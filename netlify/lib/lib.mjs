@@ -23,7 +23,9 @@ export async function store() {
     };
     return _mem;
   }
-  const { getStore } = await import("@netlify/blobs");
+  if (globalThis.__trip3dD1) return d1store(globalThis.__trip3dD1);
+  const spec = "@netlify/blobs"; // מזהה דינמי בכוונה: ב-Cloudflare לא נטען ולא נארז
+  const { getStore } = await import(/* @vite-ignore */ spec);
   const s = getStore({ name: isProd() ? "trip3d" : "trip3d-staging", consistency: "strong" });
   return {
     get: (k) => s.get(k, { type: "json" }),
@@ -32,6 +34,41 @@ export async function store() {
     list: async (p) => {
       const r = await s.list({ prefix: p });
       return (r.blobs || []).map((b) => b.key).sort();
+    },
+  };
+}
+
+// ---------- אחסון על Cloudflare D1 (SQLite): טבלה אחת של מפתח/ערך, עם פיצול ערכים גדולים ----------
+const CHUNK = 900000, CK = (k, i) => "\u0001c/" + i + "/" + k;
+let _d1ready = null;
+function d1store(db) {
+  const init = () => (_d1ready ||= db.prepare("CREATE TABLE IF NOT EXISTS kv (k TEXT PRIMARY KEY, v TEXT NOT NULL)").run().catch((e) => { _d1ready = null; throw e; }));
+  const rawGet = async (k) => { await init(); return db.prepare("SELECT v FROM kv WHERE k = ?1").bind(k).first("v"); };
+  const rawSet = async (k, v) => { await init(); await db.prepare("INSERT INTO kv (k, v) VALUES (?1, ?2) ON CONFLICT(k) DO UPDATE SET v = excluded.v").bind(k, v).run(); };
+  const rawDel = async (k) => { await init(); await db.prepare("DELETE FROM kv WHERE k = ?1").bind(k).run(); };
+  return {
+    get: async (k) => {
+      const v = await rawGet(k); if (v == null) return null;
+      if (v.startsWith("\u0001chunks:")) { const n = +v.slice(8); let s = ""; for (let i = 0; i < n; i++) s += (await rawGet(CK(k, i))) || ""; return JSON.parse(s); }
+      return JSON.parse(v);
+    },
+    setJSON: async (k, val) => {
+      const s = JSON.stringify(val), old = await rawGet(k);
+      if (old && old.startsWith("\u0001chunks:")) { const n = +old.slice(8); for (let i = 0; i < n; i++) await rawDel(CK(k, i)); }
+      if (s.length <= CHUNK) return rawSet(k, s);
+      const n = Math.ceil(s.length / CHUNK);
+      for (let i = 0; i < n; i++) await rawSet(CK(k, i), s.slice(i * CHUNK, (i + 1) * CHUNK));
+      await rawSet(k, "\u0001chunks:" + n);
+    },
+    delete: async (k) => {
+      const old = await rawGet(k);
+      if (old && old.startsWith("\u0001chunks:")) { const n = +old.slice(8); for (let i = 0; i < n; i++) await rawDel(CK(k, i)); }
+      await rawDel(k);
+    },
+    list: async (p) => {
+      await init();
+      const r = await db.prepare("SELECT k FROM kv WHERE k >= ?1 AND k < ?2 AND substr(k, 1, 1) != char(1) ORDER BY k").bind(p, p + "\uffff").all();
+      return (r.results || []).map((x) => x.k);
     },
   };
 }

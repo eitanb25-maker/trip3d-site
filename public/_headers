@@ -1,0 +1,10 @@
+/maintenance.json
+  Cache-Control: no-store
+/news.json
+  Cache-Control: no-store
+/maint.js
+  Cache-Control: no-cache
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Frame-Options: SAMEORIGIN

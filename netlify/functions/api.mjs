@@ -39,7 +39,7 @@ const setCookie = (req, token, clear = false) =>
 const clean = (s, n = 60) => String(s ?? "").replace(/[\u0000-\u001f<>]/g, "").trim().slice(0, n);
 const emailOk = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e) && e.length <= 120;
 const pub = (u) => u && { uid: u.uid, name: u.name, email: u.email, role: u.role, verified: !!u.verified, mailOk: u.mailOk !== false, google: !!u.google, badges: u.badges || [] };
-const ipOf = (req) => (req.headers.get("x-nf-client-connection-ip") || (req.headers.get("x-forwarded-for") || "").split(",")[0] || req.headers.get("x-real-ip") || "?").trim();
+const ipOf = (req) => (req.headers.get("cf-connecting-ip") || req.headers.get("x-nf-client-connection-ip") || (req.headers.get("x-forwarded-for") || "").split(",")[0] || req.headers.get("x-real-ip") || "?").trim();
 const ipHash = (req) => crypto.createHash("sha1").update(ipOf(req)).digest("hex").slice(0, 12);
 const sha = (s) => crypto.createHash("sha256").update(s).digest("hex");
 const DISPOSABLE = new Set(["mailinator.com", "10minutemail.com", "guerrillamail.com", "tempmail.com", "temp-mail.org", "yopmail.com", "trashmail.com", "sharklasers.com", "getnada.com", "dispostable.com", "maildrop.cc", "throwawaymail.com", "fakeinbox.com", "mintemail.com"]);

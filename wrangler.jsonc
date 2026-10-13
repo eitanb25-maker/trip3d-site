@@ -1,0 +1,15 @@
+{
+  // פריסה ל-Cloudflare Workers (חלופה ל-Netlify). הוראות מלאות ב-README, סעיף Cloudflare.
+  "name": "trip3d-site",
+  "main": "worker/index.mjs",
+  "compatibility_date": "2025-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*", "/g/*", "/", "/index.html", "/gallery.html"]
+  },
+  "d1_databases": [{ "binding": "DB", "database_name": "trip3d" }],
+  "triggers": { "crons": ["0 0 * * *", "0 1 * * 1"] },
+  "observability": { "enabled": true }
+}

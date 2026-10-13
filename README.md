@@ -189,3 +189,16 @@
 - **ניטור חיות:** הכתובת `/api/ping` מחזירה `{"ok":true}` (או 503 אם האחסון או `SESSION_SECRET` לא תקינים), בלי שום מידע רגיש.
   הגדרה ב-UptimeRobot (חינם): Add monitor → HTTP(s) → URL `https://האתר-שלכם/api/ping` → כל 5 דקות → (אפשר Keyword monitor על `"ok":true`) → התראה למייל.
 - **הצעות לשיפור:** כפתור 💡 בכותרת העורך וקישור בדף הבית, גם לאורחים (מייל לתשובה אופציונלי). ההצעות מגיעות ללשונית "דיווחים" עם תג 💡, ולטלגרם/דיסקורד לפי הגדרות ההתראות. מוגבל ל-5 בשעה לכל כתובת, עם honeypot נגד ספאם.
+
+## Cloudflare (חלופה ל-Netlify, בלי מגבלת קרדיטים)
+
+הקוד רץ גם על Cloudflare Workers: קבצים סטטיים מ-`public/`, מסד נתונים D1, ומשימות מתוזמנות (גיבוי יומי + סיכום שבועי).
+
+1. פותחים חשבון חינם ב-cloudflare.com.
+2. **Workers & Pages → Create → Import a repository** → GitHub → `eitanb25-maker/trip3d-site`.
+3. Deploy command: `npx wrangler deploy` (השאר ברירת מחדל).
+4. מסד נתונים: אם לא נוצר אוטומטית – **Storage & databases → D1 → Create** בשם `trip3d`, ואז לשלוח את ה-Database ID, ולהוסיף אותו ל-`wrangler.jsonc` בשדה `database_id`.
+5. **Settings → Variables and Secrets** – להוסיף: `SESSION_SECRET` (לפחות 32 תווים), `ADMIN_EMAIL`, `ADMIN_SETUP_CODE`. אופציונלי: `SITE_URL`, ושאר המשתנים מ-`.env.example`.
+6. נכנסים לאתר, נרשמים עם `ADMIN_EMAIL`, ופותחים `/health.html` לבדיקה.
+
+נבדק רק מקומית עם סימולציה של D1; ההרצה האמיתית ב-Cloudflare עוד לא נבדקה.
