@@ -1368,7 +1368,7 @@ try{const home=document.querySelector("#home .box");if(home&&!$("lnks")){const p
   const hb=document.createElement("button");hb.id="homebot";hb.type="button";hb.className="pill";hb.style.cssText="display:block;margin:14px auto 0;padding:12px 20px;font-size:16px;font-weight:700;cursor:pointer";hb.textContent="🤖 "+L_("שאלו את הבוט – עונה על הכול","Ask the helper bot");hb.onclick=()=>{const b=$("aib");if(b)b.click()};home.insertBefore(hb,p)}}catch(e){}
 
 /* נגישות: מסגרת פוקוס ברורה למקלדת + תוויות לכפתורי אייקון */
-(function(){try{const s=document.createElement("style");s.textContent=":focus-visible{outline:3px solid #ffb703!important;outline-offset:2px}@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}";document.head.appendChild(s);
+(function(){try{const s=document.createElement("style");s.textContent="@media (max-width:600px){#aip{left:12px!important;right:12px!important;width:auto!important;max-width:none!important;max-height:calc(100dvh - 130px)!important;bottom:60px!important}}:focus-visible{outline:3px solid #ffb703!important;outline-offset:2px}@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}";document.head.appendChild(s);
 const lab=()=>{document.querySelectorAll("button:not([aria-label])").forEach(b=>{const t=(b.textContent||"").trim();if(t&&t.length<=3&&!b.title)return;if(!t&&b.title)b.setAttribute("aria-label",b.title)})};
 lab();new MutationObserver(()=>{clearTimeout(lab._t);lab._t=setTimeout(lab,500)}).observe(document.body,{childList:true,subtree:true})}catch(e){}})();
 

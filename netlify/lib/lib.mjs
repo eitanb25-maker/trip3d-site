@@ -571,3 +571,11 @@ export function extractKeywords(q) {
 export async function feed(text) {
   try { const st = await store(); await st.setJSON("fe/" + Date.now() + "-" + rid(2), { ts: Date.now(), text: String(text).slice(0, 160) }); } catch (e) { /* לא קריטי */ }
 }
+
+// שאלות שהבוט לא ידע לענות עליהן בשבוע האחרון (נכנס לדוח השבועי)
+export async function botMissText() {
+  const st = await store(), cut = Date.now() - 7 * 864e5;
+  const rows = (await st.scan("bm/", { limit: 300 })).map((x) => x.v).filter((v) => v && (v.last || 0) > cut).sort((a, b) => b.n - a.n).slice(0, 10);
+  if (!rows.length) return "";
+  return "\n\n🤖 שאלות שהבוט לא ידע לענות עליהן השבוע:\n" + rows.map((r) => `• ${r.q} (${r.n}x)`).join("\n") + "\n(ללמד אותו: לוח בקרה ← בוט)";
+}

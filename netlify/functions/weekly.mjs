@@ -1,10 +1,10 @@
 // דוח שבועי אוטומטי + גיבוי מוצפן (רץ פעם בשבוע)
-import { weeklySummary, weeklyCsv, notify, saveAutoBackup, store, weeklyPerks } from "../lib/lib.mjs";
+import { botMissText, weeklySummary, weeklyCsv, notify, saveAutoBackup, store, weeklyPerks } from "../lib/lib.mjs";
 
 export default async () => {
   try { const r = await weeklyPerks(); console.log("weeklyPerks", JSON.stringify(r)); } catch (e) { console.error("weeklyPerks failed", e); }
   const csv = await weeklyCsv(7);
-  await notify(await weeklySummary(), { name: "weekly-report.csv", content: csv, mime: "text/csv" });
+  await notify((await weeklySummary()) + (await botMissText().catch(() => "")), { name: "weekly-report.csv", content: csv, mime: "text/csv" });
   try {
     const { key, enc } = await saveAutoBackup();
     if (process.env.NOTIFY_EMAIL || process.env.TELEGRAM_BOT_TOKEN || globalThis.__notifyHook) {
