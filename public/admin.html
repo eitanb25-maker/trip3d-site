@@ -399,6 +399,39 @@ const _vU38=vUser;vUser=async function(){await _vU38();try{
  $("main").append(h("div",{cls:"card"},h("h2",{text:"🔑 הרשאות לעורך"}),h("p",{cls:"muted",text:"עורך רואה הכול אבל לא משנה כלום. כאן אפשר לתת לו לפעול בתחום אחד בלבד:"}),
   ...Object.keys(L).map(k=>h("label",{cls:"chk"},h("input",{type:"checkbox",checked:cur.has(k),on:{change:async e=>{e.target.checked?cur.add(k):cur.delete(k);try{await api("POST","/admin/user",{uid:UID,action:"setCaps",caps:[...cur]});m.textContent="נשמר ✔"}catch(x){m.textContent=x.message}}}}),L[k])),m))
 }catch(e){}};
+
+// ---- v38: תיקון כיווניות בהודעות בדיקה + הגדרת חיבורים מהלוח ----
+(function(){const LAT=/([A-Za-z][A-Za-z0-9_+@.:\/\-]{2,})/;let busy=false;
+ function fix(){if(busy)return;busy=true;try{document.querySelectorAll('#main [role=status]').forEach(el=>{const w=document.createTreeWalker(el,NodeFilter.SHOW_TEXT);const ns=[];while(w.nextNode())ns.push(w.currentNode);
+  ns.forEach(n=>{if(n.parentNode.nodeName=="BDI"||!LAT.test(n.nodeValue))return;const fr=document.createDocumentFragment();n.nodeValue.split(new RegExp(LAT.source,"g")).forEach((p,i)=>{if(!p)return;if(i%2){const b=document.createElement("bdi");b.dir="ltr";b.textContent=p;fr.append(b)}else fr.append(document.createTextNode(p))});n.parentNode.replaceChild(fr,n)})})}finally{busy=false}}
+ new MutationObserver(()=>setTimeout(fix,0)).observe(document.body,{childList:true,subtree:true,characterData:true})})();
+
+const INTEG_GROUPS=[
+ {id:"mail",ic:"✉️",t:"מיילים (Resend)",need:["RESEND_API_KEY","FROM_EMAIL"],f:[["RESEND_API_KEY","מפתח API (מתחיל ב-re_)",1],["FROM_EMAIL","כתובת השולח","","סטודיו <onboarding@resend.dev>"]],
+  steps:["נכנסים ל-resend.com ונרשמים בחינם (מומלץ עם המייל שלך, כי בהתחלה אפשר לשלוח רק אליו).","תפריט API Keys ← Create API Key ← הרשאת Sending access ← מעתיקים את המפתח (מתחיל ב-re_).","בשדה כתובת השולח כותבים להתחלה: סטודיו <onboarding@resend.dev>","כדי לשלוח גם לשאר המשתמשים: ב-Resend ← Domains מאמתים דומיין שלך, ואז מחליפים לכתובת מהדומיין."]},
+ {id:"tg",ic:"✈️",t:"התראות בטלגרם",need:["TELEGRAM_BOT_TOKEN","TELEGRAM_CHAT_ID"],f:[["TELEGRAM_BOT_TOKEN","טוקן הבוט",1],["TELEGRAM_CHAT_ID","מזהה צ'אט (אפשר לזהות אוטומטית)"]],tg:1,
+  steps:["בטלגרם מחפשים את @BotFather ושולחים לו /newbot, ובוחרים שם לבוט.","מעתיקים את הטוקן שהוא נותן ושומרים אותו כאן.","פותחים את הבוט שיצרתם, לוחצים Start ושולחים לו הודעה כלשהי.","חוזרים לכאן ולוחצים 'זיהוי אוטומטי' כדי שהמערכת תמצא את מזהה הצ'אט שלכם."]},
+ {id:"dc",ic:"💬",t:"התראות בדיסקורד",need:["DISCORD_WEBHOOK_URL"],f:[["DISCORD_WEBHOOK_URL","כתובת Webhook",1]],
+  steps:["בדיסקורד: הגדרות הערוץ ← Integrations ← Webhooks ← New Webhook.","Copy Webhook URL ומדביקים כאן."]},
+ {id:"ne",ic:"📬",t:"התראות במייל",need:["NOTIFY_EMAIL"],f:[["NOTIFY_EMAIL","לאיזה מייל לשלוח התראות"]],steps:["דורש שהמיילים (Resend) כבר מוגדרים. מכניסים כאן את הכתובת שלך."]},
+ {id:"gg",ic:"🔑",t:"כניסה עם Google",need:["GOOGLE_CLIENT_ID"],f:[["GOOGLE_CLIENT_ID","Client ID (נגמר ב-.apps.googleusercontent.com)"]],
+  steps:["console.cloud.google.com ← APIs & Services ← Credentials ← Create credentials ← OAuth client ID ← Web application.","ב-Authorized JavaScript origins מוסיפים את כתובת האתר (https://trip3d-site.eitanb25.workers.dev).","מעתיקים את ה-Client ID ומדביקים כאן. הכפתור יופיע באתר תוך דקה."]},
+ {id:"vp",ic:"🔔",t:"התראות דחיפה לדפדפן",need:["VAPID_PUBLIC","VAPID_PRIVATE"],f:[],vapid:1,steps:["אין צורך בחשבון חיצוני: לוחצים 'יצירת מפתחות' והמערכת יוצרת ושומרת אותם."]}];
+async function integCard(){
+ const d=await api("GET","/admin/integrations"),by=Object.fromEntries(d.items.map(x=>[x.k,x])),msg=h("p",{role:"status",cls:"muted"}),pw=h("input",{type:"password",placeholder:"הסיסמה שלך (לאישור שמירה)",autocomplete:"current-password",style:"max-width:280px"});
+ const box=h("div",{cls:"card"},h("h2",{text:"🔧 חיבורים והגדרות"}),h("p",{cls:"muted",text:"כאן מכניסים את המפתחות במקום בלוח של Cloudflare. הם נשמרים במסד הנתונים של האתר, לא מוצגים שוב במלואם, ונכנסים לתוקף תוך כדקה. אם ערך כבר מוגדר ב-Cloudflare, הוא קובע וצריך לשנות אותו שם."}));
+ INTEG_GROUPS.forEach(g=>{const ok=g.need.every(k=>by[k]&&by[k].set),inputs={};
+  const rows=g.f.map(([k,lab,secret,ph])=>{const i=h("input",{type:secret?"password":"text",placeholder:by[k]&&by[k].set?by[k].shown+" (מוגדר, כתבו כדי להחליף)":(ph||lab),autocomplete:"off",style:"width:100%;margin:0",disabled:RO,"aria-label":lab});inputs[k]=i;
+   return h("label",{style:"display:block;margin:6px 0"},h("span",{cls:"muted",text:lab+(by[k]&&by[k].src=="env"?" · מוגדר ב-Cloudflare":"")}),i)});
+  const save=h("button",{cls:"pri",text:"שמירה",disabled:RO,on:{click:async()=>{const values={};Object.entries(inputs).forEach(([k,i])=>{if(i.value.trim())values[k]=i.value.trim()});if(!Object.keys(values).length){msg.textContent="לא הוזן ערך חדש.";return}
+    save.disabled=true;try{const r=await api("PUT","/admin/integrations",{password:pw.value,values});msg.style.color="var(--ok)";msg.textContent="✅ נשמר"+(r.locked&&r.locked.length?" (לא שונה כי מוגדר ב-Cloudflare: "+r.locked.join(", ")+")":"")+". עכשיו אפשר ללחוץ על כפתורי הבדיקה למעלה.";box.replaceWith(await integCard())}catch(e){msg.style.color="var(--bad)";msg.textContent="❌ "+e.message}save.disabled=false}}});
+  const extra=[];
+  if(g.tg)extra.push(h("button",{text:"🔍 זיהוי אוטומטי של מזהה הצ'אט",disabled:RO,on:{click:async()=>{try{const r=await api("POST","/admin/telegram-detect",{});msg.style.color="var(--ok)";msg.textContent="✅ זוהה הצ'אט של "+(r.name||"המשתמש")+" ונשמר.";box.replaceWith(await integCard())}catch(e){msg.style.color="var(--bad)";msg.textContent="❌ "+e.message}}}}));
+  if(g.vapid&&!ok)extra.push(h("button",{cls:"pri",text:"⚙️ יצירת מפתחות",disabled:RO,on:{click:async()=>{try{await api("POST","/admin/vapid-generate",{});msg.style.color="var(--ok)";msg.textContent="✅ נוצרו ונשמרו. כפתור 🔔 יופיע למשתמשים מחוברים תוך דקה.";box.replaceWith(await integCard())}catch(e){msg.style.color="var(--bad)";msg.textContent="❌ "+e.message}}}}));
+  box.append(h("details",{style:"border-top:1px solid var(--bd);padding:10px 0",open:!ok&&g.id=="mail"},h("summary",{style:"cursor:pointer;font-weight:700"},g.ic+" "+g.t+" ",h("span",{cls:"tag "+(ok?"ok":"bad"),text:ok?"מוגדר ✔":"לא מוגדר"})),
+   h("ol",{cls:"muted",style:"margin:8px 0;padding-inline-start:20px"},...g.steps.map(x=>h("li",{text:x}))),...rows,h("div",{cls:"row",style:"margin-top:6px"},...(g.f.length?[save]:[]),...extra)))});
+ box.append(h("div",{style:"margin-top:10px"},pw,msg));return box}
+const _vT38=vTests;vTests=async function(){await _vT38();try{if(!RO||true)$("main").append(await integCard())}catch(e){}};
 function render(){RO=!(ME&&(ME.role=="admin"||(ME.caps||[]).includes(CAPMAP[TAB])));buildNav();try{localStorage.adm_tab=TAB}catch(e){}$("main").replaceChildren(h("p",{cls:"muted",text:"טוען…"}));({"סקירה":vOverview,"משתמשים":vUsers,"משתמש":vUser,"הודעות":vMessages,"אבטחה":vSecurity,"יומן פעולות":vAudit,"גיבויים":vBackups,"הזמנות":vInvites,"דיווחים":vReports,"גלריה":vGallery,"חסימות":vBlocks,"הטבות":vPerks,"מנויים":vSubs,"צ'אט":vChat,"בדיקות":vTests,"מבצעים":vPromo,"פעילות":vActivity,"בוט":vBot,"משוב":vFeedback,"הגדרות":vSettings,"גרסאות":vChangelog,"יצוא":vExport})[TAB]().catch(e=>$("main").replaceChildren(h("p",{text:"שגיאה: "+e.message})))}
 // ---------- גרפים ----------
 function lineChart(series,keys,colors,names){const W=720,H=220,P=34,n=series.length,mx=Math.max(1,...series.flatMap(s=>keys.map(k=>s[k]||0))),X=i=>P+(n<2?0:i*(W-P-10)/(n-1)),Y=v=>H-24-(v/mx)*(H-44);

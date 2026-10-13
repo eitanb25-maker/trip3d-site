@@ -45,7 +45,7 @@ async function seedTrip5(st) {
   await st.setJSON("pc/TRIP5", pc); await st.setJSON("sys/seedTRIP5", 1); return pc;
 }
 const emailOk = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e) && e.length <= 120;
-const pub = (u) => u && { uid: u.uid, name: u.name, email: u.email, role: u.role, verified: !!u.verified, mailOk: u.mailOk !== false, google: !!u.google, totp: !!u.totp, caps: u.role === "editor" ? u.caps || [] : undefined, badges: u.badges || [], sub: u.sub && u.sub.until > Date.now() ? u.sub : null };
+const pub = (u) => u && { uid: u.uid, name: u.name, email: u.email, role: u.role, verified: !!u.verified, mailOk: u.mailOk !== false, google: !!u.google, totp: !!u.totp, tut: !!u.tut, caps: u.role === "editor" ? u.caps || [] : undefined, badges: u.badges || [], sub: u.sub && u.sub.until > Date.now() ? u.sub : null };
 const ipOf = (req) => (req.headers.get("cf-connecting-ip") || req.headers.get("x-nf-client-connection-ip") || (req.headers.get("x-forwarded-for") || "").split(",")[0] || req.headers.get("x-real-ip") || "?").trim();
 const ipHash = (req) => crypto.createHash("sha1").update(ipOf(req)).digest("hex").slice(0, 12);
 const sha = (s) => crypto.createHash("sha256").update(s).digest("hex");
@@ -157,6 +157,18 @@ function csv(rows) {
   return "\ufeff" + rows.map((r) => r.map(q).join(",")).join("\r\n");
 }
 
+const INTEG = {
+  RESEND_API_KEY: { secret: 1, re: /^re_[A-Za-z0-9_\-]{10,200}$/ },
+  FROM_EMAIL: { re: /^([^<>\n]{1,80}<[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+>|[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+)$/ },
+  NOTIFY_EMAIL: { re: /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/ },
+  TELEGRAM_BOT_TOKEN: { secret: 1, re: /^\d{5,}:[\w-]{20,}$/ },
+  TELEGRAM_CHAT_ID: { re: /^-?\d{4,20}$/ },
+  DISCORD_WEBHOOK_URL: { secret: 1, re: /^https:\/\/(discord|discordapp)\.com\/api\/webhooks\/\d+\/[\w-]+$/ },
+  GOOGLE_CLIENT_ID: { re: /^[\w.\-]+\.apps\.googleusercontent\.com$/ },
+  SITE_URL: { re: /^https:\/\/[\w.\-]+(:\d+)?$/ },
+  VAPID_PUBLIC: { re: /^[A-Za-z0-9_\-]{80,100}$/ },
+  VAPID_PRIVATE: { secret: 1, re: /^[A-Za-z0-9_\-]{40,50}$/ },
+};
 const SEGS = ["all", "sub", "nosub", "expiring", "inactive", "new", "verified"];
 async function segmentUsers(seg) {
   if (!SEGS.includes(seg)) return null;
@@ -475,6 +487,10 @@ const inner = async (req) => {
         delete me.totp; await st.setJSON("u/" + me.uid, me); await audit(me, "2fa:off", me.email); return J({ ok: true });
       }
       return E(400, "פעולה לא מוכרת");
+    }
+    if (R === "POST me/tutorial") {
+      if (!me) return E(401, "נדרשת התחברות");
+      me.tut = Date.now(); await st.setJSON("u/" + me.uid, me); return J({ ok: true });
     }
     if (R === "GET push/key") return J({ key: pushEnabled() ? process.env.VAPID_PUBLIC : "" });
     if (R === "POST me/push") {
@@ -1252,6 +1268,52 @@ const inner = async (req) => {
         const n = await restoreBackup(data);
         await audit(me, "backup:restore", b.key || "file", n + " items");
         return J({ ok: true, restored: n });
+      }
+      if (R === "GET admin/integrations") {
+        const saved = (await st.get("sys/env")) || {};
+        return J({ items: Object.entries(INTEG).map(([k, d]) => {
+          const v = process.env[k] || "", src = saved[k] ? (v === saved[k] ? "db" : "env") : v ? "env" : "";
+          return { k, set: !!v, src, secret: !!d.secret, shown: !v ? "" : d.secret ? "••••" + v.slice(-4) : v.length > 60 ? v.slice(0, 57) + "…" : v };
+        }), canSave: !!process.env.__trip3dD1 || !!globalThis.__trip3dD1 });
+      }
+      if (R === "POST admin/telegram-detect") {
+        if (await rateHit("tg:" + me.uid, 10, 600e3)) return E(429, "יותר מדי ניסיונות. נסו שוב בעוד כמה דקות");
+        const tok = process.env.TELEGRAM_BOT_TOKEN;
+        if (!tok) return E(400, "קודם שמרו את טוקן הבוט של טלגרם");
+        let d; try { d = await (await fetch(`https://api.telegram.org/bot${tok}/getUpdates`, { signal: AbortSignal.timeout(8000) })).json(); } catch { return E(502, "אין חיבור לטלגרם"); }
+        if (!d.ok) return E(400, "טלגרם דחה את הטוקן. בדקו שהעתקתם אותו שלם מ-BotFather");
+        const m = (d.result || []).map((x) => (x.message || x.my_chat_member || {}).chat).filter((c) => c && c.type === "private").pop();
+        if (!m) return E(404, "לא נמצאה הודעה לבוט. פתחו את הבוט בטלגרם, לחצו Start ושלחו לו הודעה, ואז נסו שוב");
+        const saved = (await st.get("sys/env")) || {}; saved.TELEGRAM_CHAT_ID = String(m.id); await st.setJSON("sys/env", saved);
+        if (!process.env.TELEGRAM_CHAT_ID) process.env.TELEGRAM_CHAT_ID = String(m.id);
+        await audit(me, "integrations:telegram-detect", "TELEGRAM_CHAT_ID");
+        return J({ ok: true, chat: String(m.id), name: [m.first_name, m.last_name].filter(Boolean).join(" ") });
+      }
+      if (R === "PUT admin/integrations") {
+        const b = await body(req, 4000), vals = b.values && typeof b.values === "object" ? b.values : {};
+        if (me.hash && !(await checkPw(String(b.password || ""), me))) { await secEvent("integrations_bad_pw", me.email, S); return E(403, "הסיסמה שגויה"); }
+        if (await rateHit("ig:" + me.uid, 20, 600e3)) return E(429, "יותר מדי ניסיונות. נסו שוב בעוד כמה דקות");
+        const saved = (await st.get("sys/env")) || {}, changed = [], bad = [], locked = [];
+        for (const [k, raw] of Object.entries(vals)) {
+          const d = INTEG[k]; if (!d) continue;
+          const v = String(raw ?? "").replace(/[\u0000-\u001f]/g, "").trim();
+          if (!v) { if (saved[k]) { if (process.env[k] === saved[k]) delete process.env[k]; delete saved[k]; changed.push(k + ":clear"); } continue; }
+          if (!d.re.test(v)) { bad.push(k); continue; }
+          if (process.env[k] && !(saved[k] && process.env[k] === saved[k])) { locked.push(k); continue; }
+          saved[k] = v; process.env[k] = v; changed.push(k);
+        }
+        if (bad.length) return E(400, "הערך לא נראה תקין עבור: " + bad.join(", "), { bad });
+        await st.setJSON("sys/env", saved);
+        await audit(me, "integrations:save", changed.join(",").slice(0, 190));
+        return J({ ok: true, changed, locked });
+      }
+      if (R === "POST admin/vapid-generate") {
+        if (process.env.VAPID_PUBLIC && process.env.VAPID_PRIVATE) return E(400, "כבר מוגדרים מפתחות");
+        const kp = await globalThis.crypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" }, true, ["sign"]), jwk = await globalThis.crypto.subtle.exportKey("jwk", kp.privateKey);
+        const pub = Buffer.concat([Buffer.from([4]), Buffer.from(jwk.x, "base64url"), Buffer.from(jwk.y, "base64url")]).toString("base64url");
+        const saved = (await st.get("sys/env")) || {}; saved.VAPID_PUBLIC = pub; saved.VAPID_PRIVATE = jwk.d; await st.setJSON("sys/env", saved);
+        process.env.VAPID_PUBLIC = pub; process.env.VAPID_PRIVATE = jwk.d;
+        await audit(me, "integrations:vapid-generate", "VAPID"); return J({ ok: true });
       }
       if (R === "GET admin/segments") {
         const o = {}; for (const k of SEGS) o[k] = (await segmentUsers(k)).length;

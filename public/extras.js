@@ -76,17 +76,82 @@
           var h = document.createElement("h3"); h.textContent = s[0]; var p = document.createElement("p"); p.textContent = s[1]; p.style.margin = "0";
           var nav = document.createElement("div"); nav.className = "tn";
           var sk = document.createElement("button"); sk.type = "button"; sk.className = "sk"; sk.textContent = T("דלג", "Skip"); sk.onclick = done;
-          var cnt = document.createElement("span"); cnt.textContent = (i + 1) + " / " + steps.length;
+          var cnt = document.createElement("span"); cnt.dir = "ltr"; cnt.textContent = (i + 1) + " / " + steps.length;
           var go = document.createElement("button"); go.type = "button"; go.className = "go"; go.textContent = i === steps.length - 1 ? T("מתחילים!", "Let's go!") : T("הבא", "Next");
           go.onclick = function () { if (i === steps.length - 1) done(); else { i++; draw(); } };
           nav.append(sk, cnt, go); c.append(h, p, nav); go.focus();
         }
         draw();
       }
-      btn("exTour", "❓", T("סיור היכרות", "Quick tour"), function () { tour(0); });
-      if (!ls.g("trip3d_tour") && !ls.g("trip3d_news")) setTimeout(function () { if (!document.querySelector("[role=dialog].on") && !document.getElementById("authbg") && !document.getElementById("maint")) tour(0); }, 4000);
+      btn("exTour", "❓", T("סיור היכרות", "Quick tour"), function () { if (window.API && API.session) window.__tutorial(0); else tour(0); });
+      if (!ls.g("trip3d_tour") && !ls.g("trip3d_news")) setTimeout(function () { if (!(window.API && API.session) && !document.querySelector("[role=dialog].on") && !document.getElementById("authbg") && !document.getElementById("maint")) tour(0); }, 4000);
     } catch (e) {}
 
+
+  // ----- טוטוריאל בן 10 שלבים: מופיע אוטומטית בכניסה לחשבון (פעם אחת לכל חשבון), ואפשר לפתוח שוב בכפתור ❓ -----
+  var TUT = [
+    { sel: "#tools .tool", h: ["ברוכים הבאים, {name}! בוחרים כלי", "Welcome, {name}! Pick a tool"], t: ["זה סיור קצר של 10 שלבים. מתחילים בכלי: מזכרת עם מעמד, מכמה מדינות, מחזיק מפתחות, מגנט, קישוט, פאזל או מעמד לטלפון. אפשר לדלג בכל רגע ולפתוח שוב בכפתור ❓.", "A quick 10-step tour. It starts with the tool: souvenir with stand, multi-country, keychain, magnet, ornament, puzzle or phone stand. Skip any time and reopen it with the ❓ button."] },
+    { h: ["מדינה ומקומות", "Country and places"], t: ["עונים על שאלון קצר: בוחרים מדינה (או כמה), מסמנים על המפה את המקומות שהייתם בהם, ואפשר גם לייבא מסלול מקובץ KML/GPX.", "Answer a short questionnaire: choose a country (or several), mark the places you visited on the map, or import a route from a KML/GPX file."] },
+    { h: ["מעצבים בתלת-ממד", "Design it in 3D"], t: ["רואים את המזכרת מתעדכנת בזמן אמת: שם הטיול ותאריכים, צבעים, דגל, מים, הרים וקוד QR. אפשר לסובב ולהגדיל עם האצבע או העכבר.", "Watch the souvenir update live: trip name and dates, colors, flag, water, mountains and a QR code. Rotate and zoom with your finger or mouse."] },
+    { h: ["מתאימים למדפסת", "Fit your printer"], t: ["בוחרים את גודל משטח ההדפסה שלכם והאתר מתאים את המודל אליו אוטומטית, כולל פירוק לחלקים וצבע לכל חלק.", "Pick your print bed size and the site fits the model to it automatically, split into parts with a color for each."] },
+    { h: ["מורידים ומדפיסים", "Download and print"], t: ["ההורדה היא קובץ ZIP עם 3MF (מומלץ ל-Bambu, Orca ו-Prusa) וקבצי STL. יש מכסה יומית, ובונוסים והטבות מוסיפים הורדות.", "The download is a ZIP with a 3MF (best for Bambu, Orca and Prusa) and STL files. There is a daily limit, and bonuses and perks add more downloads."] },
+    { sel: "#gtab", h: ["מדריך הדפסה", "Print guide"], t: ["הלשונית בצד פותחת את מדריך ההדפסה: הגדרות, חומרים ופתרון בעיות. אפשר גם לבקש שפה נוספת.", "The side tab opens the print guide: settings, materials and troubleshooting. You can also request another language."] },
+    { sel: "#acct", h: ["החשבון שלי", "My account"], t: ["כאן רואים הורדות שנשארו, הטבות ותגים, מממשים קוד קופון, מזמינים חברים, ויש גם צ'אט פרטי עם מנהל האתר.", "See your remaining downloads, perks and badges, redeem a coupon code, invite friends, and chat privately with the site admin."] },
+    { sel: "#bl", h: ["עזרה ודיווח", "Help and reports"], t: ["הבוט עונה על שאלות (ואפילו מחליף שפה), ואם משהו לא עובד אפשר לדווח עליו בלחיצה.", "The bot answers questions (and can even switch the language), and you can report any problem with one tap."] },
+    { h: ["שומרים ומשתפים", "Save and share"], t: ["שומרים פרויקט בחשבון וממשיכים בכל מכשיר, משכפלים, ומשתפים בקישור או בכרטיס שיתוף. יצירה טובה אפשר לפרסם בגלריית הקהילה.", "Save projects to your account and continue on any device, duplicate them, and share by link or share card. Publish great ones to the community gallery."] },
+    { sel: "#exb", h: ["ועוד כמה דברים", "A few more things"], t: ["כפתורים למצב כהה/בהיר, התקנה כאפליקציה והתראות, וגם עמוד ההטבות והגלריה. זהו, בהצלחה!", "Buttons for dark/light mode, installing as an app and notifications, plus the perks and gallery pages. That's it, have fun!"] }
+  ];
+  var tutOn = false;
+  function uidKey() { return "trip3d_tut_" + ((window.API && API.session && API.session.uid) || "x"); }
+  window.__tutorial = function (from) {
+    if (tutOn) return; tutOn = true;
+    var name = (window.API && API.session && API.session.name) || "", i = from || 0, E = en();
+    var sh = document.createElement("div"); sh.id = "tutsh"; sh.style.cssText = "position:fixed;z-index:2147483100;pointer-events:none;border-radius:14px;transition:all .25s;box-shadow:0 0 0 100vmax rgba(0,0,0,.62);outline:3px solid var(--ac,#ea580c)";
+    var cd = document.createElement("div"); cd.id = "tutcd"; cd.setAttribute("role", "dialog"); cd.setAttribute("aria-modal", "true"); cd.setAttribute("aria-live", "polite"); cd.dir = E ? "ltr" : "rtl";
+    cd.style.cssText = "position:fixed;z-index:2147483101;width:min(400px,calc(100vw - 24px));box-sizing:border-box;background:var(--card,#fff);color:var(--tx,#1d1d1b);border-radius:18px;padding:18px 18px 14px;box-shadow:0 20px 60px rgba(0,0,0,.5);font:15px/1.6 system-ui,'Segoe UI',Arial,sans-serif;left:50%;transform:translateX(-50%)";
+    document.body.append(sh, cd);
+    function done() { tutOn = false; sh.remove(); cd.remove(); document.removeEventListener("keydown", key); window.removeEventListener("resize", place);
+      ls.s(uidKey(), "1"); try { if (window.API && API.session && !API.session.tut) { API.session.tut = true; fetch("/api/me/tutorial", { method: "POST", credentials: "include" }); } } catch (e) {} }
+    function key(e) { if (e.key === "Escape") done(); else if (e.key === "ArrowRight") go(E ? 1 : -1); else if (e.key === "ArrowLeft") go(E ? -1 : 1); }
+    function go(d) { var n = i + d; if (n < 0) return; if (n >= TUT.length) { done(); return; } i = n; draw(); }
+    function target() { var st = TUT[i]; if (!st.sel) return null; var el = document.querySelector(st.sel); if (!el) return null; var r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== "hidden" ? el : null; }
+    function place() {
+      var el = target(), vw = window.innerWidth, vh = window.innerHeight;
+      if (!el) { sh.style.cssText += ";left:50%;top:50%;width:0;height:0;box-shadow:0 0 0 100vmax rgba(0,0,0,.62);outline:0"; cd.style.top = "50%"; cd.style.transform = "translate(-50%,-50%)"; cd.style.bottom = "auto"; return; }
+      el.scrollIntoView({ block: "center", inline: "nearest" });
+      var r = el.getBoundingClientRect(), pad = 6;
+      sh.style.left = r.left - pad + "px"; sh.style.top = r.top - pad + "px"; sh.style.width = r.width + pad * 2 + "px"; sh.style.height = r.height + pad * 2 + "px"; sh.style.outline = "3px solid var(--ac,#ea580c)";
+      cd.style.transform = "translateX(-50%)";
+      if (r.top + r.height / 2 > vh / 2) { cd.style.top = "max(12px,env(safe-area-inset-top,0px))"; cd.style.bottom = "auto"; } else { cd.style.bottom = "max(12px,env(safe-area-inset-bottom,0px))"; cd.style.top = "auto"; }
+    }
+    function draw() {
+      var st = TUT[i], L = E ? 1 : 0; cd.textContent = "";
+      var h = document.createElement("h3"); h.style.cssText = "margin:0 0 6px;font-size:18px"; h.textContent = st.h[L].replace("{name}", name);
+      var p = document.createElement("p"); p.style.margin = "0"; p.textContent = st.t[L];
+      var dots = document.createElement("div"); dots.style.cssText = "display:flex;gap:5px;justify-content:center;margin:12px 0 4px";
+      TUT.forEach(function (_, k) { var d = document.createElement("span"); d.style.cssText = "width:" + (k === i ? 18 : 7) + "px;height:7px;border-radius:9px;background:" + (k === i ? "var(--ac,#ea580c)" : "var(--bd,#ccc)") + ";transition:width .2s"; dots.appendChild(d); });
+      var nav = document.createElement("div"); nav.style.cssText = "display:flex;gap:8px;align-items:center";
+      function b(txt, cls, fn, dis) { var x = document.createElement("button"); x.type = "button"; x.textContent = txt; x.disabled = !!dis; x.style.cssText = "border:0;border-radius:10px;padding:9px 14px;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;margin:0;width:auto;" + (cls === "go" ? "background:var(--ac,#ea580c);color:#fff" : cls === "sk" ? "background:transparent;color:var(--mu,#777)" : "background:var(--bd,#e5e5e5);color:var(--tx,#222)") + (dis ? ";opacity:.4;cursor:default" : ""); x.onclick = fn; return x; }
+      var cnt = document.createElement("span"); cnt.style.cssText = "flex:1;text-align:center;color:var(--mu,#777);font-size:13px;white-space:nowrap"; cnt.dir = "ltr"; cnt.textContent = (i + 1) + " / " + TUT.length;
+      var last = i === TUT.length - 1;
+      nav.append(b(T("דלג", "Skip"), "sk", done), b(T("הקודם", "Back"), "bk", function () { go(-1); }, i === 0), cnt, b(last ? T("סיום 🎉", "Finish 🎉") : T("הבא", "Next"), "go", function () { go(1); }));
+      cd.append(h, p, dots, nav); place(); var gb = nav.lastChild; gb.focus({ preventScroll: true });
+    }
+    document.addEventListener("keydown", key); window.addEventListener("resize", place); draw();
+  };
+  // פתיחה אוטומטית: אחרי כניסה לחשבון שעוד לא ראה את הטוטוריאל, כשאין חלון פתוח ומסך הבית מוצג
+  setInterval(function () {
+    try {
+      var a = window.API, u = a && a.session;
+      if (!u || u.tut || tutOn || ls.g(uidKey())) return;
+      if (document.getElementById("maint") || document.getElementById("tourbg")) return;
+      var vis = function (id) { var e = document.getElementById(id); return e && getComputedStyle(e).display !== "none"; };
+      if (vis("authm") || vis("dlg") || vis("acctm")) return;
+      var hm = document.getElementById("home"); if (!hm || getComputedStyle(hm).display === "none") return;
+      setTimeout(function () { var u2 = window.API && API.session; if (u2 && !u2.tut && !tutOn && !ls.g(uidKey())) window.__tutorial(0); }, 1200);
+      ls.s(uidKey() + "_try", String(Date.now()));
+    } catch (e) {}
+  }, 2500);
     // ----- התקנה כאפליקציה -----
     try {
       var dp = null, ib = null;
