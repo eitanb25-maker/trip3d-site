@@ -1154,6 +1154,12 @@ const inner = async (req) => {
         const past = (await st.scan("hof/2", { desc: true, limit: 8 })).map((x) => x.v).filter(Boolean);
         return J({ week: w7, month: m30, cow: liveDoc(cow), hof: liveDoc(hof), past, bonus: bonusNow(S), refs: (await refBoard(monthKey())).slice(0, 5) });
       }
+      if (R === "POST admin/reset-link") {
+        if (!isAdmin(me)) return E(403, "נדרשת הרשאת מנהל לפעולה הזו");
+        const u = await st.get("u/" + clean((await body(req, 300)).uid, 20)); if (!u || u.google && !u.hash) return E(404, "משתמש לא נמצא או שנכנס רק עם Google");
+        const tok = await makeToken(u.uid, "reset", 24 * 3600e3); await audit(me, "user:resetlink", u.email);
+        return J({ link: siteUrl(req) + "/#reset=" + tok });
+      }
       if (R === "POST admin/trust") {
         const b = await body(req, 300), u = await st.get("u/" + clean(b.uid, 20)); if (!u) return E(404, "משתמש לא נמצא");
         if (b.trust === false) { u.trusted = false; } else { u.trusted = true; u.sus = false; }
