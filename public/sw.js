@@ -6,7 +6,7 @@ self.addEventListener("fetch", (e) => {
   const r = e.request, u = new URL(r.url);
   if (r.method !== "GET") return;
   if (u.origin === location.origin) {
-    if (u.pathname.startsWith("/api/") || u.pathname.startsWith("/g/") || u.pathname === "/maintenance.json" || u.pathname === "/news.json" || u.pathname === "/changelog.json" || u.pathname === "/maint.js" || u.pathname === "/admin.html" || u.pathname === "/health.html" || u.pathname === "/sw.js") return; // רשת בלבד
+    if (u.pathname.startsWith("/api/") || u.pathname.startsWith("/g/") || u.pathname === "/maintenance.json" || u.pathname === "/news.json" || u.pathname === "/changelog.json" || u.pathname === "/maint.js" || u.pathname === "/admin.html" || u.pathname === "/botstudio.html" || u.pathname === "/health.html" || u.pathname === "/sw.js") return; // רשת בלבד
     // רשת קודם (תמיד הגרסה העדכנית), ואם אין חיבור – מהמטמון
     e.respondWith(fetch(r).then((res) => { if (res.ok) { const cp = res.clone(); caches.open(V).then((c) => c.put(r, cp)); } return res; }).catch(() => caches.match(r).then((m) => m || (r.mode === "navigate" ? caches.match("/") : Response.error()))));
     return;

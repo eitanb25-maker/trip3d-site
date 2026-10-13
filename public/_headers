@@ -11,6 +11,10 @@
   Cache-Control: no-cache
 /extras.js
   Cache-Control: no-cache
+/botengine.js
+  Cache-Control: no-cache
+/botstudio.html
+  Cache-Control: no-cache
 /guidetab.js
   Cache-Control: no-cache
 /news.js

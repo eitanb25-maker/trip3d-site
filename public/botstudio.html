@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700&display=swap">
+<title>סטודיו הבוט</title>
+<style>
+:root{--bg:#f4f2ec;--card:#fff;--tx:#1f1d1a;--mu:#6f6b62;--ac:#c2410c;--ac2:#ea580c;--acs:#fff1e8;--bd:#e3dfd3;--ok:#16a34a;--bad:#dc2626;--sh:0 1px 2px rgba(60,40,10,.06),0 6px 18px rgba(60,40,10,.06);--r:14px;--okbg:#dcfce7;--okfg:#166534;--badbg:#fee2e2;--badfg:#991b1b}
+@media(prefers-color-scheme:dark){:root{--bg:#141413;--card:#201f1d;--tx:#efede7;--mu:#a6a39a;--ac:#fb923c;--ac2:#fdba74;--acs:#33261b;--bd:#35332f;--sh:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.3);--okbg:#14532d;--okfg:#bbf7d0;--badbg:#7f1d1d;--badfg:#fecaca}}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.55 Heebo,system-ui,"Segoe UI",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+header{position:sticky;top:0;z-index:20;display:flex;gap:12px;align-items:center;padding:12px 22px;background:color-mix(in srgb,var(--card) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--bd);flex-wrap:wrap}
+header h1{margin:0;font-size:18px;font-weight:700;flex:1;letter-spacing:-.2px}
+header a{color:var(--ac);text-decoration:none;font-weight:500}header a:hover{text-decoration:underline}
+button,input,select,textarea{font:inherit;color:inherit;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:7px 12px;transition:border-color .15s,background .15s,box-shadow .15s,transform .05s}
+input,select,textarea{background:var(--bg)}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:none;border-color:var(--ac);box-shadow:0 0 0 3px color-mix(in srgb,var(--ac) 25%,transparent)}
+button{cursor:pointer}button:hover:not(:disabled){border-color:var(--ac);background:var(--acs)}button:active:not(:disabled){transform:translateY(1px)}
+button.on,button.pri{background:linear-gradient(135deg,var(--ac),var(--ac2));color:#fff;border-color:transparent;font-weight:600;box-shadow:0 2px 8px color-mix(in srgb,var(--ac) 35%,transparent)}
+button.on:hover,button.pri:hover:not(:disabled){background:linear-gradient(135deg,var(--ac),var(--ac2));filter:brightness(1.05)}
+button.bad{color:var(--bad)}button.bad:hover:not(:disabled){background:var(--badbg);border-color:var(--bad)}
+button:disabled,input:disabled,select:disabled{opacity:.5;cursor:not-allowed}
+main{padding:22px 26px 56px;min-width:0}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:18px 20px;margin-bottom:16px;box-shadow:var(--sh)}
+h2{margin:0 0 12px;font-size:17px;font-weight:700;letter-spacing:-.2px}h3{margin:0 0 6px;font-size:15px;font-weight:600}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.kpi{position:relative;background:var(--bg);border:1px solid var(--bd);border-radius:12px;padding:14px 12px;text-align:center;overflow:hidden}
+.kpi::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:linear-gradient(90deg,var(--ac),var(--ac2))}
+.kpi b{display:block;font-size:28px;line-height:1.2;font-weight:700;font-variant-numeric:tabular-nums}.kpi span{color:var(--mu);font-size:12px}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th,td{padding:9px 10px;border-bottom:1px solid var(--bd);text-align:start;vertical-align:top}
+th{color:var(--mu);font-weight:600;font-size:12px;background:color-mix(in srgb,var(--bg) 70%,transparent);position:sticky;top:0}
+tbody tr:hover td,table tr:hover td{background:color-mix(in srgb,var(--acs) 55%,transparent)}
+tr:last-child td{border-bottom:0}
+.bar{height:8px;border-radius:4px;background:linear-gradient(90deg,var(--ac),var(--ac2));display:inline-block;vertical-align:middle}
+.tag{display:inline-block;border-radius:99px;padding:2px 10px;font-size:11px;font-weight:500;background:var(--bd);color:var(--tx)}
+.tag.ok{background:var(--okbg);color:var(--okfg)}.tag.bad{background:var(--badbg);color:var(--badfg)}
+.muted{color:var(--mu)}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
+.scroll{overflow-x:auto;border-radius:10px}@media(max-width:820px){#main .scroll td:last-child:has(button+button){min-width:230px}}svg text{fill:var(--mu);font-size:11px}
+label.chk{display:flex;gap:8px;align-items:center;margin:6px 0;cursor:pointer}label.chk input{width:16px;height:16px;accent-color:var(--ac)}
+ul{padding-inline-start:20px;margin:6px 0}li{margin:3px 0}
+#login{max-width:360px;margin:70px auto}#login input{width:100%;margin:5px 0}
+
+:root[data-theme=light]{--bg:#f4f2ec;--card:#fff;--tx:#1f1d1a;--mu:#6f6b62;--ac:#c2410c;--ac2:#ea580c;--acs:#fff1e8;--bd:#e3dfd3;--sh:0 1px 2px rgba(60,40,10,.06),0 6px 18px rgba(60,40,10,.06);--okbg:#dcfce7;--okfg:#166534;--badbg:#fee2e2;--badfg:#991b1b;color-scheme:light}
+:root[data-theme=dark]{--bg:#141413;--card:#201f1d;--tx:#efede7;--mu:#a6a39a;--ac:#fb923c;--ac2:#fdba74;--acs:#33261b;--bd:#35332f;--sh:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.3);--okbg:#14532d;--okfg:#bbf7d0;--badbg:#7f1d1d;--badfg:#fecaca;color-scheme:dark}
+.shell{display:grid;grid-template-columns:240px minmax(0,1fr);max-width:1400px;margin:auto;align-items:start}
+nav#tabs{position:sticky;top:61px;height:calc(100vh - 61px);overflow-y:auto;flex-direction:column;gap:2px;padding:18px 14px 24px 8px;border-inline-end:1px solid var(--bd);scrollbar-width:thin}
+nav#tabs .ns{width:100%;margin-bottom:10px;border-radius:10px;background:var(--bg)}
+nav#tabs .ng{font-size:11px;font-weight:600;color:var(--mu);letter-spacing:.06em;padding:14px 12px 4px}
+nav#tabs button.nb{display:flex;align-items:center;gap:10px;width:100%;text-align:start;border:0;background:transparent;border-radius:10px;padding:8px 12px;color:var(--tx);font-weight:500;box-shadow:none}
+nav#tabs button.nb .ic{width:22px;text-align:center;font-size:15px}
+nav#tabs button.nb:hover{background:var(--acs);border:0}
+nav#tabs button.nb.on{background:linear-gradient(135deg,var(--ac),var(--ac2));color:#fff;box-shadow:0 2px 8px color-mix(in srgb,var(--ac) 30%,transparent)}
+nav#tabs button.nb[hidden],nav#tabs .ng[hidden]{display:none}
+.hbtn{padding:5px 10px;border-radius:99px;font-size:13px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--bd);border-radius:99px;padding:4px 12px;font-size:12.5px;background:var(--bg)}
+.chip i{width:8px;height:8px;border-radius:50%;background:var(--bad);display:inline-block}.chip.ok i{background:var(--ok)}.chip.na i{background:#a3a3a3}
+.pg{display:flex;align-items:baseline;gap:10px;margin:0 0 18px}.pg h1{margin:0;font-size:22px;letter-spacing:-.3px}.pg span{color:var(--mu)}
+@media(max-width:820px){.shell{display:block}nav#tabs{position:sticky;top:55px;z-index:15;height:auto;flex-direction:row;overflow-x:auto;overflow-y:hidden;padding:8px 12px;gap:6px;border-inline-end:0;border-bottom:1px solid var(--bd);background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(8px);scrollbar-width:none}
+nav#tabs::-webkit-scrollbar{display:none}nav#tabs .ns,nav#tabs .ng{display:none}nav#tabs button.nb{width:auto;flex:none;white-space:nowrap;border:1px solid var(--bd);border-radius:99px;padding:6px 12px}nav#tabs button.nb .ic{width:auto}
+main{padding:16px 14px 48px}header{padding:10px 14px}header h1{font-size:15px;flex-basis:100%}.card{padding:14px}.grid{grid-template-columns:repeat(2,1fr)}.kpi b{font-size:24px}}
+
+
+.bdg{margin-inline-start:auto;background:#dc2626;color:#fff;border-radius:99px;font-size:11px;font-weight:700;min-width:18px;height:18px;line-height:18px;text-align:center;padding:0 5px}
+nav#tabs button.nb.on .bdg{background:#fff;color:var(--ac)}
+@media(max-width:820px){nav#tabs{position:fixed;top:auto;bottom:0;left:0;right:0;border-bottom:0;border-top:1px solid var(--bd);padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))}#main{padding-bottom:90px}}
+<style>
+header{flex-wrap:wrap}
+.stabs{display:flex;gap:6px;overflow-x:auto;padding:10px 22px;border-bottom:1px solid var(--bd);background:var(--card);position:sticky;top:55px;z-index:15;scrollbar-width:none}
+.stabs::-webkit-scrollbar{display:none}
+.stabs button{flex:none;white-space:nowrap;border-radius:99px}
+.stabs button.on{cursor:default}
+main{max-width:1100px;margin:0 auto;padding:20px 22px 60px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+.kpi{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:14px 16px;box-shadow:var(--sh)}
+.kpi b{display:block;font-size:30px;line-height:1.1;font-variant-numeric:tabular-nums}.kpi span{color:var(--mu);font-size:13px}
+.bars{display:flex;align-items:flex-end;gap:5px;height:120px;padding-top:8px}
+.bars div{flex:1;min-width:6px;background:var(--ac);border-radius:4px 4px 0 0;position:relative;min-height:2px}
+.bars div.z{background:var(--bd)}
+.bars-l{display:flex;gap:5px;font-size:10px;color:var(--mu)}.bars-l span{flex:1;text-align:center;min-width:6px;overflow:hidden}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
+.bub{border-radius:14px;padding:8px 12px;max-width:100%;white-space:pre-wrap;word-break:break-word}
+.q{background:var(--acs)}.a{background:var(--bg);border:1px solid var(--bd)}
+textarea,input[type=text],input:not([type]),input[type=search],select{max-width:100%}
+.full{width:100%}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px}
+.sm{font-size:12px}
+@media(max-width:820px){.stabs{top:84px;padding:8px 12px}main{padding:14px 14px 60px}}
+</style></head><body>
+<header><h1>🧠 סטודיו הבוט</h1><span id="who" class="muted"></span><button id="thm" class="hbtn" title="ערכת נושא"></button><a href="/admin.html" class="hbtn" style="border:1px solid var(--bd)">⬅ ללוח הבקרה</a><a href="/" class="hbtn" style="border:1px solid var(--bd)">🏠 לאתר</a></header>
+<div id="gate"></div>
+<nav class="stabs" id="stabs" style="display:none" aria-label="לשוניות"></nav>
+<main id="main"></main>
+<script src="/botengine.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const h=(t,a={},...k)=>{const e=document.createElement(t);for(const[x,v]of Object.entries(a)){if(x=="on")Object.entries(v).forEach(([n,f])=>e.addEventListener(n,f));else if(x=="cls")e.className=v;else if(x=="text")e.textContent=v;else if(v!==false&&v!=null)e.setAttribute(x,v===true?"":v)}k.flat().forEach(c=>e.append(c&&c.nodeType?c:document.createTextNode(c??"")));return e};
+async function api(m,p,b){const r=await fetch("/api"+p,{method:m,headers:{"content-type":"application/json"},credentials:"same-origin",body:b?JSON.stringify(b):undefined});let d={};try{d=await r.json()}catch(e){}if(!r.ok)throw Object.assign(new Error(d.error||"שגיאה"),{status:r.status});return d}
+const fmt=t=>t?new Date(t).toLocaleString("he-IL",{dateStyle:"short",timeStyle:"short"}):"—";
+const BE=window.BotEngine;
+const SRC={kb:["מאגר מובנה",""],custom:["תשובה שלימדת","ok"],ai:["AI",""],miss:["לא ידע","bad"],small:["שיחת חולין",""]};
+const VIA={direct:"התאמה ישירה",syn:"דרך מילים נרדפות",typo:"אחרי תיקון כתיב",context:"לפי השאלה הקודמת",none:"אין התאמה"};
+let ME=null,RO=true,TAB="סקירה",ST={kb:[],misses:[],syn:[]},PREFILL=null,LOGUID="";
+const TABS=["סקירה","שיחות","ידע","אוצר מילים","AI","מגרש משחקים"];
+const THEMES=[["auto","🌓 אוטומטי"],["light","☀️ בהיר"],["dark","🌙 כהה"]];
+function applyTheme(){let t="auto";try{t=localStorage.adm_theme||"auto"}catch(e){}if(t=="auto")document.documentElement.removeAttribute("data-theme");else document.documentElement.setAttribute("data-theme",t);const b=$("thm");if(b)b.textContent=(THEMES.find(x=>x[0]==t)||THEMES[0])[1]}
+applyTheme();$("thm").onclick=()=>{let t="auto";try{t=localStorage.adm_theme||"auto"}catch(e){}const n=THEMES[(THEMES.findIndex(x=>x[0]==t)+1)%3][0];try{localStorage.adm_theme=n}catch(e){}applyTheme()};
+async function loadEngine(){const [d,sy]=await Promise.all([api("GET","/admin/bot"),api("GET","/admin/bot-syn")]);ST.kb=d.kb||[];ST.misses=d.misses||[];ST.syn=sy.syn||[];BE.setCustom(ST.kb.map(x=>({k:x.k,a:x.a,e:x.e})));BE.setSyn(ST.syn)}
+const go=(tab,pre)=>{TAB=tab;PREFILL=pre||null;render()};
+async function boot(){let me;try{me=await api("GET","/me")}catch(e){}
+ if(!me||!me.user||!["admin","editor"].includes(me.user.role)){$("gate").replaceChildren(h("div",{cls:"card",style:"max-width:440px;margin:60px auto"},h("h2",{text:"סטודיו הבוט"}),h("p",{text:"האזור הזה פתוח למנהלי האתר בלבד."}),h("a",{href:"/admin.html",text:"כניסה ללוח הבקרה",style:"color:var(--ac);font-weight:700"})));return}
+ ME=me.user;RO=ME.role!="admin";$("who").textContent=ME.name+(RO?" · צפייה בלבד":"");
+ try{await loadEngine()}catch(e){$("main").replaceChildren(h("p",{text:"שגיאה בטעינה: "+e.message}));return}
+ $("stabs").style.display="flex";render()}
+function buildTabs(){$("stabs").replaceChildren(...TABS.map(t=>h("button",{cls:t==TAB?"on":"",text:t,on:{click:()=>go(t)}})))}
+function render(){buildTabs();$("main").replaceChildren(h("p",{cls:"muted",text:"טוען…"}));({"סקירה":vStats,"שיחות":vLogs,"ידע":vKnow,"אוצר מילים":vVocab,"AI":vAI,"מגרש משחקים":vPlay})[TAB]().catch(e=>$("main").replaceChildren(h("p",{text:"שגיאה: "+e.message})));window.scrollTo(0,0)}
+const tag=(src)=>{const s=SRC[src]||[src,""];return h("span",{cls:"tag "+s[1],text:s[0]})};
+// ---- טופס "למד תשובה" משותף ----
+function teachForm(q,done,kw){
+ const a=h("textarea",{rows:3,placeholder:"התשובה בעברית (המשתמשים יקבלו אותה מיד)",cls:"full"}),e=h("textarea",{rows:2,placeholder:"תשובה באנגלית (לא חובה)",cls:"full"}),k=h("input",{placeholder:"מילות מפתח מופרדות בפסיק או ברווח (אם ריק – אחלץ אוטומטית מהשאלה)",cls:"full"}),msg=h("span",{cls:"muted"});if(kw)k.value=kw;
+ const save=h("button",{cls:"pri",text:"שמור ולמד 🧠",disabled:RO,on:{click:async()=>{save.disabled=true;try{const r=await api("POST","/admin/bot-answer",{q,answer:a.value,answerEn:e.value,keywords:k.value});await loadEngine();msg.textContent="נלמד ✔ (מילות מפתח: "+r.keywords+")";if(done)done(r)}catch(x){msg.textContent=x.message;save.disabled=false}}}});
+ return h("div",{style:"display:grid;gap:6px;margin-top:8px"},h("b",{text:"שאלה: "+q}),a,e,k,h("div",{cls:"row"},save,msg))}
+
+// ================= סקירה =================
+async function vStats(){
+ const [s,]=await Promise.all([api("GET","/admin/bot-stats")]),w=s.d7,m=$("main"),c=BE.counts();
+ const pc=w.total?Math.round(100*w.answered/w.total)+"%":"—",mx=Math.max(1,...s.perDay.map(x=>x.n));
+ const kp=(n,l,tt)=>h("div",{cls:"kpi",title:tt||""},h("b",{text:n}),h("span",{text:l}));
+ const srcRows=Object.entries(w.bySrc).sort((a,b)=>b[1]-a[1]).map(([k,n])=>h("tr",{},h("td",{},tag(k)),h("td",{text:n})));
+ const top=w.top.map(x=>h("tr",{},h("td",{text:x.q}),h("td",{text:x.n}),h("td",{},tag(x.src)),h("td",{},h("button",{text:"למד תשובה",disabled:RO,on:{click:()=>go("שיחות",{teach:x.q})}}))));
+ m.replaceChildren(
+  h("div",{cls:"kpis"},kp(w.total,"הודעות ב-7 ימים"),kp(pc,"נענו (ללא 'לא ידע')"),kp(w.miss,"לא נענו","שאלות שהבוט לא הצליח לענות עליהן"),kp(w.users,"משתמשים רשומים ששאלו"),kp(s.d30.total,"הודעות ב-30 ימים")),
+  h("div",{cls:"card"},h("h2",{text:"הודעות ב-14 הימים האחרונים"}),h("div",{cls:"bars"},s.perDay.map(x=>{const d=h("div",{title:x.d+": "+x.n,cls:x.n?"":"z"});d.style.height=Math.max(2,Math.round(100*x.n/mx))+"%";return d})),h("div",{cls:"bars-l"},s.perDay.map(x=>h("span",{text:x.d.slice(8)}))),s.sampled?h("p",{cls:"muted sm",text:"הנתונים מבוססים על 2000 ההודעות האחרונות."}):""),
+  h("div",{cls:"grid2"},
+   h("div",{cls:"card"},h("h2",{text:"מי ענה (7 ימים)"}),srcRows.length?h("table",{},h("tbody",{},srcRows)):h("p",{cls:"muted",text:"עדיין אין שיחות. הן יתחילו להישמר ברגע שמשתמשים ישאלו את הבוט."})),
+   h("div",{cls:"card"},h("h2",{text:"המוח של הבוט"}),h("table",{},h("tbody",{},
+    h("tr",{},h("td",{text:"תשובות מובנות"}),h("td",{text:c.kb})),h("tr",{},h("td",{text:"תשובות שלימדת"}),h("td",{text:c.custom})),h("tr",{},h("td",{text:"קבוצות מילים נרדפות"}),h("td",{text:c.syn})),h("tr",{},h("td",{text:"אוצר מילים לתיקון כתיב"}),h("td",{text:c.vocab})),h("tr",{},h("td",{text:"שאלות פתוחות ללא תשובה"}),h("td",{text:ST.misses.length})))),
+    h("p",{cls:"muted sm",text:"הבוט מתקן שגיאות כתיב, מבין מילים נרדפות וזוכר את השאלה הקודמת. ככל שתלמד אותו יותר תשובות ומילים – הוא יענה על יותר."}))),
+  h("div",{cls:"card scroll"},h("h2",{text:"השאלות הנפוצות ב-7 הימים האחרונים"}),top.length?h("table",{},h("thead",{},h("tr",{},["שאלה","פעמים","נענתה ע״י",""].map(x=>h("th",{text:x})))),h("tbody",{},top)):h("p",{cls:"muted",text:"אין עדיין נתונים."})),
+  w.topics.length?h("div",{cls:"card"},h("h2",{text:"הנושאים הכי פופולריים"}),h("div",{cls:"row"},w.topics.map(x=>h("span",{cls:"tag",text:x.t+" · "+x.n})))):"")}
+
+// ================= שיחות =================
+async function vLogs(){
+ const m=$("main"),pre=PREFILL;PREFILL=null;
+ const q=h("input",{type:"search",placeholder:"חיפוש בשאלות, בתשובות ובשמות…",style:"flex:1;min-width:200px"}),sr=h("select",{},h("option",{value:"",text:"כל המקורות"}),...Object.entries(SRC).map(([k,v])=>h("option",{value:k,text:v[0]}))),rg=h("input",{type:"checkbox"}),list=h("div"),cnt=h("span",{cls:"muted"});
+ const load=async()=>{const p=new URLSearchParams();if(q.value)p.set("q",q.value);if(sr.value)p.set("src",sr.value);if(rg.checked)p.set("reg","1");if(LOGUID)p.set("uid",LOGUID);
+  const d=await api("GET","/admin/bot-log?"+p);cnt.textContent=d.total+" הודעות"+(d.total>d.items.length?" (מוצגות "+d.items.length+")":"");
+  list.replaceChildren(...(d.items.length?d.items.map(row):[h("p",{cls:"muted",text:"אין הודעות שמתאימות. שיחות נשמרות מרגע שהעדכון עלה, ונמחקות אחרי כ-45 יום."})]))};
+ const row=x=>{const tf=h("div");const who=x.uid?h("a",{href:"#",style:"color:var(--ac);font-weight:700",title:"כל השיחות של המשתמש",text:x.name||"משתמש",on:{click:e=>{e.preventDefault();LOGUID=x.uid;render()}}}):h("span",{cls:"muted",text:"אורח"});
+  return h("div",{cls:"card",style:"background:var(--bg)"},h("div",{cls:"row",style:"margin:0 0 6px"},who,h("span",{cls:"muted sm",text:fmt(x.ts)+" · "+(x.lang=="en"?"EN":"עב")}),tag(x.src),x.t?h("span",{cls:"tag",text:x.t}):"",
+   h("span",{style:"margin-inline-start:auto;display:flex;gap:6px"},h("button",{text:"✏️ למד/תקן תשובה",disabled:RO,on:{click:()=>{tf.replaceChildren(tf.firstChild?"":teachForm(x.q,()=>{}))}}}),h("button",{text:"🧪 במגרש",on:{click:()=>go("מגרש משחקים",{q:x.q})}}),h("button",{cls:"bad",text:"מחק",disabled:RO,on:{click:async()=>{await api("DELETE","/admin/bot-log?key="+encodeURIComponent(x.key));load()}}}))),
+   h("div",{cls:"bub q",text:x.q}),x.a?h("div",{cls:"bub a",style:"margin-top:6px",text:x.a}):h("div",{cls:"muted sm",style:"margin-top:6px",text:x.src=="miss"?"הבוט לא ידע לענות.":""}),tf)};
+ [q,sr,rg].forEach(e=>e.addEventListener(e===q?"input":"change",()=>{clearTimeout(window.__t);window.__t=setTimeout(load,e===q?300:0)}));
+ const who=LOGUID?h("div",{cls:"row"},h("span",{cls:"tag",text:"מסונן לפי משתמש"}),h("button",{text:"הצג את כולם",on:{click:()=>{LOGUID="";render()}}}),h("button",{cls:"bad",text:"מחק את כל השיחות של המשתמש",disabled:RO,on:{click:async()=>{if(!confirm("למחוק את כל השיחות של המשתמש הזה עם הבוט?"))return;await api("DELETE","/admin/bot-log?uid="+encodeURIComponent(LOGUID));LOGUID="";render()}}})):"";
+ const del=h("button",{cls:"bad",text:"🗑 מחק את כל ההיסטוריה",disabled:RO,on:{click:async()=>{if(del.dataset.s!="1"){del.dataset.s="1";del.textContent="לחצו שוב לאישור המחיקה";setTimeout(()=>{del.dataset.s="";del.textContent="🗑 מחק את כל ההיסטוריה"},4000);return}await api("DELETE","/admin/bot-log?all=1");render()}}});
+ const pf=pre&&pre.teach?h("div",{cls:"card",style:"border-color:var(--ac)"},h("h2",{text:"לימוד תשובה חדשה"}),teachForm(pre.teach,()=>{})):"";
+ m.replaceChildren(pf,h("div",{cls:"card"},h("h2",{text:"💬 שיחות – מי כתב לבוט ומה הוא ענה"}),h("p",{cls:"muted",text:"כל הודעה שנשלחת לבוט נשמרת כאן (עד כ-45 יום) עם שם המשתמש אם הוא מחובר. אפשר ללמד את הבוט תשובה נכונה לכל שאלה, או לבדוק אותה במגרש."}),who,h("div",{cls:"row"},q,sr,h("label",{cls:"row",style:"margin:0"},rg,"רק רשומים"),cnt,del),list));
+ await load()}
+
+// ================= ידע =================
+async function vKnow(){
+ const m=$("main");
+ const nq=h("input",{placeholder:"שאלה / נושא (למשל: איך מדפיסים בלי AMS?)",cls:"full"}),nbox=h("div");
+ const addBtn=h("button",{cls:"pri",text:"➕ הוסף תשובה חדשה",disabled:RO,on:{click:()=>{if(!nq.value.trim())return;nbox.replaceChildren(teachForm(nq.value.trim(),()=>{setTimeout(()=>render(),700)}))}}});
+ const custom=ST.kb.map(x=>{const a=h("textarea",{rows:2,cls:"full"}),e=h("textarea",{rows:2,cls:"full",placeholder:"English"}),k=h("input",{cls:"full"}),ms=h("span",{cls:"muted"});a.value=x.a;e.value=x.e||"";k.value=x.k;
+  return h("div",{cls:"card",style:"background:var(--bg)"},h("b",{text:x.q}),h("div",{style:"display:grid;gap:6px;margin-top:6px"},h("label",{cls:"muted",text:"תשובה"}),a,h("label",{cls:"muted",text:"English"}),e,h("label",{cls:"muted",text:"מילות מפתח"}),k,
+   h("div",{cls:"row"},h("button",{cls:"pri",text:"שמור",disabled:RO,on:{click:async()=>{try{await api("POST","/admin/bot-kb",{id:x.id,q:x.q,k:k.value,a:a.value,e:e.value});await loadEngine();ms.textContent="נשמר ✔"}catch(z){ms.textContent=z.message}}}}),h("button",{text:"🧪 בדוק במגרש",on:{click:()=>go("מגרש משחקים",{q:x.q})}}),h("button",{cls:"bad",text:"מחק",disabled:RO,on:{click:async()=>{await api("DELETE","/admin/bot-kb?id="+encodeURIComponent(x.id));await loadEngine();render()}}}),ms)))});
+ const bq=h("input",{type:"search",placeholder:"חיפוש בתשובות המובנות…",cls:"full"}),bl=h("div"),bc=h("span",{cls:"muted"});
+ const drawB=()=>{const f=BE.norm(bq.value).trim(),L=BE.KB.filter(e=>!f||(e[0]+" "+e[1]+" "+e[2]).toLowerCase().includes(bq.value.toLowerCase().trim())||BE.norm(e[0]+" "+e[1]).includes(f));bc.textContent=L.length+" מתוך "+BE.KB.length;
+  bl.replaceChildren(...L.slice(0,40).map(e=>h("div",{cls:"card",style:"background:var(--bg)"},h("div",{cls:"row",style:"margin:0"},h("b",{text:BE.topic(e)}),e[3]?h("span",{cls:"tag",text:"פעולה: "+e[3]}):"",e[4]?h("span",{cls:"tag",text:"קישור"}):"",h("button",{text:"ענה אחרת",disabled:RO,style:"margin-inline-start:auto",title:"יוצר תשובה מותאמת עם אותן מילות מפתח. היא תגבר על המובנית.",on:{click:()=>{nq.value=BE.topic(e);nbox.replaceChildren(teachForm(nq.value,()=>setTimeout(render,700),e[0].split(",").map(s=>s.replace(/^=/,"").trim()).slice(0,8).join(" ")));window.scrollTo(0,0)}}})),h("p",{style:"margin:6px 0"},e[1]),h("div",{cls:"muted sm mono",text:e[0].split(",").join(" · ")}))),L.length>40?h("p",{cls:"muted",text:"מוצגות 40 הראשונות – צמצמו בחיפוש."}):"")};
+ bq.oninput=drawB;drawB();
+ m.replaceChildren(
+  h("div",{cls:"card"},h("h2",{text:"➕ תשובה חדשה"}),h("p",{cls:"muted",text:"כתבו שאלה ותשובה, והבוט יענה אותן אוטומטית. תשובות שלמדת מנצחות את המובנות כשיש שוויון."}),nq,h("div",{cls:"row"},addBtn),nbox),
+  h("div",{cls:"card"},h("h2",{text:"🧠 תשובות שלימדת ("+ST.kb.length+")"}),custom.length?custom:h("p",{cls:"muted",text:"עוד לא לימדת. אפשר ללמוד משאלות בלשונית 'שיחות'."})),
+  h("div",{cls:"card"},h("h2",{text:"📚 הידע המובנה ("+BE.KB.length+")"}),h("p",{cls:"muted",text:"כל מה שהבוט יודע מראש. אפשר לחפש, ולתקן תשובה בכפתור 'ענה אחרת'."}),bq,h("div",{cls:"row"},bc),bl))}
+
+// ================= אוצר מילים =================
+async function vVocab(){
+ const m=$("main"),pre=PREFILL;PREFILL=null;let rows=ST.syn.map(x=>[x[0],x[1]]);
+ const box=h("div"),msg=h("span",{cls:"muted"});
+ const draw=()=>box.replaceChildren(...rows.map((r,i)=>{const c=h("input",{placeholder:"המילה העיקרית (כמו שמופיעה במילות המפתח)",style:"flex:1;min-width:160px"}),v=h("input",{placeholder:"מילים נרדפות, סלנג וכתיב שגוי – מופרדות בפסיק",style:"flex:3;min-width:240px"});c.value=r[0];v.value=r[1];c.oninput=()=>r[0]=c.value;v.oninput=()=>r[1]=v.value;
+  return h("div",{cls:"row",style:"margin:6px 0"},c,v,h("button",{cls:"bad",text:"✕",title:"הסרה",disabled:RO,on:{click:()=>{rows.splice(i,1);draw()}}}))}));
+ if(pre&&pre.canon){rows.unshift([pre.canon,pre.vars||""])}
+ draw();
+ const save=h("button",{cls:"pri",text:"שמור אוצר מילים",disabled:RO,on:{click:async()=>{try{const r=await api("PUT","/admin/bot-syn",{syn:rows.filter(x=>x[0].trim()&&x[1].trim())});await loadEngine();msg.textContent="נשמר ✔ ("+r.n+" קבוצות). משתמשים יקבלו את העדכון תוך דקה בערך."}catch(e){msg.textContent=e.message}}}});
+ const t=h("input",{placeholder:"בדיקה: כתבו משפט ותראו איך הבוט מפרש אותו",cls:"full"}),to=h("div",{cls:"muted",style:"margin-top:6px"});
+ t.oninput=()=>{const r=BE.match(t.value);to.replaceChildren(h("span",{text:"מפורש כ: "}),h("code",{cls:"mono",text:r.expanded||"—"}),r.corrected?h("span",{text:"  · תוקן כתיב: "+r.corrected}):"",h("br"),h("span",{text:r.hit?"→ תשובה: "+BE.topic(r.hit)+" ("+VIA[r.via]+")":"→ אין התאמה"}))};
+ // מילים שחוזרות בשאלות שנכשלו: רעיונות לאוצר מילים
+ let sug=[];try{const d=await api("GET","/admin/bot-log?src=miss");const cnt={};for(const x of d.items)for(const w of BE.norm(x.q).split(" "))if(w.length>=4&&!/^[a-z0-9]+$/.test(w))cnt[w]=(cnt[w]||0)+1;for(const x of ST.misses)for(const w of BE.norm(x.q).split(" "))if(w.length>=4)cnt[w]=(cnt[w]||0)+x.n;sug=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,16)}catch(e){}
+ const bsyn=BE.SYN.map(([c,v])=>h("div",{cls:"sm",style:"padding:4px 0;border-bottom:1px solid var(--bd)"},h("b",{text:c+": "}),v.split(",").slice(0,12).join(" · ")));
+ m.replaceChildren(
+  h("div",{cls:"card"},h("h2",{text:"🔤 אוצר המילים שלך"}),h("p",{cls:"muted",text:"כאן מלמדים את הבוט שמילים שונות הן אותו דבר. למשל: המילה העיקרית 'להוריד' ונרדפות 'לשמור, לקבל את הקובץ, דאונלוד'. הבוט כבר מתקן שגיאות כתיב לבד, אז הוסיפו בעיקר סלנג ומילים אחרות באמת."}),box,h("div",{cls:"row"},h("button",{text:"➕ קבוצה חדשה",disabled:RO,on:{click:()=>{rows.push(["",""]);draw()}}}),save,msg)),
+  h("div",{cls:"card"},h("h2",{text:"🧪 בדיקה מהירה"}),t,to),
+  sug.length?h("div",{cls:"card"},h("h2",{text:"💡 מילים שחוזרות בשאלות שהבוט לא הבין"}),h("p",{cls:"muted",text:"אולי כדאי להוסיף אותן כמילה נרדפת למשהו שהבוט כבר מכיר, או ללמד תשובה."}),h("div",{cls:"row"},sug.map(([w,n])=>h("button",{text:w+" · "+n,disabled:RO,on:{click:()=>{rows.unshift(["",w]);draw();window.scrollTo(0,0)}}})))):"",
+  h("details",{cls:"card"},h("summary",{text:"📖 אוצר המילים המובנה ("+BE.SYN.length+" קבוצות)",style:"cursor:pointer;font-weight:700"}),h("div",{style:"margin-top:8px"},bsyn)))}
+
+// ================= AI =================
+async function vAI(){
+ const c=await api("GET","/admin/bot-ai"),m=$("main");
+ const ai=h("input",{type:"checkbox"}),lg=h("input",{type:"checkbox"});ai.checked=c.ai;lg.checked=c.log;
+ const gr=h("input",{cls:"full",maxlength:300,placeholder:"הודעת פתיחה של הבוט (ריק = ברירת מחדל)"});gr.value=c.greet||"";
+ const sy=h("textarea",{rows:6,cls:"full",placeholder:"למשל: ענה בגובה העיניים וקצר. אם שואלים על מחיר – הפנה לדף ההטבות. אל תמליץ על מותגי מדפסות."});sy.value=c.sys||"";
+ const ex=h("textarea",{rows:9,cls:"full",placeholder:"עובדות על האתר שה-AI צריך לדעת, אחת בכל שורה. למשל:\nהמכסה היומית היא 3 הורדות.\nמנוי מועדון מאושר ידנית על ידי המנהל."});ex.value=c.extra||"";
+ const msg=h("span",{cls:"muted"});
+ const save=h("button",{cls:"pri",text:"שמור הגדרות",disabled:RO,on:{click:async()=>{try{await api("PUT","/admin/bot-ai",{ai:ai.checked,log:lg.checked,greet:gr.value,sys:sy.value,extra:ex.value});msg.textContent="נשמר ✔";await loadEngine()}catch(e){msg.textContent=e.message}}}});
+ const tq=h("input",{cls:"full",placeholder:"שאלו את ה-AI כאילו אתם משתמשים (משתמשת בטיוטה שלמעלה גם בלי לשמור)"}),to=h("div",{cls:"bub a",style:"display:none;margin-top:8px"}),
+ tb=h("button",{text:"שלח ל-AI 🤖",disabled:RO||!c.provider,on:{click:async()=>{to.style.display="";to.textContent="…";try{const r=await api("POST","/admin/bot-ai-test",{q:tq.value,hints:BE.hints(tq.value),draft:{sys:sy.value,extra:ex.value}});to.textContent=r.reply}catch(e){to.textContent="שגיאה: "+e.message}}}});
+ const st=(ok,t)=>h("span",{cls:"tag "+(ok?"ok":"bad"),text:t});
+ m.replaceChildren(
+  h("div",{cls:"card"},h("h2",{text:"🤖 מצב ה-AI"}),h("div",{cls:"row"},st(!!c.provider,c.provider?"מפתח מחובר: "+(c.provider=="gemini"?"Gemini":"Anthropic")+" · "+c.model:"אין מפתח AI"),st(c.aiOn,c.aiOn?"העוזר דלוק בהגדרות האתר":"העוזר כבוי בהגדרות האתר")),
+   h("p",{cls:"muted",text:c.provider?"מגבלה: "+c.aiLimit+" שאלות ליום למשתמש, "+c.aiGlobal+" ביום לכל האתר (משנים בלשונית הגדרות בלוח הבקרה).":"בלי מפתח הבוט עונה רק מהמאגר המובנה ומה שלימדת. כדי שיהיה כמו בוט AI חופשי: הוסיפו GEMINI_API_KEY (חינמי) או ANTHROPIC_API_KEY ב-Cloudflare ← Settings ← Variables, והפעילו 'עוזר AI' בלשונית הגדרות. אפשר להזין את המפתח גם דרך לשונית 'בדיקות' ← חיבורים."}),
+   h("p",{cls:"muted sm",text:"סדר העבודה של הבוט: קודם תשובה מוכנה מהמאגר (מהירה וחינמית), ורק אם אין התאמה פונים ל-AI (למשתמשים מחוברים), וה-AI מקבל גם את התשובות הקרובות ביותר מהמאגר כרמז."})),
+  h("div",{cls:"card"},h("h2",{text:"⚙️ הגדרות"}),h("label",{cls:"row"},ai,"להפעיל את ה-AI בתוך הבוט (כשהוא מחובר ודלוק)"),h("label",{cls:"row"},lg,"לשמור את שיחות המשתמשים עם הבוט (כ-45 יום) כדי שאוכל לראות ולשפר"),
+   h("label",{cls:"muted",text:"הודעת פתיחה"}),gr,h("label",{cls:"muted",text:"הוראות לסגנון ולהתנהגות של ה-AI"}),sy,h("label",{cls:"muted",text:"ידע נוסף ל-AI (עובדות על האתר)"}),ex,h("div",{cls:"row"},save,msg),
+   h("p",{cls:"muted sm",text:"ה-AI מקבל תמיד את הכללים הקבועים של האתר (לענות רק על האתר והדפסה, לא להמציא פיצ'רים או מחירים). ההוראות שלכם נוספות עליהם ולא מבטלות אותם."})),
+  h("div",{cls:"card"},h("h2",{text:"🧪 בדיקת ה-AI"}),tq,h("div",{cls:"row"},tb),to))}
+
+// ================= מגרש משחקים =================
+async function vPlay(){
+ const m=$("main"),pre=PREFILL;PREFILL=null;
+ const q=h("input",{cls:"full",placeholder:"כתבו שאלה כמו משתמש…"}),pv=h("input",{cls:"full",placeholder:"שאלה קודמת (לבדיקת הקשר, לא חובה)"}),out=h("div"),bt=h("textarea",{rows:6,cls:"full",placeholder:"בדיקת אצווה: שאלה בכל שורה"}),bo=h("div");
+ const run=()=>{const r=BE.match(q.value,pv.value);
+  const cand=r.cands.length?h("div",{cls:"scroll"},h("table",{},h("thead",{},h("tr",{},["מקור","ציון","מילות מפתח","תשובה"].map(x=>h("th",{text:x})))),h("tbody",{},r.cands.map((c,i)=>h("tr",{style:i==0?"font-weight:700":""},h("td",{},tag(c.src)),h("td",{text:c.sc}),h("td",{cls:"sm",text:c.kw}),h("td",{cls:"sm",text:(c.a||"").slice(0,120)})))))):h("p",{cls:"muted",text:"אין מועמדים."});
+  out.replaceChildren(h("div",{cls:"card"},h("h2",{text:r.hit?"הבוט היה עונה:":"הבוט לא היה יודע לענות"}),r.hit?h("div",{cls:"bub a",text:r.hit[1]}):"",r.hit&&r.hit[3]?h("p",{cls:"muted sm",text:"כפתור פעולה: "+r.hit[3]}):"",r.hit&&r.hit[4]?h("p",{cls:"muted sm",text:"קישור: "+r.hit[4].split("|")[0]}):"",
+   h("div",{cls:"row"},h("span",{cls:"tag "+(r.hit?"ok":"bad"),text:VIA[r.via]}),h("span",{cls:"tag",text:"ציון "+r.score}),r.hit?h("span",{cls:"tag",text:"נושא: "+BE.topic(r.hit)}):""),
+   h("p",{cls:"muted sm",text:"הטקסט אחרי עיבוד: "+(r.expanded||"—")}),r.corrected?h("p",{cls:"muted sm",text:"אחרי תיקון כתיב: "+r.corrected}):"",
+   h("div",{cls:"row"},h("button",{text:r.hit?"✏️ לא מדויק – למד תשובה אחרת":"✏️ למד תשובה לשאלה הזו",disabled:RO||!q.value.trim(),on:{click:()=>go("שיחות",{teach:q.value.trim()})}}),h("button",{text:"🤖 מה ה-AI היה עונה?",disabled:RO,on:{click:async function(){this.disabled=true;try{const a=await api("POST","/admin/bot-ai-test",{q:q.value,hints:BE.hints(q.value)});out.append(h("div",{cls:"card"},h("b",{text:"תשובת ה-AI"}),h("div",{cls:"bub a",style:"margin-top:6px",text:a.reply})))}catch(e){out.append(h("p",{cls:"muted",text:"AI: "+e.message}))}this.disabled=false}}}))),
+   h("div",{cls:"card"},h("h2",{text:"מועמדים"}),cand))};
+ q.onkeydown=e=>{if(e.key=="Enter")run()};
+ const runB=()=>{const L=bt.value.split("\n").map(s=>s.trim()).filter(Boolean).slice(0,100);let ok=0;const rows=L.map(s=>{const r=BE.match(s);if(r.hit)ok++;return h("tr",{},h("td",{text:s}),h("td",{},h("span",{cls:"tag "+(r.hit?"ok":"bad"),text:r.hit?BE.topic(r.hit):"לא ידע"})),h("td",{text:r.score}),h("td",{cls:"sm",text:VIA[r.via]}))});
+  bo.replaceChildren(h("p",{text:"נענו "+ok+" מתוך "+L.length}),h("div",{cls:"scroll"},h("table",{},h("thead",{},h("tr",{},["שאלה","תשובה","ציון","דרך"].map(x=>h("th",{text:x})))),h("tbody",{},rows))))};
+ m.replaceChildren(h("div",{cls:"card"},h("h2",{text:"🧪 מגרש משחקים"}),h("p",{cls:"muted",text:"כותבים שאלה ורואים בדיוק מה הבוט היה עונה, למה, ומה היו המועמדים האחרים. זה אותו מנוע כמו באתר, כולל מה שלימדת."}),q,pv,h("div",{cls:"row"},h("button",{cls:"pri",text:"בדיקה",on:{click:run}}))),out,
+  h("div",{cls:"card"},h("h2",{text:"בדיקת אצווה"}),h("p",{cls:"muted",text:"הדביקו כמה שאלות (אחת בכל שורה) ובדקו כמה מהן נענות. שימושי אחרי שמוסיפים תשובות או אוצר מילים."}),bt,h("div",{cls:"row"},h("button",{text:"הרץ",on:{click:runB}})),bo));
+ if(pre&&pre.q){q.value=pre.q;run()}}
+boot();
+</script></body></html>

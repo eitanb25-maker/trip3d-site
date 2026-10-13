@@ -66,7 +66,7 @@ main{padding:16px 14px 48px}header{padding:10px 14px}header h1{font-size:15px;fl
 nav#tabs button.nb.on .bdg{background:#fff;color:var(--ac)}
 @media(max-width:820px){nav#tabs{position:fixed;top:auto;bottom:0;left:0;right:0;border-bottom:0;border-top:1px solid var(--bd);padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))}#main{padding-bottom:90px}}
 </style></head><body>
-<header><h1>🛠 לוח בקרה – מזכרות תלת-ממד</h1><span id="who" class="muted"></span><button id="thm" class="hbtn" title="ערכת נושא"></button><a href="/" id="home" class="hbtn" style="background:var(--ac);color:#fff;border-color:var(--ac);text-decoration:none;font-weight:700;display:inline-flex;align-items:center;gap:6px" aria-label="חזרה לאתר">🏠 חזרה לאתר</a><button id="out" style="display:none">התנתקות</button></header>
+<header><h1>🛠 לוח בקרה – מזכרות תלת-ממד</h1><span id="who" class="muted"></span><button id="thm" class="hbtn" title="ערכת נושא"></button><a href="/" id="home" class="hbtn" style="background:var(--ac);color:#fff;border-color:var(--ac);text-decoration:none;font-weight:700;display:inline-flex;align-items:center;gap:6px" aria-label="חזרה לאתר">🏠 חזרה לאתר</a><a href="/botstudio.html" id="bsl" class="hbtn" target="_blank" rel="noopener" style="display:none;border:1px solid var(--bd);color:var(--tx);text-decoration:none;align-items:center;gap:6px">🧠 סטודיו הבוט</a><button id="out" style="display:none">התנתקות</button></header>
 <div id="gate"></div>
 <div class="shell"><nav id="tabs" style="display:none"></nav>
 <main id="main"></main></div>
@@ -77,8 +77,8 @@ const h=(t,a={},...k)=>{const e=document.createElement(t);for(const[x,v]of Objec
 async function api(m,p,b){const r=await fetch("/api"+p,{method:m,headers:{"content-type":"application/json"},credentials:"same-origin",body:b?JSON.stringify(b):undefined});let d={};try{d=await r.json()}catch(e){}if(!r.ok)throw Object.assign(new Error(d.error||"שגיאה"),{status:r.status,need2fa:!!d.need2fa});return d}
 const TN={stand:"מזכרת",multi:"מכמה מדינות",key:"מחזיק מפתחות",magnet:"מגנט",orn:"קישוט",puzzle:"פאזל",holder:"מעמד לטלפון"},TOOLS=Object.keys(TN);
 const fmt=t=>t?new Date(t).toLocaleString("he-IL"):"—",pct=(a,b)=>b?Math.round(100*a/b)+"%":"—";
-let ME=null,RO=true,TAB=(()=>{try{const t=localStorage.adm_tab;return ["סקירה","משתמשים","הודעות","פעילות","בוט","הטבות","מבצעים","חסימות","הזמנות","דיווחים","גלריה","משוב","אבטחה","יומן פעולות","גיבויים","הגדרות","גרסאות","יצוא","מנויים","בדיקות","צ'אט"].includes(t)?t:"סקירה"}catch(e){return"סקירה"}})(),UID=null,PRE=null;
-const TABS=["סקירה","משתמשים","הודעות","פעילות","בוט","הטבות","מבצעים","חסימות","הזמנות","דיווחים","גלריה","משוב","אבטחה","יומן פעולות","גיבויים","הגדרות","גרסאות","יצוא","מנויים","בדיקות","צ'אט"];
+let ME=null,RO=true,TAB=(()=>{try{const t=localStorage.adm_tab;return ["סקירה","משתמשים","הודעות","פעילות","בוט","הטבות","מבצעים","חסימות","הזמנות","דיווחים","גלריה","משוב","אבטחה","יומן פעולות","גיבויים","הגדרות","גרסאות","יצוא","מנויים","בדיקות","צ'אט","תזכורות"].includes(t)?t:"סקירה"}catch(e){return"סקירה"}})(),UID=null,PRE=null;
+const TABS=["תזכורות","סקירה","משתמשים","הודעות","פעילות","בוט","הטבות","מבצעים","חסימות","הזמנות","דיווחים","גלריה","משוב","אבטחה","יומן פעולות","גיבויים","הגדרות","גרסאות","יצוא","מנויים","בדיקות","צ'אט"];
 async function boot(){let me;try{me=await api("GET","/me")}catch(e){}
  if(!me||!me.user){showLogin();return}
  if(!["admin","editor"].includes(me.user.role)){{const sc=h("input",{placeholder:"קוד הקמה (ADMIN_SETUP_CODE)",autocomplete:"off",style:"width:100%;margin:6px 0"}),em=h("p",{cls:"muted",style:"color:var(--bad)"});
@@ -86,12 +86,12 @@ async function boot(){let me;try{me=await api("GET","/me")}catch(e){}
   h("p",{cls:"muted",text:"אם זה המייל שהגדרתם ב-ADMIN_EMAIL, הכניסו את קוד ההקמה (ADMIN_SETUP_CODE) כדי להפוך למנהל:"}),sc,em,
   h("div",{cls:"row"},h("button",{cls:"pri",text:"הפוך אותי למנהל",on:{click:async()=>{try{await api("POST","/auth/claim-admin",{setup:sc.value});location.reload()}catch(e){em.textContent=e.message}}}}),h("button",{text:"התנתקות",on:{click:async()=>{await api("POST","/auth/logout");location.reload()}}})),
   h("p",{cls:"muted"},h("a",{href:"/health.html",text:"בדיקת תקינות המערכת",style:"color:var(--ac)"}))))};return}
- ME=me.user;RO=ME.role!="admin";$("gate").replaceChildren();$("who").textContent=ME.name+" · "+(RO?"עורך (קריאה בלבד)":"מנהל");$("out").style.display="";$("out").onclick=async()=>{await api("POST","/auth/logout");location.reload()};
+ ME=me.user;RO=ME.role!="admin";$("gate").replaceChildren();$("who").textContent=ME.name+" · "+(RO?"עורך (קריאה בלבד)":"מנהל");$("out").style.display="";if($("bsl"))$("bsl").style.display="inline-flex";$("out").onclick=async()=>{await api("POST","/auth/logout");location.reload()};
  $("tabs").style.display="flex";render()}
 function showLogin(){const e=h("input",{type:"email",placeholder:"מייל",autocomplete:"email"}),p=h("input",{type:"password",placeholder:"סיסמה",autocomplete:"current-password"}),er=h("p",{cls:"muted",style:"color:var(--bad)"}),cd=h("input",{placeholder:"קוד אימות דו-שלבי (6 ספרות)",inputmode:"numeric",autocomplete:"one-time-code",maxlength:7,style:"display:none"});
  const go=async()=>{try{await api("POST","/auth/login",{email:e.value,password:p.value,code:cd.value});location.reload()}catch(x){if(x.need2fa){cd.style.display="";cd.focus();er.textContent="הזינו את הקוד מאפליקציית האימות"}else er.textContent=x.message}};p.onkeydown=ev=>{if(ev.key=="Enter")go()};cd.onkeydown=ev=>{if(ev.key=="Enter")go()};
  $("gate").replaceChildren(h("div",{cls:"card",id:"login"},h("h2",{text:"כניסה ללוח הבקרה"}),e,p,cd,er,h("button",{cls:"pri",text:"כניסה",on:{click:go}}),h("p",{cls:"muted"},"בעיה בכניסה? ",h("a",{href:"/health.html",text:"בדיקת תקינות המערכת",style:"color:var(--ac)"}))))}
-const NAV=[["כללי",[["סקירה","📊"],["פעילות","⚡"]]],["קהילה",[["משתמשים","👥"],["הטבות","🎁"],["מנויים","⭐"],["מבצעים","🎉"],["גלריה","🖼️"],["הזמנות","✉️"],["משוב","💬"],["דיווחים","🚩"]]],["תקשורת",[["צ'אט","🗨️"],["הודעות","📣"],["בוט","🤖"]]],["בטיחות",[["חסימות","⛔"],["אבטחה","🔒"],["יומן פעולות","📜"]]],["מערכת",[["הגדרות","⚙️"],["בדיקות","🧪"],["גיבויים","💾"],["יצוא","📤"],["גרסאות","🆕"]]]];
+const NAV=[["כללי",[["סקירה","📊"],["תזכורות","⏰"],["פעילות","⚡"]]],["קהילה",[["משתמשים","👥"],["הטבות","🎁"],["מנויים","⭐"],["מבצעים","🎉"],["גלריה","🖼️"],["הזמנות","✉️"],["משוב","💬"],["דיווחים","🚩"]]],["תקשורת",[["צ'אט","🗨️"],["הודעות","📣"],["בוט","🤖"]]],["בטיחות",[["חסימות","⛔"],["אבטחה","🔒"],["יומן פעולות","📜"]]],["מערכת",[["הגדרות","⚙️"],["בדיקות","🧪"],["גיבויים","💾"],["יצוא","📤"],["גרסאות","🆕"]]]];
 const NS=h("input",{cls:"ns",type:"search",placeholder:"חיפוש בתפריט  ( / )",autocomplete:"off"});
 function filterNav(){const q=NS.value.trim();let first=null;document.querySelectorAll("#tabs .ng").forEach(g=>{let any=false;for(let n=g.nextElementSibling;n&&n.classList.contains("nb");n=n.nextElementSibling){const m=!q||n.dataset.t.includes(q);n.hidden=!m;if(m){any=true;first=first||n}}g.hidden=!any});return first}
 NS.addEventListener("input",filterNav);NS.addEventListener("keydown",e=>{if(e.key=="Enter"){const f=filterNav();if(f)f.click()}if(e.key=="Escape"){NS.value="";filterNav();NS.blur()}});
@@ -135,7 +135,7 @@ const _vB=vBackups;vBackups=async function(){await _vB();let b=null;try{b=await 
 
 // ================= מרכז טיפול, מספרים על הלשוניות, גרפים =================
 let BADGE={};
-async function refreshBadges(){try{const a=await api("GET","/admin/attention");BADGE={"דיווחים":a.reports+a.resets,"גלריה":a.gallery,"מבצעים":a.suspects,"בוט":a.misses,"צ'אט":a.chats};for(const k in BADGE)if(!BADGE[k])delete BADGE[k];{const n=Object.values(BADGE).reduce((x,y)=>x+y,0);document.title=(n?"("+n+") ":"")+document.title.replace(/^\(\d+\) /,"")}document.querySelectorAll("#tabs button.nb").forEach(b=>{const t=b.dataset.t;let s=b.querySelector(".bdg");if(BADGE[t]){if(!s){s=h("span",{cls:"bdg"});b.append(s)}s.textContent=BADGE[t]}else if(s)s.remove()});return a}catch(e){return null}}
+async function refreshBadges(){try{const a=await api("GET","/admin/attention");BADGE={"דיווחים":a.reports+a.resets,"גלריה":a.gallery,"מבצעים":a.suspects,"בוט":a.misses,"תזכורות":a.todo,"צ'אט":a.chats};for(const k in BADGE)if(!BADGE[k])delete BADGE[k];{const n=Object.values(BADGE).reduce((x,y)=>x+y,0);document.title=(n?"("+n+") ":"")+document.title.replace(/^\(\d+\) /,"")}document.querySelectorAll("#tabs button.nb").forEach(b=>{const t=b.dataset.t;let s=b.querySelector(".bdg");if(BADGE[t]){if(!s){s=h("span",{cls:"bdg"});b.append(s)}s.textContent=BADGE[t]}else if(s)s.remove()});return a}catch(e){return null}}
 setInterval(()=>{if(ME)refreshBadges()},60000);
 const svgNS="http://www.w3.org/2000/svg";
 function chart(rows,key,title,color){ // עמודות יומיות; rows=[{d,..}]
@@ -432,7 +432,32 @@ async function integCard(){
    h("ol",{cls:"muted",style:"margin:8px 0;padding-inline-start:20px"},...g.steps.map(x=>h("li",{text:x}))),...rows,h("div",{cls:"row",style:"margin-top:6px"},...(g.f.length?[save]:[]),...extra)))});
  box.append(h("div",{style:"margin-top:10px"},pw,msg));return box}
 const _vT38=vTests;vTests=async function(){await _vT38();try{if(!RO||true)$("main").append(await integCard())}catch(e){}};
-function render(){RO=!(ME&&(ME.role=="admin"||(ME.caps||[]).includes(CAPMAP[TAB])));buildNav();try{localStorage.adm_tab=TAB}catch(e){}$("main").replaceChildren(h("p",{cls:"muted",text:"טוען…"}));({"סקירה":vOverview,"משתמשים":vUsers,"משתמש":vUser,"הודעות":vMessages,"אבטחה":vSecurity,"יומן פעולות":vAudit,"גיבויים":vBackups,"הזמנות":vInvites,"דיווחים":vReports,"גלריה":vGallery,"חסימות":vBlocks,"הטבות":vPerks,"מנויים":vSubs,"צ'אט":vChat,"בדיקות":vTests,"מבצעים":vPromo,"פעילות":vActivity,"בוט":vBot,"משוב":vFeedback,"הגדרות":vSettings,"גרסאות":vChangelog,"יצוא":vExport})[TAB]().catch(e=>$("main").replaceChildren(h("p",{text:"שגיאה: "+e.message})))}
+
+// ================= v39: תזכורות + קישור לסטודיו הבוט =================
+async function vTodo(){
+ const d=await api("GET","/admin/todo"),m=$("main"),SEV={high:["חשוב","bad"],med:["כדאי",""],low:["אופציונלי",""]};
+ const goBtn=x=>x.go?h("a",{href:x.go,target:"_blank",rel:"noopener",style:"display:inline-block;padding:7px 12px;border:1px solid var(--bd);border-radius:10px;color:var(--ac);text-decoration:none;font-weight:600",text:"פתח ↗"}):(x.tab?h("button",{text:"עבור ללשונית "+x.tab,on:{click:()=>{TAB=x.tab;render()}}}):"");
+ const autoCard=x=>h("div",{cls:"card",style:"background:var(--bg);"+(x.done?"opacity:.75":"")},
+  h("div",{cls:"row"},h("b",{text:(x.done?"✅ ":"⏳ ")+x.title}),h("span",{cls:"tag "+(x.done?"ok":SEV[x.sev][1]),text:x.done?(x.okAuto?"הוגדר":"טופל"):SEV[x.sev][0]})),
+  h("p",{text:x.why}),x.how&&!x.done?h("p",{cls:"muted",text:"איך עושים: "+x.how}):"",
+  h("div",{cls:"row"},x.done?"":goBtn(x),x.okAuto?"":h("button",{text:x.dismissed?"החזר לרשימה":(x.manual?"סמנתי כטופל":"לא רלוונטי לי"),disabled:RO,on:{click:async()=>{await api("POST","/admin/todo",{dismiss:x.key,undo:x.dismissed});render()}}})));
+ const open=d.auto.filter(x=>!x.done),done=d.auto.filter(x=>x.done);
+ const ti=h("input",{placeholder:"מה צריך לזכור? (למשל: לענות לחברת ההדפסה)",maxlength:140,style:"flex:1;min-width:220px"}),no=h("input",{placeholder:"הערה (לא חובה)",maxlength:600,style:"flex:1;min-width:200px"}),du=h("input",{type:"date",title:"תאריך יעד (לא חובה)"}),er=h("span",{cls:"muted"});
+ const add=h("button",{cls:"pri",text:"➕ הוסף תזכורת",disabled:RO,on:{click:async()=>{try{await api("POST","/admin/todo",{title:ti.value,note:no.value,due:du.value});render()}catch(e){er.textContent=e.message}}}});
+ ti.onkeydown=e=>{if(e.key=="Enter")add.click()};
+ const cust=x=>{const late=!x.done&&x.due&&x.due<d.today;return h("div",{cls:"card",style:"background:var(--bg);"+(x.done?"opacity:.7":"")},h("div",{cls:"row"},
+  h("input",{type:"checkbox",checked:x.done,disabled:RO,title:"סימון כבוצע",on:{change:async e=>{await api("POST","/admin/todo",{id:x.id,done:e.target.checked});render()}}}),
+  h("b",{text:x.title,style:x.done?"text-decoration:line-through":""}),x.due?h("span",{cls:"tag "+(late?"bad":""),text:(late?"עבר המועד · ":"עד ")+x.due.split("-").reverse().join("/")}):"",
+  h("button",{cls:"bad",text:"מחק",disabled:RO,style:"margin-inline-start:auto",on:{click:async()=>{await api("DELETE","/admin/todo?id="+encodeURIComponent(x.id));render()}}})),x.note?h("p",{cls:"muted",text:x.note}):"")};
+ m.replaceChildren(
+  h("div",{cls:"card"},h("h2",{text:"⏰ תזכורות – מה מחכה לטיפול שלך"}),h("p",{cls:"muted",text:"למעלה: דברים שהמערכת מזהה שחסרים או שכדאי לטפל בהם (הם מתעדכנים לבד כשמסדרים אותם), כל אחד עם הסבר למה זה חשוב ואיך עושים. למטה: תזכורות אישיות משלך. מספר התזכורות הפתוחות מופיע בתפריט."}),
+   h("div",{cls:"row"},h("span",{cls:"tag "+(open.length?"bad":"ok"),text:open.length?open.length+" פתוחות":"הכול מטופל 🎉"}),h("span",{cls:"muted",text:"הושלמו: "+done.length+" מתוך "+d.auto.length}))),
+  h("div",{cls:"card"},h("h2",{text:"🔧 דברים שצריך לטפל בהם ("+open.length+")"}),open.length?open.map(autoCard):h("p",{cls:"muted",text:"אין כרגע. מצוין!"})),
+  h("div",{cls:"card"},h("h2",{text:"📝 התזכורות שלי ("+d.custom.filter(x=>!x.done).length+")"}),h("div",{cls:"row"},ti,no,du,add),er,d.custom.length?d.custom.map(cust):h("p",{cls:"muted",text:"עוד לא הוספת תזכורות."})),
+  done.length?h("details",{cls:"card"},h("summary",{text:"✅ כבר מטופל ("+done.length+")",style:"cursor:pointer;font-weight:700"}),h("div",{style:"display:grid;gap:8px;margin-top:8px"},done.map(autoCard))):"")}
+const _vBot39=vBot;vBot=async function(){await _vBot39();$("main").prepend(h("div",{cls:"card",style:"border-color:var(--ac)"},h("h2",{text:"🧠 סטודיו הבוט – אזור עבודה מלא"}),h("p",{cls:"muted",text:"מי כתב לבוט ומה הוא ענה, סטטיסטיקות, אוצר מילים ונרדפות, תשובות מותאמות, הגדרות ה-AI ומגרש משחקים לבדיקת תשובות."}),h("a",{href:"/botstudio.html",target:"_blank",rel:"noopener",style:"display:inline-block;padding:8px 16px;border-radius:10px;background:var(--ac);color:#fff;text-decoration:none;font-weight:700",text:"פתיחת סטודיו הבוט ↗"})))};
+
+function render(){RO=!(ME&&(ME.role=="admin"||(ME.caps||[]).includes(CAPMAP[TAB])));buildNav();try{localStorage.adm_tab=TAB}catch(e){}$("main").replaceChildren(h("p",{cls:"muted",text:"טוען…"}));({"סקירה":vOverview,"משתמשים":vUsers,"משתמש":vUser,"הודעות":vMessages,"אבטחה":vSecurity,"יומן פעולות":vAudit,"גיבויים":vBackups,"הזמנות":vInvites,"דיווחים":vReports,"גלריה":vGallery,"חסימות":vBlocks,"הטבות":vPerks,"מנויים":vSubs,"צ'אט":vChat,"בדיקות":vTests,"מבצעים":vPromo,"פעילות":vActivity,"בוט":vBot,"תזכורות":vTodo,"משוב":vFeedback,"הגדרות":vSettings,"גרסאות":vChangelog,"יצוא":vExport})[TAB]().catch(e=>$("main").replaceChildren(h("p",{text:"שגיאה: "+e.message})))}
 // ---------- גרפים ----------
 function lineChart(series,keys,colors,names){const W=720,H=220,P=34,n=series.length,mx=Math.max(1,...series.flatMap(s=>keys.map(k=>s[k]||0))),X=i=>P+(n<2?0:i*(W-P-10)/(n-1)),Y=v=>H-24-(v/mx)*(H-44);
  const ns="http://www.w3.org/2000/svg",svg=document.createElementNS(ns,"svg");svg.setAttribute("viewBox",`0 0 ${W} ${H}`);svg.style.width="100%";
