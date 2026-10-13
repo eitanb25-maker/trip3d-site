@@ -7,6 +7,16 @@
   node_bundler = "esbuild"
 
 [[headers]]
+  for = "/maintenance.json"
+  [headers.values]
+    Cache-Control = "no-store"
+
+[[headers]]
+  for = "/maint.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
   for = "/*"
   [headers.values]
     X-Content-Type-Options = "nosniff"
