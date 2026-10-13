@@ -1003,6 +1003,7 @@ function acctOpen(){const s=API.session;if(!s){authOpen("login");return}const q=
   $("authbox").innerHTML=`<h2>👤 ${L_("החשבון שלי","My account")}</h2><p><b></b><br><span class="hint"></span></p><p class="hint">${L_("הורדות היום","Downloads today")}: ${q.used||0}${q.limit>0?" / "+q.limit:" ("+L_("ללא הגבלה","unlimited")+")"}</p>
   <div id="ac_bd" class="hint" style="margin:6px 0"></div>
   <div id="ac_ch" class="hint" style="margin:6px 0"></div>
+  <div id="ac_sub" style="margin:8px 0"></div>
   <div style="margin:8px 0"><canvas id="ac_map" width="560" height="270" role="img" aria-label="${L_("מפת המדינות שיצרתם","Map of your countries")}" style="width:100%;border-radius:10px;background:var(--bg)"></canvas><div class="hint" id="ac_mapt"></div></div>
   <div class="row" style="margin:8px 0"><input id="ac_pc" placeholder="${L_("יש לי קוד הטבה","I have a promo code")}" aria-label="${L_("קוד הטבה","Promo code")}" style="flex:1;text-transform:uppercase" maxlength="24"><button id="ac_pg" type="button">${L_("מימוש","Redeem")}</button></div><p class="hint" id="ac_pm" style="margin:0 0 6px"></p>
   <div class="row" style="margin:8px 0"><input id="ac_ge" type="email" dir="ltr" placeholder="${L_("מייל של חבר רשום – שלחו לו הורדה במתנה","Friend's email – gift them a download")}" style="flex:1" maxlength="120"><button id="ac_gg" type="button">🎁 ${L_("מתנה","Gift")}</button></div><p class="hint" id="ac_gm" style="margin:0 0 6px"></p>
@@ -1018,6 +1019,7 @@ function acctOpen(){const s=API.session;if(!s){authOpen("login");return}const q=
   $("ac_pg").onclick=async()=>{const m=$("ac_pm");try{const r=await API.j("POST","/me/redeem",{code:$("ac_pc").value});m.textContent="🎁 "+r.text;m.style.color="#16a34a";await API.refresh();updateAcct()}catch(e){m.textContent=e.message;m.style.color="#dc2626"}};
   {const ch=API.me.challenge,el=$("ac_ch");if(el&&API.me.perkOk===false)el.textContent="✉️ "+L_("אמתו את כתובת המייל כדי לקבל הטבות, מתנות ולהגיב בגלריה","Verify your email to receive perks and gifts and to comment in the gallery");else if(el&&ch)el.textContent="🎯 "+L_("אתגר השבוע: מזכרות מ-"+ch.n+" מדינות שונות","Weekly challenge: souvenirs from "+ch.n+" different countries")+" – "+(ch.done?L_("הושלם ✔","done ✔"):ch.have+"/"+ch.n+" (+"+ch.reward+" "+L_("הורדות","downloads")+")")}
   try{drawMap()}catch(e){}
+  try{subBox()}catch(e){}
   API.j("GET","/ref/top").then(r=>{const el=$("ac_rt");if(el&&r.items&&r.items.length)el.textContent="👑 "+L_("מזמינים מובילים החודש","Top inviters this month")+": "+r.items.slice(0,3).map(x=>["🥇","🥈","🥉"][x.place-1]+" "+x.name+" ("+x.n+")").join("  ")}).catch(()=>{});
   $("ac_gg").onclick=async()=>{const m=$("ac_gm");try{const r=await API.j("POST","/me/gift",{email:$("ac_ge").value});m.textContent="🎁 "+L_("נשלחה הורדה במתנה ל-","A download was gifted to ")+r.to;m.style.color="#16a34a";$("ac_ge").value="";await API.refresh();updateAcct()}catch(e){m.textContent=e.message;m.style.color="#dc2626"}};
   {const bd=$("ac_bd");if(bd){const pk=(q.perks||[]).map(p=>PKL(p)+(p.until?" ("+L_("עד","until")+" "+new Date(p.until).toLocaleDateString()+")":"")).filter(Boolean),st=API.me.streak||0;bd.innerHTML=badgeHtml(API.me.user&&API.me.user.badges)+(st>1?`<div>🔥 ${L_("רצף יצירה","Creation streak")}: <b>${st}</b> ${L_("ימים (בונוס ב-3, 7 ו-30)","days (bonus at 3, 7 and 30)")}</div>`:"")+(pk.length?`<div>🎁 ${pk.join(" · ")}</div>`:"")}}
@@ -1142,6 +1144,18 @@ const BDG={founder:["🌱","מייסד","Founder"],top:["⭐","מטייל מוב
 window.badgeHtml=a=>(a||[]).filter(x=>BDG[x]).map(x=>`<span title="${BDG[x][L_(1,2)]}" style="display:inline-block;margin-inline-end:6px;padding:2px 8px;border:1px solid var(--bd);border-radius:99px;font-size:12px">${BDG[x][0]} ${BDG[x][L_(1,2)]}</span>`).join("");
 const PKL=p=>({daily:"+"+p.n+" "+L_("הורדות ליום","downloads/day"),unlimited:L_("הורדות ללא הגבלה","Unlimited downloads"),ai:"+"+p.n+" "+L_("שאלות ל-AI ביום","AI questions/day"),early:L_("גישה מוקדמת ואלמנטים בלעדיים","Early access + exclusive options"),projects:"+"+p.n+" "+L_("פרויקטים שמורים","saved projects"),gallery:"+"+p.n+" "+L_("יצירות ממתינות בגלריה","gallery slots")})[p.type]||"";
 let _cbT=0;window.cBlocked=k=>{const b=activeBlk("country",k)||activeBlk("country",HE[k]);if(!b)return false;if(Date.now()-_cbT>2500){_cbT=Date.now();toast(b.msg||(L_("המקום הזה בתיקון זמני","This place is temporarily unavailable")+untilTxt(b)))}return true};
+
+/* ---- מנויים (פעילים רק כשהמנהל הפעיל בהגדרות) ---- */
+function subBox(){const el=$("ac_sub");if(!el)return;el.replaceChildren();const sb=API.cfg&&API.cfg.subs,cur=API.me&&API.me.user&&API.me.user.sub;
+ if(cur){const d=document.createElement("div");d.className="hint";d.textContent="⭐ "+L_("המנוי שלכם פעיל","Your subscription is active")+": "+cur.name+" "+L_("עד","until")+" "+new Date(cur.until).toLocaleDateString();el.append(d)}
+ if(!sb)return;const h=document.createElement("div");h.innerHTML="<b>⭐ "+L_("מנויים","Subscriptions")+"</b>";el.append(h);
+ sb.plans.forEach(pl=>{const r=document.createElement("div");r.style.cssText="border:1px solid #ccc8;border-radius:12px;padding:8px 10px;margin:6px 0";
+  const t=document.createElement("div");t.style.fontWeight="700";t.textContent=pl.name+(pl.price?" · "+pl.price:"")+" · "+pl.days+" "+L_("ימים","days");
+  const d=document.createElement("div");d.className="hint";d.textContent=(pl.desc?pl.desc+" · ":"")+(pl.perk=="daily"?"+"+pl.n+" "+L_("הורדות ביום","downloads/day"):L_("הורדות ללא הגבלה","Unlimited downloads"));
+  const b=document.createElement("button");b.className="pill";b.type="button";b.textContent=L_("אני רוצה את המסלול הזה","I want this plan");
+  b.onclick=async()=>{try{if(sb.payUrl)window.open(sb.payUrl,"_blank","noopener");await API.j("POST","/sub/request",{plan:pl.id});b.disabled=true;b.textContent="✅ "+L_("הבקשה נשלחה. המנוי יופעל אחרי אישור המנהל","Request sent. Your plan will be activated after admin approval")}catch(e){b.textContent=e.message||"Error"}};
+  r.append(t,d,b);el.append(r)});
+ if(sb.payNote){const n=document.createElement("div");n.className="hint";n.textContent=sb.payNote;el.append(n)}}
 // ---------- עוזר AI ----------
 (function(){
   const ai=()=>!!(API.cfg&&API.cfg.aiEnabled);

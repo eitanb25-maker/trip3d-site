@@ -45,7 +45,7 @@ async function seedTrip5(st) {
   await st.setJSON("pc/TRIP5", pc); await st.setJSON("sys/seedTRIP5", 1); return pc;
 }
 const emailOk = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e) && e.length <= 120;
-const pub = (u) => u && { uid: u.uid, name: u.name, email: u.email, role: u.role, verified: !!u.verified, mailOk: u.mailOk !== false, google: !!u.google, badges: u.badges || [] };
+const pub = (u) => u && { uid: u.uid, name: u.name, email: u.email, role: u.role, verified: !!u.verified, mailOk: u.mailOk !== false, google: !!u.google, badges: u.badges || [], sub: u.sub && u.sub.until > Date.now() ? u.sub : null };
 const ipOf = (req) => (req.headers.get("cf-connecting-ip") || req.headers.get("x-nf-client-connection-ip") || (req.headers.get("x-forwarded-for") || "").split(",")[0] || req.headers.get("x-real-ip") || "?").trim();
 const ipHash = (req) => crypto.createHash("sha1").update(ipOf(req)).digest("hex").slice(0, 12);
 const sha = (s) => crypto.createHash("sha256").update(s).digest("hex");
@@ -647,6 +647,18 @@ const inner = async (req) => {
       await bump([[b.ok ? "fbok" : "fbbad", d.tool]]);
       return J({ ok: true });
     }
+    if (R === "POST sub/request") {
+      if (!me) return E(401, "נדרשת התחברות");
+      if (!S.subsOn) return E(400, "מנויים לא פעילים כרגע");
+      const id = clean((await body(req, 300)).plan, 20), pl = (S.subPlans || []).find((x) => x.id === id);
+      if (!pl) return E(404, "מסלול לא נמצא");
+      if (await rateHit("sr:" + me.uid, 3, 3600e3)) return E(429, "כבר שלחתם בקשה. נחזור אליכם בהקדם");
+      const rid2 = Date.now() + "-" + rid(3);
+      await st.setJSON("r/" + rid2, { id: rid2, uid: me.uid, name: me.name, email: me.email, ts: Date.now(), message: `בקשת מנוי: ${pl.name} (${pl.price || "ללא מחיר"})`, status: "open", page: "sub" });
+      globalThis.__att = null;
+      await notify(`⭐ בקשת מנוי\n${me.name} (${me.email})\nמסלול: ${pl.name}`);
+      return J({ ok: true });
+    }
     if (R === "POST report") {
       if (!me) return E(401, "נדרשת התחברות");
       const b = await body(req, 60000);
@@ -1088,6 +1100,14 @@ const inner = async (req) => {
         else if (b.action === "setQuota") { u.quota = b.quota === null || b.quota === "" ? null : Math.max(0, Math.min(1000, Math.floor(+b.quota) || 0)); }
         else if (b.action === "resetToday") u.dlDay = { d: dayKey(), n: 0 }
         else if (b.action === "setNote") u.note = clean(b.note, 300);
+        else if (b.action === "giveSub") {
+          const pl = (S.subPlans || []).find((x) => x.id === clean(b.plan, 20)); if (!pl) return E(404, "מסלול לא נמצא");
+          const days = Math.max(1, Math.min(366, Math.floor(+b.days) || pl.days)), until = Date.now() + days * 864e5;
+          u.perks = activePerks(u).filter((p) => p.note !== "מנוי");
+          await givePerk(st, u, { type: pl.perk === "daily" ? "daily" : "unlimited", n: pl.perk === "daily" ? pl.n : 0, until, note: "מנוי" }, "המנוי שלך הופעל ⭐", `מסלול ${pl.name} פעיל ${days} ימים.`);
+          u.sub = { id: pl.id, name: pl.name, until }; await audit(me, "sub:give", u.email, pl.name + " " + days + "d");
+        }
+        else if (b.action === "cancelSub") { u.perks = (u.perks || []).filter((p) => p.note !== "מנוי"); u.sub = null; await audit(me, "sub:cancel", u.email); }
         else if (b.action === "giveCredits") {
           const n = Math.max(1, Math.min(100, Math.floor(+b.n) || 0)); if (!n) return E(400, "כתבו כמה הורדות");
           u.credits = (u.credits || 0) + n; await addInbox(st, u.uid, "קיבלת הורדות במתנה 🎁", `קיבלת ${n} הורדות נוספות מהמנהל.`);
@@ -1167,6 +1187,10 @@ const inner = async (req) => {
             await st.setJSON("bc/" + id, { id, ts: Date.now(), subject: "⚡ " + lab, body: `עכשיו +${n} הורדות ליום לכולם, עד ${new Date(next.bonusWin.until).toLocaleString("he-IL", { timeZone: "Asia/Jerusalem", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}. מהרו ליצור!`, by: me.email });
           }
         }
+        if (typeof b.subsOn === "boolean") next.subsOn = b.subsOn;
+        if (Array.isArray(b.subPlans)) next.subPlans = b.subPlans.slice(0, 4).map((x) => ({ id: clean(x.id, 20) || rid(3), name: clean(x.name, 40), price: clean(x.price, 40), days: Math.max(1, Math.min(366, Math.floor(+x.days) || 30)), perk: x.perk === "daily" ? "daily" : "unlimited", n: Math.max(1, Math.min(50, Math.floor(+x.n) || 5)), desc: clean(x.desc, 140) })).filter((x) => x.name);
+        if (typeof b.subPayUrl === "string") { const u = b.subPayUrl.trim(); if (u && !/^https:\/\/[^\s]+$/i.test(u)) return E(400, "קישור התשלום חייב להתחיל ב-https://"); next.subPayUrl = clean(u, 300); }
+        if (typeof b.subPayNote === "string") next.subPayNote = clean(b.subPayNote, 200);
         if (b.texts && typeof b.texts === "object") { next.texts = {}; for (const k of ["homeTitle", "homeTitleEn", "homeSub", "homeSubEn"]) { const v = clean(b.texts[k], 120); if (v) next.texts[k] = v; } }
         if (Array.isArray(b.bonusSched)) {
           const old = new Set((Array.isArray(S.bonusSched) ? S.bonusSched : []).map((x) => x.id));

@@ -6,7 +6,7 @@ export const DEFAULTS = {
   tools: {}, banner: "", bannerOn: false, maint: false, lang: "he",
   inviteOnly: false, dlLimit: 5, notifyDownload: true, notifyReport: true, errAlert: true, errThreshold: 5, blocks: [], abuseDl: 20, refBonus: 1, refMax: 5, extBackup: true, aiOn: false, aiLimit: 10, aiGlobal: 300, early: [], vip: [], galReward: 1, streakOn: true, lbOn: true,
   requireVerify: false, notifySecurity: true, autoBackup: true,
-  welcomeGift: 2, challengeOn: true, challengeN: 3, challengeReward: 3, annivGift: 3, refPrizeOn: true, goalTarget: 1000, bonusSched: [], texts: {}, goalBonus: 2, perkVerify: true, thanksReward: 2, cowBonus: 1, weekendBonus: 0, bonusWin: null, hofAuto: true,
+  welcomeGift: 2, challengeOn: true, challengeN: 3, challengeReward: 3, annivGift: 3, refPrizeOn: true, goalTarget: 1000, bonusSched: [], texts: {}, subsOn: false, subPlans: [], subPayUrl: "", subPayNote: "", goalBonus: 2, perkVerify: true, thanksReward: 2, cowBonus: 1, weekendBonus: 0, bonusWin: null, hofAuto: true,
 };
 
 export const isProd = () => !process.env.CONTEXT || process.env.CONTEXT === "production";
@@ -452,7 +452,7 @@ export async function topCountries(days = 7) {
 export const liveDoc = (d) => (d && d.until > Date.now() ? d : null);
 export async function perkInfo(S) {
   const st = await store(), [cow, hof, pick, goal] = await st.getMany(["cow/current", "hof/current", "cwk/current", "sys/goal"]);
-  return { bonus: bonusNow(S), next: bonusNext(S), texts: S.texts || {}, cow: liveDoc(cow) ? { country: cow.country, until: cow.until, bonus: S.cowBonus } : null, hof: liveDoc(hof) ? { from: hof.from, until: hof.until, top: hof.top } : null,
+  return { subs: S.subsOn && (S.subPlans || []).length ? { plans: S.subPlans, payUrl: S.subPayUrl || "", payNote: S.subPayNote || "" } : null, bonus: bonusNow(S), next: bonusNext(S), texts: S.texts || {}, cow: liveDoc(cow) ? { country: cow.country, until: cow.until, bonus: S.cowBonus } : null, hof: liveDoc(hof) ? { from: hof.from, until: hof.until, top: hof.top } : null,
     pick: liveDoc(pick) ? { id: pick.id, name: pick.name, author: pick.author, country: pick.country, likes: pick.likes } : null, goal: await goalState(S, goal) };
 }
 // יעד קהילתי חודשי: הורדות של כל האתר; כשמגיעים אליו מופעל בונוס ל-24 שעות
