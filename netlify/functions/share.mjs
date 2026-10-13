@@ -1,5 +1,5 @@
 // דף שיתוף ליצירה בגלריה: מחזיר תגי Open Graph (לתצוגה יפה בוואטסאפ/פייסבוק) ומעביר לגלריה
-import { store, isProd } from "../lib/lib.mjs";
+import { store } from "../lib/lib.mjs";
 
 export const config = { path: "/g/*" };
 

@@ -1,7 +1,7 @@
 // שרת האתר: התחברות, הרשאות, מכסות, סטטיסטיקות ולוח בקרה
 import crypto from "node:crypto";
 import { trBody } from "../lib/i18n.mjs";
-import { planItems, VIP_OPTS, PERK_TYPES, TIMED_PERKS, BADGES, activePerks, perkSum, hasEarly, perkText, givePerk, awardBadge, addInbox, leaderboard, awardMonthly, monthKey, alertMail, externalBackup, extTargets, activeBlocks, findBlock, BLOCK_FEATURES, errorSpike, funnelOf, store, getSettings, bump, notify, dayKey, rid, rangeStats, sumGroup, TOOLS, DEFAULTS, mailEnabled, sendMail, sendMailDetail, lastBackupAge, rateHit, secEvent, isProd, audit, weeklyCsv, makeBackup, restoreBackup, encryptBackup, decryptBackup, saveAutoBackup, bonusNow, perkInfo, weekKey, refBoard, awardRefMonthly, weekReport, lbScore, canPerk, aidOf, pickCreation, qHash, normQ, extractKeywords, feed, topCountries, publishHof, setCow, liveDoc, pushEnabled, pushUser, totpSecret, totpOk } from "../lib/lib.mjs";
+import { planItems, VIP_OPTS, PERK_TYPES, TIMED_PERKS, BADGES, activePerks, perkSum, hasEarly, perkText, givePerk, awardBadge, addInbox, leaderboard, awardMonthly, monthKey, alertMail, externalBackup, extTargets, activeBlocks, findBlock, BLOCK_FEATURES, errorSpike, funnelOf, store, getSettings, bump, notify, dayKey, rid, rangeStats, sumGroup, TOOLS, mailEnabled, sendMail, sendMailDetail, lastBackupAge, rateHit, secEvent, isProd, audit, weeklyCsv, restoreBackup, decryptBackup, saveAutoBackup, bonusNow, perkInfo, weekKey, refBoard, weekReport, canPerk, aidOf, qHash, normQ, extractKeywords, feed, topCountries, publishHof, setCow, liveDoc, pushEnabled, pushUser, totpSecret, totpOk } from "../lib/lib.mjs";
 
 export const config = { path: "/api/*" };
 
