@@ -73,8 +73,8 @@ const h=(t,a={},...k)=>{const e=document.createElement(t);for(const[x,v]of Objec
 async function api(m,p,b){const r=await fetch("/api"+p,{method:m,headers:{"content-type":"application/json"},credentials:"same-origin",body:b?JSON.stringify(b):undefined});let d={};try{d=await r.json()}catch(e){}if(!r.ok)throw Object.assign(new Error(d.error||"שגיאה"),{status:r.status});return d}
 const TN={stand:"מזכרת",multi:"מכמה מדינות",key:"מחזיק מפתחות",magnet:"מגנט",orn:"קישוט",puzzle:"פאזל",holder:"מעמד לטלפון"},TOOLS=Object.keys(TN);
 const fmt=t=>t?new Date(t).toLocaleString("he-IL"):"—",pct=(a,b)=>b?Math.round(100*a/b)+"%":"—";
-let ME=null,RO=true,TAB=(()=>{try{const t=localStorage.adm_tab;return ["סקירה","משתמשים","הודעות","הטבות","חסימות","הזמנות","דיווחים","גלריה","משוב","אבטחה","יומן פעולות","גיבויים","הגדרות","גרסאות","יצוא"].includes(t)?t:"סקירה"}catch(e){return"סקירה"}})(),UID=null,PRE=null;
-const TABS=["סקירה","משתמשים","הודעות","הטבות","חסימות","הזמנות","דיווחים","גלריה","משוב","אבטחה","יומן פעולות","גיבויים","הגדרות","גרסאות","יצוא"];
+let ME=null,RO=true,TAB=(()=>{try{const t=localStorage.adm_tab;return ["סקירה","משתמשים","הודעות","הטבות","מבצעים","חסימות","הזמנות","דיווחים","גלריה","משוב","אבטחה","יומן פעולות","גיבויים","הגדרות","גרסאות","יצוא"].includes(t)?t:"סקירה"}catch(e){return"סקירה"}})(),UID=null,PRE=null;
+const TABS=["סקירה","משתמשים","הודעות","הטבות","מבצעים","חסימות","הזמנות","דיווחים","גלריה","משוב","אבטחה","יומן פעולות","גיבויים","הגדרות","גרסאות","יצוא"];
 async function boot(){let me;try{me=await api("GET","/me")}catch(e){}
  if(!me||!me.user){showLogin();return}
  if(!["admin","editor"].includes(me.user.role)){{const sc=h("input",{placeholder:"קוד הקמה (ADMIN_SETUP_CODE)",autocomplete:"off",style:"width:100%;margin:6px 0"}),em=h("p",{cls:"muted",style:"color:var(--bad)"});
@@ -87,7 +87,7 @@ async function boot(){let me;try{me=await api("GET","/me")}catch(e){}
 function showLogin(){const e=h("input",{type:"email",placeholder:"מייל",autocomplete:"email"}),p=h("input",{type:"password",placeholder:"סיסמה",autocomplete:"current-password"}),er=h("p",{cls:"muted",style:"color:var(--bad)"});
  const go=async()=>{try{await api("POST","/auth/login",{email:e.value,password:p.value});location.reload()}catch(x){er.textContent=x.message}};p.onkeydown=ev=>{if(ev.key=="Enter")go()};
  $("gate").replaceChildren(h("div",{cls:"card",id:"login"},h("h2",{text:"כניסה ללוח הבקרה"}),e,p,er,h("button",{cls:"pri",text:"כניסה",on:{click:go}}),h("p",{cls:"muted"},"בעיה בכניסה? ",h("a",{href:"/health.html",text:"בדיקת תקינות המערכת",style:"color:var(--ac)"}))))}
-const NAV=[["כללי",[["סקירה","📊"]]],["קהילה",[["משתמשים","👥"],["הטבות","🎁"],["גלריה","🖼️"],["הזמנות","✉️"],["משוב","💬"],["דיווחים","🚩"]]],["תקשורת",[["הודעות","📣"]]],["בטיחות",[["חסימות","⛔"],["אבטחה","🔒"],["יומן פעולות","📜"]]],["מערכת",[["הגדרות","⚙️"],["גיבויים","💾"],["יצוא","📤"],["גרסאות","🆕"]]]];
+const NAV=[["כללי",[["סקירה","📊"]]],["קהילה",[["משתמשים","👥"],["הטבות","🎁"],["מבצעים","🎉"],["גלריה","🖼️"],["הזמנות","✉️"],["משוב","💬"],["דיווחים","🚩"]]],["תקשורת",[["הודעות","📣"]]],["בטיחות",[["חסימות","⛔"],["אבטחה","🔒"],["יומן פעולות","📜"]]],["מערכת",[["הגדרות","⚙️"],["גיבויים","💾"],["יצוא","📤"],["גרסאות","🆕"]]]];
 const NS=h("input",{cls:"ns",type:"search",placeholder:"חיפוש בתפריט  ( / )",autocomplete:"off"});
 function filterNav(){const q=NS.value.trim();let first=null;document.querySelectorAll("#tabs .ng").forEach(g=>{let any=false;for(let n=g.nextElementSibling;n&&n.classList.contains("nb");n=n.nextElementSibling){const m=!q||n.dataset.t.includes(q);n.hidden=!m;if(m){any=true;first=first||n}}g.hidden=!any});return first}
 NS.addEventListener("input",filterNav);NS.addEventListener("keydown",e=>{if(e.key=="Enter"){const f=filterNav();if(f)f.click()}if(e.key=="Escape"){NS.value="";filterNav();NS.blur()}});
@@ -110,7 +110,7 @@ const _vO=vOverview;vOverview=async function(){await _vO();let hl=null;try{hl=aw
   h("p",{cls:"muted",text:"מי שכבר באתר רואה פס אזהרה ולא נחסם; מי שנכנס אחרי ההדלקה רואה מסך תחזוקה. לוח הבקרה לא נחסם לעולם."}))};drawMt();
  const m=$("main");m.insertBefore(mt,m.firstChild);m.insertBefore(card,m.firstChild)};
 
-function render(){buildNav();try{localStorage.adm_tab=TAB}catch(e){}$("main").replaceChildren(h("p",{cls:"muted",text:"טוען…"}));({"סקירה":vOverview,"משתמשים":vUsers,"משתמש":vUser,"הודעות":vMessages,"אבטחה":vSecurity,"יומן פעולות":vAudit,"גיבויים":vBackups,"הזמנות":vInvites,"דיווחים":vReports,"גלריה":vGallery,"חסימות":vBlocks,"הטבות":vPerks,"משוב":vFeedback,"הגדרות":vSettings,"גרסאות":vChangelog,"יצוא":vExport})[TAB]().catch(e=>$("main").replaceChildren(h("p",{text:"שגיאה: "+e.message})))}
+function render(){buildNav();try{localStorage.adm_tab=TAB}catch(e){}$("main").replaceChildren(h("p",{cls:"muted",text:"טוען…"}));({"סקירה":vOverview,"משתמשים":vUsers,"משתמש":vUser,"הודעות":vMessages,"אבטחה":vSecurity,"יומן פעולות":vAudit,"גיבויים":vBackups,"הזמנות":vInvites,"דיווחים":vReports,"גלריה":vGallery,"חסימות":vBlocks,"הטבות":vPerks,"מבצעים":vPromo,"משוב":vFeedback,"הגדרות":vSettings,"גרסאות":vChangelog,"יצוא":vExport})[TAB]().catch(e=>$("main").replaceChildren(h("p",{text:"שגיאה: "+e.message})))}
 // ---------- גרפים ----------
 function lineChart(series,keys,colors,names){const W=720,H=220,P=34,n=series.length,mx=Math.max(1,...series.flatMap(s=>keys.map(k=>s[k]||0))),X=i=>P+(n<2?0:i*(W-P-10)/(n-1)),Y=v=>H-24-(v/mx)*(H-44);
  const ns="http://www.w3.org/2000/svg",svg=document.createElementNS(ns,"svg");svg.setAttribute("viewBox",`0 0 ${W} ${H}`);svg.style.width="100%";
@@ -220,7 +220,41 @@ async function vInvites(){const d=await api("GET","/admin/invites"),s=(await api
 // ---------- דיווחים ----------
 async function vReports(){const d=await api("GET","/admin/reports"),act=async(id,a)=>{await api("POST","/admin/report",{id,action:a});render()};
  $("main").replaceChildren(h("div",{cls:"card"},h("h2",{text:"דיווחי משתמשים ("+d.items.length+")"}),d.items.length?d.items.map(r=>h("div",{cls:"card",style:"background:var(--bg)"},h("div",{cls:"row"},h("b",{text:r.name}),h("span",{cls:"muted",text:r.email+" · "+fmt(r.ts)}),h("span",{cls:"tag "+(r.status=="done"?"ok":""),text:r.status=="done"?"טופל":"פתוח"}),r.type=="suggest"?h("span",{cls:"tag",text:"💡 הצעה"}):"",r.tool?h("span",{cls:"tag",text:TN[r.tool]||r.tool}):"",r.country?h("span",{cls:"tag",text:r.country}):""),h("p",{text:r.message}),
-  h("div",{cls:"row"},r.code?h("a",{href:"/#p="+encodeURIComponent(r.code),target:"_blank",rel:"noopener",text:"🔎 פתיחת הפרויקט שלהם באתר",style:"color:var(--ac)"}):"",h("button",{text:r.status=="done"?"פתיחה מחדש":"סימון כטופל",disabled:RO,on:{click:()=>act(r.id,r.status=="done"?"reopen":"resolve")}}),h("button",{cls:"bad",text:"מחיקה",disabled:RO,on:{click:()=>act(r.id,"delete")}})))):h("p",{cls:"muted",text:"אין דיווחים 🎉"})))}
+  h("div",{cls:"row"},r.code?h("a",{href:"/#p="+encodeURIComponent(r.code),target:"_blank",rel:"noopener",text:"🔎 פתיחת הפרויקט שלהם באתר",style:"color:var(--ac)"}):"",r.uid&&!r.thanked?h("button",{cls:"pri",text:"תודה 🎁",title:"נותן הורדות במתנה + תג תורם רעיונות",disabled:RO,on:{click:()=>act(r.id,"thank").catch(e=>alert(e.message))}}):r.thanked?h("span",{cls:"tag ok",text:"נשלחה תודה"}):"",h("button",{text:r.status=="done"?"פתיחה מחדש":"סימון כטופל",disabled:RO,on:{click:()=>act(r.id,r.status=="done"?"reopen":"resolve")}}),h("button",{cls:"bad",text:"מחיקה",disabled:RO,on:{click:()=>act(r.id,"delete")}})))):h("p",{cls:"muted",text:"אין דיווחים 🎉"})))}
+
+// ---------- מבצעים, מדינת השבוע והיכל תהילה ----------
+async function vPromo(){const [hub,sr]=await Promise.all([api("GET","/admin/perkhub"),api("GET","/admin/settings")]),S=sr.settings,bw=S.bonusWin&&S.bonusWin.until>Date.now()?S.bonusWin:null;
+ const save=async(o,msg)=>{try{await api("PUT","/admin/settings",{settings:o});render()}catch(e){alert(e.message)}};
+ const num=(v,mx)=>h("input",{type:"number",min:0,max:mx,value:v,style:"width:80px"});
+ const wd=d=>d?new Date(d).toLocaleDateString("he-IL",{day:"numeric",month:"short"}):"";
+ // בונוס לכולם
+ const bn=num(1,20),bh=num(24,336),bl=h("input",{placeholder:"שם (למשל: שעה שמחה)",maxlength:60,style:"flex:1;min-width:140px"}),wk=num(S.weekendBonus||0,20);
+ const c1=h("div",{cls:"card"},h("h2",{text:"⚡ בונוס הורדות לכולם"}),h("p",{cls:"muted",text:"מוסיף הורדות ליום לכל המשתמשים בזמן מוגדר. מוצג למבקרים כפס באתר."}),
+  h("p",{},h("b",{text:bw?"🟢 פעיל: +"+bw.n+" ליום עד "+new Date(bw.until).toLocaleString("he-IL",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})+(bw.label?" ("+bw.label+")":""):hub.bonus?"🟢 פעיל כרגע: "+hub.bonus.label+" (+"+hub.bonus.n+")":"⚪ לא פעיל"})),
+  h("div",{cls:"row"},"תוספת ליום:",bn,"למשך (שעות):",bh,bl,h("button",{cls:"pri",text:"הפעל",disabled:RO,on:{click:()=>save({bonusWin:{n:+bn.value,hours:+bh.value,label:bl.value}})}}),h("button",{cls:"bad",text:"בטל",disabled:RO,on:{click:()=>save({bonusWin:null})}})),
+  h("div",{cls:"row"},"בונוס סוף שבוע אוטומטי (שישי–שבת), תוספת ליום (0 = כבוי):",wk,h("button",{text:"שמירה",disabled:RO,on:{click:()=>save({weekendBonus:+wk.value})}})));
+ // מתנות אוטומטיות
+ const wg=num(S.welcomeGift,20),tr=num(S.thanksReward,20),cb=num(S.cowBonus,10);
+ const c2=h("div",{cls:"card"},h("h2",{text:"🎁 מתנות אוטומטיות"}),
+  h("div",{cls:"row"},"מתנת פתיחה (על ההורדה הראשונה):",wg),h("div",{cls:"row"},"תודה על משוב (כפתור 'תודה' בדיווחים):",tr),h("div",{cls:"row"},"בונוס מדינת השבוע (הורדה / אישור יצירה בגלריה):",cb),
+  h("div",{cls:"row"},h("button",{cls:"pri",text:"שמירה",disabled:RO,on:{click:()=>save({welcomeGift:+wg.value,thanksReward:+tr.value,cowBonus:+cb.value})}})),
+  h("p",{cls:"muted",text:"קופונים: בלשונית 'הטבות'. הקוד TRIP5 (5 הורדות, עד 300 משתמשים, 90 יום) נוצר אוטומטית ואפשר למחוק או לשנות אותו. מתנת הורדה לחבר: מתוך 'החשבון שלי' באתר."}));
+ // מדינת השבוע
+ const ci=h("input",{placeholder:"שם מדינה בדיוק כפי שמופיע באתר",maxlength:40,list:"cl",style:"flex:1;min-width:180px"}),dl=h("datalist",{id:"cl"},hub.month.map(x=>h("option",{value:x.country})));
+ const setCow=async c=>{try{await api("POST","/admin/cow",{country:c});render()}catch(e){alert(e.message)}};
+ const c3=h("div",{cls:"card"},h("h2",{text:"🧭 מדינת השבוע"}),h("p",{},h("b",{text:hub.cow?hub.cow.country+" (עד "+wd(hub.cow.until)+(hub.cow.manual?", ידני":", אוטומטי")+")":"לא נבחרה"})),
+  h("p",{cls:"muted",text:"מי שיוצר מזכרת מהמדינה הזו מקבל בונוס + תג 🧭. בכל יום שני נבחרת אוטומטית המדינה הכי פחות משומשת, כדי לעודד גיוון."}),
+  h("div",{cls:"row"},ci,dl,h("button",{cls:"pri",text:"קבע",disabled:RO,on:{click:()=>ci.value&&setCow(ci.value)}}),h("button",{cls:"bad",text:"נקה",disabled:RO,on:{click:()=>setCow("")}})));
+ // היכל תהילה + שימוש
+ const tbl=(arr)=>arr.length?h("table",{},h("tr",{},["#","מדינה","הורדות",""].map(x=>h("th",{text:x}))),...arr.slice(0,15).map((x,i)=>h("tr",{},h("td",{text:i+1}),h("td",{text:x.country}),h("td",{text:x.n}),h("td",{},h("button",{text:"מדינת השבוע",disabled:RO,on:{click:()=>setCow(x.country)}}))))):h("p",{cls:"muted",text:"אין עדיין נתונים"});
+ const medal=["🥇","🥈","🥉"],hf=hub.hof;
+ const c4=h("div",{cls:"card"},h("h2",{text:"🏛️ היכל התהילה של המדינות"}),
+  hf?h("div",{},h("p",{},h("b",{text:"מוצג כרגע באתר עד "+wd(hf.until)+":"})),h("p",{style:"font-size:1.1em"},hf.top.map((x,i)=>medal[i]+" "+x.country+" ("+x.n+")").join("   "))):h("p",{cls:"muted",text:"כרגע לא מוצג היכל תהילה."}),
+  h("div",{cls:"row"},h("button",{cls:"pri",text:"פרסם עכשיו לפי 7 הימים האחרונים",disabled:RO,on:{click:async()=>{try{await api("POST","/admin/hof");render()}catch(e){alert(e.message)}}}}),h("button",{cls:"bad",text:"הסר מהאתר",disabled:RO,on:{click:async()=>{await api("DELETE","/admin/hof");render()}}}),
+   h("label",{},h("input",{type:"checkbox",checked:S.hofAuto!==false,disabled:RO,on:{change:e=>save({hofAuto:e.target.checked})}})," פרסום אוטומטי כל יום שני (3 המדינות המובילות של השבוע, מוצגות שבוע)")),
+  hub.past&&hub.past.length?h("p",{cls:"muted",text:"שבועות קודמים: "+hub.past.map(p=>wd(p.from)+": "+p.top.map(x=>x.country).join(", ")).join(" | ")}):"");
+ const c5=h("div",{cls:"card scroll"},h("h2",{text:"🌍 מדינות לפי שימוש"}),h("div",{cls:"row",style:"align-items:flex-start"},h("div",{style:"flex:1;min-width:240px"},h("h3",{text:"7 ימים אחרונים"}),tbl(hub.week)),h("div",{style:"flex:1;min-width:240px"},h("h3",{text:"30 ימים אחרונים"}),tbl(hub.month))));
+ $("main").replaceChildren(c1,c2,c3,c4,c5)}
 // ---------- משוב והורדות ----------
 async function vFeedback(){const [f,dl]=await Promise.all([api("GET","/admin/feedback"),api("GET","/admin/downloads")]);
  const by=k=>{const m={};f.items.forEach(i=>{const v=(i[k]||"").trim()||"לא צוין";m[v]=m[v]||[0,0];m[v][i.ok?0:1]++});return Object.entries(m).sort((a,b)=>(b[1][0]+b[1][1])-(a[1][0]+a[1][1]))};

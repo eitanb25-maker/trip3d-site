@@ -1,6 +1,6 @@
 // שרת האתר: התחברות, הרשאות, מכסות, סטטיסטיקות ולוח בקרה
 import crypto from "node:crypto";
-import { VIP_OPTS, PERK_TYPES, TIMED_PERKS, BADGES, activePerks, perkSum, hasEarly, perkText, givePerk, awardBadge, addInbox, leaderboard, awardMonthly, monthKey, alertMail, externalBackup, extTargets, activeBlocks, findBlock, BLOCK_FEATURES, errorSpike, funnelOf, store, getSettings, bump, notify, dayKey, rid, rangeStats, sumGroup, TOOLS, DEFAULTS, mailEnabled, sendMail, rateHit, secEvent, isProd, audit, weeklyCsv, makeBackup, restoreBackup, encryptBackup, decryptBackup, saveAutoBackup } from "../lib/lib.mjs";
+import { VIP_OPTS, PERK_TYPES, TIMED_PERKS, BADGES, activePerks, perkSum, hasEarly, perkText, givePerk, awardBadge, addInbox, leaderboard, awardMonthly, monthKey, alertMail, externalBackup, extTargets, activeBlocks, findBlock, BLOCK_FEATURES, errorSpike, funnelOf, store, getSettings, bump, notify, dayKey, rid, rangeStats, sumGroup, TOOLS, DEFAULTS, mailEnabled, sendMail, rateHit, secEvent, isProd, audit, weeklyCsv, makeBackup, restoreBackup, encryptBackup, decryptBackup, saveAutoBackup, bonusNow, perkInfo, topCountries, publishHof, setCow, liveDoc } from "../lib/lib.mjs";
 
 export const config = { path: "/api/*" };
 
@@ -102,7 +102,7 @@ async function quotaOf(u, S) {
   const now = Date.now(), act = (u.perks || []).filter((p) => !p.until || p.until > now);
   let limit = u.quota != null ? u.quota : (S.dlLimit > 0 ? S.dlLimit + (u.bonus || 0) : S.dlLimit);
   if (act.some((p) => p.type === "unlimited")) limit = 0;
-  else if (limit > 0) limit += act.filter((p) => p.type === "daily").reduce((a, p) => a + (+p.n || 0), 0);
+  else if (limit > 0) { limit += act.filter((p) => p.type === "daily").reduce((a, p) => a + (+p.n || 0), 0); const bn = bonusNow(S); if (bn) limit += bn.n; }
   const used = u.dlDay && u.dlDay.d === dayKey() ? u.dlDay.n : 0;
   return { limit, used, credits: u.credits || 0, perks: act.map((p) => ({ type: p.type, n: p.n, key: p.key || "", until: p.until || 0, note: p.note || "" })) };
 }
@@ -210,11 +210,12 @@ export default async (req) => {
         tools: S.tools, banner: S.banner, bannerOn: S.bannerOn, maint: S.maint, lang: S.lang,
         inviteOnly: S.inviteOnly, dlLimit: S.dlLimit, googleClientId: process.env.GOOGLE_CLIENT_ID || "",
         mailEnabled: mailEnabled(), env: isProd() ? "production" : "staging", requireVerify: S.requireVerify, turnstileSiteKey: process.env.TURNSTILE_SITE_KEY || "", contactEmail: process.env.CONTACT_EMAIL || "",
-        early: S.early || [], vip: S.vip || [],
+        early: S.early || [], vip: S.vip || [], ...(await perkInfo(S)),
         blocks: activeBlocks(S).map((b) => ({ type: b.type, key: b.key, until: b.until || 0, msg: b.msg || "" })),
         aiEnabled: !!(S.aiOn && (process.env.ANTHROPIC_API_KEY || process.env.GEMINI_API_KEY) && !findBlock(S, "feature", "ai")),
       });
     }
+    if (R === "GET hof") return J(await perkInfo(S));
     if (R === "GET me") {
       if (!me) return J({ user: null });
       const q = await quotaOf(me, S);
@@ -232,7 +233,13 @@ export default async (req) => {
     if (R === "POST me/redeem") {
       if (!me) return E(401, "נדרשת התחברות");
       if (await rateHit("rd:" + me.uid, 10, 3600e3)) return E(429, "יותר מדי ניסיונות. נסו שוב בעוד שעה");
-      const b = await body(req, 500), code = clean(b.code, 24).toUpperCase().replace(/\s/g, ""), pc = code && (await st.get("pc/" + code));
+      const b = await body(req, 500), code = clean(b.code, 24).toUpperCase().replace(/\s/g, "");
+      let pc = code && (await st.get("pc/" + code));
+      // קוד ברירת מחדל TRIP5 נוצר אוטומטית פעם אחת (אפשר למחוק או לשנות מלוח הבקרה)
+      if (!pc && code === "TRIP5" && !(await st.get("sys/seedTRIP5"))) {
+        pc = { code, type: "credits", n: 5, key: "", days: 0, note: "ברוכים הבאים! 5 הורדות במתנה", max: 300, uses: 0, users: [], expires: Date.now() + 90 * 864e5, by: "system", ts: Date.now() };
+        await st.setJSON("pc/" + code, pc); await st.setJSON("sys/seedTRIP5", 1);
+      }
       if (!pc || (pc.expires && pc.expires < Date.now()) || (pc.max > 0 && pc.uses >= pc.max)) return E(400, "הקוד לא תקף או שפג תוקפו");
       if ((pc.users || []).includes(me.uid)) return E(400, "כבר מימשתם את הקוד הזה");
       pc.uses++; pc.users = (pc.users || []).concat([me.uid]); await st.setJSON("pc/" + code, pc);
@@ -523,10 +530,43 @@ export default async (req) => {
           if (inv.refCount >= 3) await awardBadge(st, inv, "inviter");
         }
       }
+      const gifts = [];
+      if (S.welcomeGift > 0 && !me.welcomed && me.dlTotal === 1) {
+        me.welcomed = true; me.credits = (me.credits || 0) + S.welcomeGift; gifts.push(`${S.welcomeGift} הורדות מתנת פתיחה`);
+        await addInbox(st, me.uid, "מתנת פתיחה 🎁", `ברוכים הבאים! על היצירה הראשונה שלכם קיבלתם ${S.welcomeGift} הורדות נוספות במתנה.`);
+      } else if (!me.welcomed) me.welcomed = true;
+      if (country && S.cowBonus > 0) {
+        const cow = liveDoc(await st.get("cow/current"));
+        if (cow && me.cowGot !== cow.from && country.split("+").some((c) => c.trim().toLowerCase() === cow.country.toLowerCase())) {
+          me.cowGot = cow.from; me.credits = (me.credits || 0) + S.cowBonus; gifts.push(`${S.cowBonus} הורדות על מדינת השבוע (${cow.country})`);
+          await addInbox(st, me.uid, "🧭 מדינת השבוע!", `יצרתם מזכרת של ${cow.country}, מדינת השבוע. קיבלתם ${S.cowBonus} הורדות נוספות${(me.badges || []).includes("explorer") ? "" : " ותג \"חוקר השבוע\""}.`);
+          if (!(me.badges || []).includes("explorer")) me.badges = (me.badges || []).concat(["explorer"]);
+        }
+      }
       await st.setJSON("u/" + me.uid, me);
       await bump([["dl", tool], ["country", country || "?"]].filter((x) => x[1]));
       if (S.notifyDownload) await notify(`⬇️ הורדה חדשה\n${me.name} (${me.email})\nכלי: ${tool}${country ? " · " + country : ""}`);
-      return J({ ok: true, id, remaining: q.limit > 0 ? Math.max(0, q.limit - q.used - 1) + (me.credits || 0) : null, credits: me.credits || 0 });
+      return J({ ok: true, id, remaining: q.limit > 0 ? Math.max(0, q.limit - q.used - 1) + (me.credits || 0) : null, credits: me.credits || 0, gifts });
+    }
+
+    // ---------- מתנת הורדה לחבר ----------
+    if (R === "POST me/gift") {
+      if (!me) return E(401, "נדרשת התחברות");
+      if (me.blocked) return E(403, "החשבון חסום");
+      if (await rateHit("gf:" + me.uid, 5, 864e5)) return E(429, "אפשר לנסות לשלוח מתנה עד 5 פעמים ביום");
+      const b = await body(req, 500), email = clean(b.email, 120).toLowerCase();
+      const tid = emailOk(email) && (await st.get("e/" + email)), to = tid && tid !== me.uid && (await st.get("u/" + tid));
+      if (!to || to.blocked) return E(404, "לא נמצא משתמש רשום עם המייל הזה (החבר צריך קודם להירשם לאתר)");
+      const wk = dayKey(Date.now() - ((new Date().getUTCDay() + 6) % 7) * 864e5), gi = to.giftIn && to.giftIn.w === wk ? to.giftIn : { w: wk, n: 0 };
+      if (gi.n >= 5) return E(429, "החבר כבר קיבל השבוע את מספר המתנות המקסימלי");
+      const q = await quotaOf(me, S);
+      if (q.credits > 0) me.credits = q.credits - 1;
+      else if (q.limit > 0 && q.used < q.limit) me.dlDay = { d: dayKey(), n: q.used + 1 };
+      else return E(400, "אין לכם הורדה פנויה לתת במתנה");
+      gi.n++; to.giftIn = gi; to.credits = (to.credits || 0) + 1;
+      await st.setJSON("u/" + me.uid, me); await st.setJSON("u/" + to.uid, to);
+      await addInbox(st, to.uid, "קיבלת מתנה 🎁", `${me.name} שלח/ה לך הורדה אחת במתנה!`);
+      return J({ ok: true, to: to.name });
     }
 
     // ---------- משוב ודיווחים (דורשים התחברות) ----------
@@ -740,6 +780,7 @@ export default async (req) => {
             if (S.galReward > 0 && recent.length < 3) { au.credits = (au.credits || 0) + S.galReward; au.galRwTs = recent.concat([Date.now()]); rewardTxt = ` קיבלת ${S.galReward} הורדות נוספות במתנה על הפרסום.`; }
             au.galRw = (au.galRw || []).concat([id]).slice(-100);
             await st.setJSON("u/" + au.uid, au);
+            { const cow = liveDoc(await st.get("cow/current")); if (cow && S.cowBonus > 0 && g.country && String(g.country).split("+").some((c) => c.trim().toLowerCase() === cow.country.toLowerCase())) { au.credits = (au.credits || 0) + S.cowBonus; rewardTxt += ` ועוד ${S.cowBonus} על מדינת השבוע (${cow.country}).`; await st.setJSON("u/" + au.uid, au); } }
             if (await awardBadge(st, au, "publisher", true)) rewardTxt += ` וגם תג חדש: ${BADGES.publisher[0]} ${BADGES.publisher[1]}.`;
           }
         }
@@ -922,6 +963,15 @@ export default async (req) => {
         const r = await st.get("r/" + clean(b.id, 40));
         if (!r) return E(404, "לא נמצא");
         if (b.action === "delete") { await st.delete("r/" + r.id); await audit(me, "report:delete", r.email); return J({ ok: true }); }
+        if (b.action === "thank") {
+          if (r.thanked) return E(400, "כבר נשלחה תודה על זה");
+          const u = r.uid && (await st.get("u/" + r.uid)); if (!u || u.blocked) return E(400, "אין משתמש רשום לפנייה הזו");
+          const n = S.thanksReward || 0; u.credits = (u.credits || 0) + n; await st.setJSON("u/" + u.uid, u);
+          await addInbox(st, u.uid, "תודה על המשוב! 💡", `ההצעה/הדיווח שלך עזרו לנו.${n ? ` קיבלת ${n} הורדות נוספות במתנה` : ""} ותג "תורם רעיונות".`);
+          await awardBadge(st, u, "helper", true);
+          r.thanked = Date.now(); r.status = "done"; await st.setJSON("r/" + r.id, r); await audit(me, "report:thank", r.email, String(n));
+          return J({ ok: true });
+        }
         r.status = b.action === "reopen" ? "open" : "done"; await st.setJSON("r/" + r.id, r); await audit(me, "report:" + r.status, r.email);
         return J({ ok: true });
       }
@@ -947,6 +997,12 @@ export default async (req) => {
         if (["he", "en"].includes(b.lang)) next.lang = b.lang;
         if ("errThreshold" in b) next.errThreshold = Math.max(1, Math.min(500, Math.floor(+b.errThreshold) || 5));
         for (const [k, mx] of [["abuseDl", 1000], ["refBonus", 10], ["refMax", 50]]) if (k in b) next[k] = Math.max(0, Math.min(mx, Math.floor(+b[k]) || 0));
+        for (const [k, mx] of [["welcomeGift", 20], ["thanksReward", 20], ["cowBonus", 10], ["weekendBonus", 20]]) if (k in b) next[k] = Math.max(0, Math.min(mx, Math.floor(+b[k]) || 0));
+        if ("hofAuto" in b) next.hofAuto = !!b.hofAuto;
+        if ("bonusWin" in b) {
+          const w = b.bonusWin, n = w && Math.max(0, Math.min(20, Math.floor(+w.n) || 0)), hrs = w && Math.max(0, Math.min(24 * 14, +w.hours || 0));
+          next.bonusWin = n && hrs ? { n, from: Date.now(), until: Date.now() + hrs * 36e5, label: clean(w.label, 60) } : null;
+        }
         if ("aiLimit" in b) next.aiLimit = Math.max(0, Math.min(200, Math.floor(+b.aiLimit) || 0));
         if ("aiGlobal" in b) next.aiGlobal = Math.max(1, Math.min(100000, Math.floor(+b.aiGlobal) || 300));
         if ("dlLimit" in b) next.dlLimit = Math.max(0, Math.min(1000, Math.floor(+b.dlLimit) || 0));
@@ -954,6 +1010,18 @@ export default async (req) => {
         await st.setJSON("settings", next);
         await audit(me, "settings:update", diffKeys(S, next).join(","));
         return J({ ok: true, settings: next });
+      }
+      if (R === "GET admin/perkhub") {
+        const [w7, m30] = [await topCountries(7), await topCountries(30)], [cow, hof] = await st.getMany(["cow/current", "hof/current"]);
+        const past = (await st.scan("hof/2", { desc: true, limit: 8 })).map((x) => x.v).filter(Boolean);
+        return J({ week: w7, month: m30, cow: liveDoc(cow), hof: liveDoc(hof), past, bonus: bonusNow(S) });
+      }
+      if (R === "POST admin/hof") { const r = await publishHof(true); if (!r.done) return E(400, "אין עדיין נתוני שימוש לפי מדינות"); await audit(me, "hof:publish", "", r.doc.top.map((x) => x.country).join(",")); return J({ ok: true, hof: r.doc }); }
+      if (R === "DELETE admin/hof") { await st.delete("hof/current"); await audit(me, "hof:clear"); return J({ ok: true }); }
+      if (R === "POST admin/cow") {
+        const b = await body(req, 500), c = clean(b.country, 40);
+        if (!c) { await st.delete("cow/current"); await audit(me, "cow:clear"); return J({ ok: true }); }
+        await setCow(c, true); await audit(me, "cow:set", c); return J({ ok: true });
       }
       if (R === "GET admin/history") return J({ items: (await listAll("h/", 40)).map((h) => ({ ts: h.ts, by: h.by, key: h._k, diff: diffKeys(h.before, h.after) })) });
       if (R === "POST admin/revert") {

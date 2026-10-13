@@ -1,7 +1,8 @@
 // דוח שבועי אוטומטי + גיבוי מוצפן (רץ פעם בשבוע)
-import { weeklySummary, weeklyCsv, notify, saveAutoBackup, store } from "../lib/lib.mjs";
+import { weeklySummary, weeklyCsv, notify, saveAutoBackup, store, weeklyPerks } from "../lib/lib.mjs";
 
 export default async () => {
+  try { const r = await weeklyPerks(); console.log("weeklyPerks", JSON.stringify(r)); } catch (e) { console.error("weeklyPerks failed", e); }
   const csv = await weeklyCsv(7);
   await notify(await weeklySummary(), { name: "weekly-report.csv", content: csv, mime: "text/csv" });
   try {

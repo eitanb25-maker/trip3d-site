@@ -23,6 +23,7 @@ button,.btn{font:inherit;padding:8px 16px;border-radius:99px;border:1px solid va
 <main>
 <p class="mu" data-l="he">יצירות שהקהילה שיתפה. כל יצירה עוברת אישור לפני פרסום. רוצים להופיע כאן? בעורך לחצו על "🌍 פרסום בגלריית הקהילה".</p>
 <p class="mu" data-l="en">Creations shared by the community. Each one is reviewed before it's published. Want to appear here? In the editor click "🌍 Publish to community gallery".</p>
+<div id="hof" class="mu" style="display:none;margin:10px 0;padding:10px 14px;border:1px solid currentColor;border-radius:12px"></div>
 <div class="top" id="top" style="display:none" aria-label="top"></div>
 <div class="grid" id="grid" role="list"></div>
 <p id="empty" class="mu" style="display:none"><span data-l="he">עדיין אין יצירות בגלריה. תהיו הראשונים!</span><span data-l="en">No creations yet. Be the first!</span></p>
@@ -35,12 +36,17 @@ button,.btn{font:inherit;padding:8px 16px;border-radius:99px;border:1px solid va
 <script>
 const $=id=>document.getElementById(id);let L="he";try{L=localStorage.getItem("trip3d_l")||"he"}catch(e){}
 const TN={he:{stand:"מזכרת",multi:"מכמה מדינות",key:"מחזיק מפתחות",magnet:"מגנט",orn:"קישוט",puzzle:"פאזל",holder:"מעמד לטלפון"},en:{stand:"Souvenir",multi:"Multi-country",key:"Keychain",magnet:"Magnet",orn:"Ornament",puzzle:"Puzzle",holder:"Phone stand"}};
-function setL(l){L=l;try{localStorage.setItem("trip3d_l",l)}catch(e){}document.documentElement.lang=l;document.documentElement.dir=l=="en"?"ltr":"rtl";document.querySelectorAll("[data-l]").forEach(e=>{e.style.display=e.dataset.l==l?(e.tagName=="SPAN"?"inline":""):"none"});$("lb").textContent=l=="en"?"עברית":"English";document.title=l=="en"?"Community gallery":"גלריית הקהילה";render()}
+function setL(l){L=l;setTimeout(()=>{try{loadHof()}catch(e){}},0);try{localStorage.setItem("trip3d_l",l)}catch(e){}document.documentElement.lang=l;document.documentElement.dir=l=="en"?"ltr":"rtl";document.querySelectorAll("[data-l]").forEach(e=>{e.style.display=e.dataset.l==l?(e.tagName=="SPAN"?"inline":""):"none"});$("lb").textContent=l=="en"?"עברית":"English";document.title=l=="en"?"Community gallery":"גלריית הקהילה";render()}
 $("lb").onclick=()=>setL(L=="en"?"he":"en");
 let ITEMS=[],OFF=0;const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const BD={founder:["🌱","מייסד","Founder"],top:["⭐","מטייל מוביל","Top traveler"],maker:["🎨","יוצר החודש","Maker of the month"],inviter:["🤝","מזמין","Inviter"],streak:["🔥","רצף יצירה","Creation streak"],publisher:["🖼️","מפרסם בגלריה","Gallery publisher"]};
+const BD={founder:["🌱","מייסד","Founder"],top:["⭐","מטייל מוביל","Top traveler"],maker:["🎨","יוצר החודש","Maker of the month"],inviter:["🤝","מזמין","Inviter"],streak:["🔥","רצף יצירה","Creation streak"],publisher:["🖼️","מפרסם בגלריה","Gallery publisher"],helper:["💡","תורם רעיונות","Helper"],explorer:["🧭","חוקר השבוע","Weekly explorer"]};
 const bdg=g=>(g.bd||[]).filter(x=>BD[x]).map(x=>`<span class="bd" title="${BD[x][L=="en"?2:1]}">${BD[x][0]}</span>`).join("");
 function meta(g){return [TN[L][g.tool]||"",g.country,g.author?(L=="en"?"by ":"מאת ")+g.author:""].filter(Boolean).join(" · ")}
+async function loadHof(){try{const r=await (await fetch("/api/hof")).json(),e=$("hof"),en=document.documentElement.lang=="en",rows=[];
+  if(r.hof&&r.hof.top&&r.hof.top.length)rows.push("🏛️ "+(en?"Hall of Fame – most used countries this week: ":"היכל התהילה – המדינות הכי משומשות השבוע: ")+r.hof.top.map((x,i)=>["🥇","🥈","🥉"][i]+" "+x.country).join("   "));
+  if(r.cow)rows.push("🧭 "+(en?"Country of the week: ":"מדינת השבוע: ")+r.cow.country);
+  if(!rows.length){e.style.display="none";return}e.style.display="";e.replaceChildren(...rows.map(t=>{const d=document.createElement("div");d.textContent=t;return d}))}catch(e){}}
+loadHof();
 async function loadTop(){try{const r=await (await fetch("/api/gallery/top")).json();const t=$("top");if(!r.on||!r.items.length){t.style.display="none";return}t.style.display="flex";t.innerHTML=`<b>🏆 ${L=="en"?"Top creators this month":"מובילי החודש"}</b>`+r.items.slice(0,3).map(x=>`<span>${["🥇","🥈","🥉"][x.place-1]} ${esc(x.name)}</span>`).join("")}catch(e){}}
 function render(){$("grid").innerHTML=ITEMS.map((g,i)=>`<button class="it" type="button" role="listitem" data-i="${i}"><img loading="lazy" src="/api/gallery/thumb?id=${esc(g.id)}" alt="${esc(g.name)}"><div><b>${g.feat?'<span class="feat">⭐ </span>':""}${esc(g.name)}</b><span>${bdg(g)} ${esc(meta(g))}</span></div></button>`).join("");$("empty").style.display=ITEMS.length?"none":"";document.querySelectorAll("[data-l]").forEach(e=>{e.style.display=e.dataset.l==L?(e.tagName=="SPAN"?"inline":""):"none"});if(!ITEMS.length)$("empty").style.display=""}
 function show(g,push){try{fetch("/api/gallery/seen",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({id:g.id,kind:"view"})})}catch(e){}$("di").src="/api/gallery/thumb?id="+encodeURIComponent(g.id);$("di").alt=g.name;$("dn").textContent=g.name;$("dm").innerHTML=bdg(g)+" "+esc(meta(g));const o=$("dopen");o.style.display=g.template?"":"none";o.href="/?g="+encodeURIComponent(g.id);$("ov").classList.add("on");$("dx").focus();$("dcopy").onclick=async()=>{const u=location.origin+"/g/"+g.id;if(navigator.share){try{await navigator.share({title:g.name,url:u});return}catch(e){if(e&&e.name=="AbortError")return}}try{await navigator.clipboard.writeText(u);$("dcopy").textContent=L=="en"?"✔ Copied":"✔ הועתק"}catch(e){prompt("",u)}};if(push)try{history.replaceState(null,"","#"+g.id)}catch(e){}}

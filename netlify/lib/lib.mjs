@@ -6,6 +6,7 @@ export const DEFAULTS = {
   tools: {}, banner: "", bannerOn: false, maint: false, lang: "he",
   inviteOnly: false, dlLimit: 5, notifyDownload: true, notifyReport: true, errAlert: true, errThreshold: 5, blocks: [], abuseDl: 20, refBonus: 1, refMax: 5, extBackup: true, aiOn: false, aiLimit: 10, aiGlobal: 300, early: [], vip: [], galReward: 1, streakOn: true, lbOn: true,
   requireVerify: false, notifySecurity: true, autoBackup: true,
+  welcomeGift: 2, thanksReward: 2, cowBonus: 1, weekendBonus: 0, bonusWin: null, hofAuto: true,
 };
 
 export const isProd = () => !process.env.CONTEXT || process.env.CONTEXT === "production";
@@ -352,7 +353,7 @@ export async function externalBackup(enc, key) {
 export const PERK_TYPES = ["daily", "credits", "unlimited", "ai", "early", "projects", "gallery", "badge"];
 export const VIP_OPTS = ["rim:2", "shape:hex", "shape:oct", "shape:oval", "ps:star", "ps:heart"];
 export const TIMED_PERKS = ["daily", "unlimited", "ai", "early", "projects", "gallery"];
-export const BADGES = { founder: ["🌱", "מייסד", "Founder"], top: ["⭐", "מטייל מוביל", "Top traveler"], maker: ["🎨", "יוצר החודש", "Maker of the month"], inviter: ["🤝", "מזמין", "Inviter"], streak: ["🔥", "רצף יצירה", "Creation streak"], publisher: ["🖼️", "מפרסם בגלריה", "Gallery publisher"] };
+export const BADGES = { founder: ["🌱", "מייסד", "Founder"], top: ["⭐", "מטייל מוביל", "Top traveler"], maker: ["🎨", "יוצר החודש", "Maker of the month"], inviter: ["🤝", "מזמין", "Inviter"], streak: ["🔥", "רצף יצירה", "Creation streak"], publisher: ["🖼️", "מפרסם בגלריה", "Gallery publisher"], helper: ["💡", "תורם רעיונות", "Helper"], explorer: ["🧭", "חוקר השבוע", "Weekly explorer"] };
 export const activePerks = (u, type) => (u.perks || []).filter((p) => (!p.until || p.until > Date.now()) && (!type || p.type === type));
 export const perkSum = (u, type) => activePerks(u, type).reduce((a, p) => a + (+p.n || 0), 0);
 export const hasEarly = (u) => !!u && (u.role === "admin" || u.role === "editor" || activePerks(u, "early").length > 0);
@@ -418,4 +419,54 @@ export async function cleanupOld() {
   const del = [...take(rl, "rl"), ...take(tk, "tokens"), ...take(hs, "history"), ...take(ai, "ai")];
   if (del.length) await st.deleteMany(del);
   return r;
+}
+
+// ---------- בונוס לכולם, מדינת השבוע והיכל תהילה ----------
+export const ilDow = (t = Date.now()) => new Date(new Date(t).toLocaleString("en-US", { timeZone: "Asia/Jerusalem" })).getDay();
+// בונוס הורדות יומי לכולם: חלון זמן מהלוח, או סוף שבוע (שישי–שבת) אוטומטי
+export function bonusNow(S) {
+  const now = Date.now(), w = S.bonusWin;
+  if (w && w.n > 0 && w.until > now && (!w.from || w.from <= now)) return { n: w.n, label: w.label || "בונוס לכולם", until: w.until };
+  if (S.weekendBonus > 0) { const d = ilDow(); if (d === 5 || d === 6) return { n: S.weekendBonus, label: "בונוס סוף שבוע", until: 0 }; }
+  return null;
+}
+// סופר שימוש לפי מדינה (מדינות מרובות "א+ב" נספרות לכל אחת)
+export async function topCountries(days = 7) {
+  const o = {}; // מפתח באותיות קטנות; שומרים את הכתיב הנפוץ ביותר
+  for (const [k, n] of Object.entries(sumGroup(await rangeStats(days), "country"))) for (const c of String(k).split("+")) {
+    const x = c.trim(); if (!x || x === "?") continue;
+    const e = o[x.toLowerCase()] || (o[x.toLowerCase()] = { n: 0, v: {} });
+    e.n += n; e.v[x] = (e.v[x] || 0) + n;
+  }
+  return Object.values(o).map((e) => ({ country: Object.entries(e.v).sort((a, b) => b[1] - a[1])[0][0], n: e.n })).sort((a, b) => b.n - a.n || a.country.localeCompare(b.country));
+}
+export const liveDoc = (d) => (d && d.until > Date.now() ? d : null);
+export async function perkInfo(S) {
+  const st = await store(), [cow, hof] = await st.getMany(["cow/current", "hof/current"]);
+  return { bonus: bonusNow(S), cow: liveDoc(cow) ? { country: cow.country, until: cow.until, bonus: S.cowBonus } : null, hof: liveDoc(hof) ? { from: hof.from, until: hof.until, top: hof.top } : null };
+}
+export async function publishHof(manual) {
+  const st = await store(), top = (await topCountries(7)).slice(0, 3);
+  if (!top.length) return { done: false, reason: "nodata" };
+  const now = Date.now(), doc = { week: dayKey(now), from: now, until: now + 7 * 864e5, top, manual: !!manual };
+  await st.setJSON("hof/current", doc); await st.setJSON("hof/" + doc.week, doc);
+  return { done: true, doc };
+}
+export async function setCow(country, manual) {
+  const st = await store(), now = Date.now(), doc = { country: String(country).slice(0, 40), from: now, until: now + 7 * 864e5, manual: !!manual };
+  await st.setJSON("cow/current", doc); return doc;
+}
+// אוטומטי: מדינת השבוע = המדינה הכי פחות משומשת (מבין אלה שהיו בחודש האחרון), כדי לעודד גיוון
+export async function autoCow() {
+  const st = await store(), cur = await st.get("cow/current");
+  if (cur && cur.manual && cur.until > Date.now()) return cur;
+  const all = await topCountries(30); if (!all.length) return null;
+  const pick = [...all].reverse().find((x) => !cur || x.country !== cur.country) || all[0];
+  return setCow(pick.country, false);
+}
+export async function weeklyPerks() {
+  const st = await store(), S = await getSettings(), out = {};
+  if (S.hofAuto !== false) out.hof = await publishHof(false);
+  out.cow = await autoCow();
+  return out;
 }
