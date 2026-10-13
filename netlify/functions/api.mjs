@@ -411,6 +411,7 @@ const inner = async (req) => {
       for (const k of await st.list("p/" + me.uid + "/")) await st.delete(k);
       for (const k of await st.list("m/" + me.uid + "/")) await st.delete(k);
       for (const g of await listAll("gl/", 500)) if (g.uid === me.uid) { for (const pre of ["gl/", "gt/", "gp/", "ga/"]) await st.delete(pre + g.id); }
+      for (const id of me.dls || []) await st.delete("pp/" + id);
       for (const id of me.dls || []) { const d = await st.get("d/" + id); if (d) { d.uid = null; d.name = "(נמחק)"; await st.setJSON("d/" + id, d); } }
       await st.delete("u/" + me.uid); await st.delete("e/" + me.email);
       return J({ ok: true }, 200, { "set-cookie": setCookie(req, "", true) });
@@ -637,6 +638,45 @@ const inner = async (req) => {
     }
 
     // ---------- משוב ודיווחים (דורשים התחברות) ----------
+    if (R === "GET me/prints") {
+      if (!me) return E(401, "נדרשת התחברות");
+      const items = [];
+      for (const id of (me.dls || []).slice().reverse()) { const d = await st.get("d/" + id); if (d && d.uid === me.uid) items.push({ id: d.id, ts: d.ts, tool: d.tool, country: d.country, printed: d.pr ? { ok: d.pr.ok, ts: d.pr.ts, photo: !!d.pr.photo } : null }); }
+      return J({ items, total: me.printed || 0 });
+    }
+    if (R === "POST me/print") {
+      if (!me) return E(401, "נדרשת התחברות");
+      const b = await body(req, 140000), d = await st.get("d/" + clean(b.id, 40));
+      if (!d || d.uid !== me.uid) return E(404, "ההורדה לא נמצאה");
+      if (await rateHit("pr:" + me.uid, 40, 3600e3)) return E(429, "יותר מדי עדכונים. נסו שוב מאוחר יותר");
+      const first = !d.pr, pr = d.pr || { ts: Date.now(), ok: true, photo: false };
+      if (typeof b.ok === "boolean") pr.ok = b.ok;
+      if (b.photo === null) { await st.delete("pp/" + d.id); pr.photo = false; }
+      else if (b.photo !== undefined) {
+        if (!/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(String(b.photo)) || b.photo.length > 90000) return E(400, "תמונה לא תקינה או גדולה מדי");
+        const have = (await st.list("pp/")).length; if (have > 4000) return E(503, "אחסון התמונות מלא כרגע");
+        await st.setJSON("pp/" + d.id, b.photo); pr.photo = true;
+      }
+      d.pr = pr; await st.setJSON("d/" + d.id, d);
+      if (first) {
+        me.printed = (me.printed || 0) + 1; await st.setJSON("u/" + me.uid, me);
+        await bump([["printed", d.tool]]); await feed("🖨️ " + me.name + " הדפיס/ה מזכרת");
+        const got = [];
+        if (await awardBadge(st, me, "printer", true)) got.push(BADGES.printer);
+        if (me.printed >= 10 && (await awardBadge(st, me, "printer10", true))) got.push(BADGES.printer10);
+        if (got.length) await addInbox(st, me.uid, "קיבלת תג חדש 🖨️", got.map((x) => `${x[0]} ${x[1]}`).join(", ") + " נוסף לפרופיל שלך.");
+        return J({ ok: true, badges: got.map((x) => x[0]), total: me.printed });
+      }
+      return J({ ok: true, total: me.printed || 0 });
+    }
+    if (route === "me/print-photo" && m === "GET") {
+      if (!me) return E(401, "נדרשת התחברות");
+      const d = await st.get("d/" + clean(url.searchParams.get("id"), 40));
+      if (!d || d.uid !== me.uid) return E(404, "לא נמצא");
+      const mm = /^data:(image\/(?:png|jpeg|webp));base64,(.+)$/.exec((await st.get("pp/" + d.id)) || "");
+      if (!mm) return E(404, "אין תמונה");
+      return new Response(Buffer.from(mm[2], "base64"), { headers: { "content-type": mm[1], "cache-control": "private, no-store" } });
+    }
     if (R === "POST feedback") {
       if (!me) return E(401, "נדרשת התחברות");
       const b = await body(req, 3000);
