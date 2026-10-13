@@ -1,7 +1,7 @@
 // שרת האתר: התחברות, הרשאות, מכסות, סטטיסטיקות ולוח בקרה
 import crypto from "node:crypto";
 import { trBody } from "../lib/i18n.mjs";
-import { VIP_OPTS, PERK_TYPES, TIMED_PERKS, BADGES, activePerks, perkSum, hasEarly, perkText, givePerk, awardBadge, addInbox, leaderboard, awardMonthly, monthKey, alertMail, externalBackup, extTargets, activeBlocks, findBlock, BLOCK_FEATURES, errorSpike, funnelOf, store, getSettings, bump, notify, dayKey, rid, rangeStats, sumGroup, TOOLS, DEFAULTS, mailEnabled, sendMail, rateHit, secEvent, isProd, audit, weeklyCsv, makeBackup, restoreBackup, encryptBackup, decryptBackup, saveAutoBackup, bonusNow, perkInfo, weekKey, refBoard, awardRefMonthly, weekReport, lbScore, canPerk, aidOf, pickCreation, qHash, normQ, extractKeywords, feed, topCountries, publishHof, setCow, liveDoc } from "../lib/lib.mjs";
+import { planItems, VIP_OPTS, PERK_TYPES, TIMED_PERKS, BADGES, activePerks, perkSum, hasEarly, perkText, givePerk, awardBadge, addInbox, leaderboard, awardMonthly, monthKey, alertMail, externalBackup, extTargets, activeBlocks, findBlock, BLOCK_FEATURES, errorSpike, funnelOf, store, getSettings, bump, notify, dayKey, rid, rangeStats, sumGroup, TOOLS, DEFAULTS, mailEnabled, sendMail, rateHit, secEvent, isProd, audit, weeklyCsv, makeBackup, restoreBackup, encryptBackup, decryptBackup, saveAutoBackup, bonusNow, perkInfo, weekKey, refBoard, awardRefMonthly, weekReport, lbScore, canPerk, aidOf, pickCreation, qHash, normQ, extractKeywords, feed, topCountries, publishHof, setCow, liveDoc } from "../lib/lib.mjs";
 
 export const config = { path: "/api/*" };
 
@@ -1104,7 +1104,9 @@ const inner = async (req) => {
           const pl = (S.subPlans || []).find((x) => x.id === clean(b.plan, 20)); if (!pl) return E(404, "מסלול לא נמצא");
           const days = Math.max(1, Math.min(366, Math.floor(+b.days) || pl.days)), until = Date.now() + days * 864e5;
           u.perks = activePerks(u).filter((p) => p.note !== "מנוי");
-          await givePerk(st, u, { type: pl.perk === "daily" ? "daily" : "unlimited", n: pl.perk === "daily" ? pl.n : 0, until, note: "מנוי" }, "המנוי שלך הופעל ⭐", `מסלול ${pl.name} פעיל ${days} ימים.`);
+          for (const it of planItems(pl)) u.perks.push({ id: rid(3), type: it.type, n: it.n, key: "", until, note: "מנוי", ts: Date.now() });
+          u.perks = u.perks.slice(-30);
+          await addInbox(st, u.uid, "המנוי שלך הופעל ⭐", `מסלול ${pl.name} פעיל ${days} ימים (עד ${new Date(until).toLocaleDateString("he-IL")}).\n` + planItems(pl).map((i) => "• " + perkText({ ...i, until: 0 })).join("\n"));
           u.sub = { id: pl.id, name: pl.name, until }; await audit(me, "sub:give", u.email, pl.name + " " + days + "d");
         }
         else if (b.action === "cancelSub") { u.perks = (u.perks || []).filter((p) => p.note !== "מנוי"); u.sub = null; await audit(me, "sub:cancel", u.email); }
@@ -1188,7 +1190,7 @@ const inner = async (req) => {
           }
         }
         if (typeof b.subsOn === "boolean") next.subsOn = b.subsOn;
-        if (Array.isArray(b.subPlans)) next.subPlans = b.subPlans.slice(0, 4).map((x) => ({ id: clean(x.id, 20) || rid(3), name: clean(x.name, 40), price: clean(x.price, 40), days: Math.max(1, Math.min(366, Math.floor(+x.days) || 30)), perk: x.perk === "daily" ? "daily" : "unlimited", n: Math.max(1, Math.min(50, Math.floor(+x.n) || 5)), desc: clean(x.desc, 140) })).filter((x) => x.name);
+        if (Array.isArray(b.subPlans)) next.subPlans = b.subPlans.slice(0, 4).map((x) => ({ id: clean(x.id, 20) || rid(3), name: clean(x.name, 40), price: clean(x.price, 40), days: Math.max(1, Math.min(366, Math.floor(+x.days) || 30)), items: planItems(x), desc: clean(x.desc, 140) })).filter((x) => x.name && x.items.length);
         if (typeof b.subPayUrl === "string") { const u = b.subPayUrl.trim(); if (u && !/^https:\/\/[^\s]+$/i.test(u)) return E(400, "קישור התשלום חייב להתחיל ב-https://"); next.subPayUrl = clean(u, 300); }
         if (typeof b.subPayNote === "string") next.subPayNote = clean(b.subPayNote, 200);
         if (b.texts && typeof b.texts === "object") { next.texts = {}; for (const k of ["homeTitle", "homeTitleEn", "homeSub", "homeSubEn"]) { const v = clean(b.texts[k], 120); if (v) next.texts[k] = v; } }

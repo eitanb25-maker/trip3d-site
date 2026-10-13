@@ -6,7 +6,11 @@ export const DEFAULTS = {
   tools: {}, banner: "", bannerOn: false, maint: false, lang: "he",
   inviteOnly: false, dlLimit: 5, notifyDownload: true, notifyReport: true, errAlert: true, errThreshold: 5, blocks: [], abuseDl: 20, refBonus: 1, refMax: 5, extBackup: true, aiOn: false, aiLimit: 10, aiGlobal: 300, early: [], vip: [], galReward: 1, streakOn: true, lbOn: true,
   requireVerify: false, notifySecurity: true, autoBackup: true,
-  welcomeGift: 2, challengeOn: true, challengeN: 3, challengeReward: 3, annivGift: 3, refPrizeOn: true, goalTarget: 1000, bonusSched: [], texts: {}, subsOn: false, subPlans: [], subPayUrl: "", subPayNote: "", goalBonus: 2, perkVerify: true, thanksReward: 2, cowBonus: 1, weekendBonus: 0, bonusWin: null, hofAuto: true,
+  welcomeGift: 2, challengeOn: true, challengeN: 3, challengeReward: 3, annivGift: 3, refPrizeOn: true, goalTarget: 1000, bonusSched: [], texts: {}, subsOn: false, subPlans: [
+    { id: "plus", name: "פלוס", price: "19₪ לחודש", days: 30, desc: "לאלה שיוצרים הרבה", items: [{ type: "daily", n: 5 }, { type: "ai", n: 10 }, { type: "projects", n: 10 }, { type: "gallery", n: 2 }] },
+    { id: "pro", name: "פרו", price: "39₪ לחודש", days: 30, desc: "הכול פתוח", items: [{ type: "unlimited", n: 0 }, { type: "ai", n: 30 }, { type: "projects", n: 30 }, { type: "gallery", n: 5 }, { type: "early", n: 0 }] },
+    { id: "pro-year", name: "פרו שנתי", price: "349₪ לשנה", days: 365, desc: "כמו פרו, בהנחה של כ-25%", items: [{ type: "unlimited", n: 0 }, { type: "ai", n: 30 }, { type: "projects", n: 30 }, { type: "gallery", n: 5 }, { type: "early", n: 0 }] },
+  ], subPayUrl: "", subPayNote: "", goalBonus: 2, perkVerify: true, thanksReward: 2, cowBonus: 1, weekendBonus: 0, bonusWin: null, hofAuto: true,
 };
 
 export const isProd = () => !process.env.CONTEXT || process.env.CONTEXT === "production";
@@ -350,6 +354,11 @@ export async function externalBackup(enc, key) {
 
 
 // ---------- הטבות, תגים ומובילי החודש ----------
+export const SUB_TYPES = ["daily", "unlimited", "ai", "projects", "gallery", "early"];
+export function planItems(x) {
+  let it = Array.isArray(x.items) ? x.items : x.perk ? [{ type: x.perk === "daily" ? "daily" : "unlimited", n: x.n }] : [];
+  return it.filter((i) => SUB_TYPES.includes(i.type)).map((i) => ({ type: i.type, n: i.type === "unlimited" || i.type === "early" ? 0 : Math.max(1, Math.min(100, Math.floor(+i.n) || 1)) })).filter((i, k, a) => a.findIndex((j) => j.type === i.type) === k);
+}
 export const PERK_TYPES = ["daily", "credits", "unlimited", "ai", "early", "projects", "gallery", "badge"];
 export const VIP_OPTS = ["rim:2", "shape:hex", "shape:oct", "shape:oval", "ps:star", "ps:heart"];
 export const TIMED_PERKS = ["daily", "unlimited", "ai", "early", "projects", "gallery"];

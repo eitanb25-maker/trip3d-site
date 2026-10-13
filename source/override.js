@@ -203,7 +203,8 @@ function subBox(){const el=$("ac_sub");if(!el)return;el.replaceChildren();const 
  if(!sb)return;const h=document.createElement("div");h.innerHTML="<b>⭐ "+L_("מנויים","Subscriptions")+"</b>";el.append(h);
  sb.plans.forEach(pl=>{const r=document.createElement("div");r.style.cssText="border:1px solid #ccc8;border-radius:12px;padding:8px 10px;margin:6px 0";
   const t=document.createElement("div");t.style.fontWeight="700";t.textContent=pl.name+(pl.price?" · "+pl.price:"")+" · "+pl.days+" "+L_("ימים","days");
-  const d=document.createElement("div");d.className="hint";d.textContent=(pl.desc?pl.desc+" · ":"")+(pl.perk=="daily"?"+"+pl.n+" "+L_("הורדות ביום","downloads/day"):L_("הורדות ללא הגבלה","Unlimited downloads"));
+  const d=document.createElement("div");d.className="hint";d.style.whiteSpace="pre-line";const IT={daily:n=>"+"+n+" "+L_("הורדות ביום","downloads/day"),unlimited:()=>L_("הורדות ללא הגבלה","Unlimited downloads"),ai:n=>"+"+n+" "+L_("שאלות ליום לעוזר ה-AI","AI helper questions/day"),projects:n=>"+"+n+" "+L_("מקומות לפרויקטים שמורים","saved project slots"),gallery:n=>"+"+n+" "+L_("יצירות ממתינות בגלריה","pending gallery items"),early:()=>L_("גישה מוקדמת לכלים חדשים","Early access to new tools")};
+  d.textContent=(pl.desc?pl.desc+"\n":"")+(pl.items||[]).map(x=>"✔ "+(IT[x.type]?IT[x.type](x.n):x.type)).join("\n");
   const b=document.createElement("button");b.className="pill";b.type="button";b.textContent=L_("אני רוצה את המסלול הזה","I want this plan");
   b.onclick=async()=>{try{if(sb.payUrl)window.open(sb.payUrl,"_blank","noopener");await API.j("POST","/sub/request",{plan:pl.id});b.disabled=true;b.textContent="✅ "+L_("הבקשה נשלחה. המנוי יופעל אחרי אישור המנהל","Request sent. Your plan will be activated after admin approval")}catch(e){b.textContent=e.message||"Error"}};
   r.append(t,d,b);el.append(r)});
