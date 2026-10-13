@@ -10,7 +10,7 @@
     "binding": "ASSETS",
     "run_worker_first": ["/api/*", "/g/*", "/", "/index.html", "/gallery.html"]
   },
-  "d1_databases": [{ "binding": "DB", "database_name": "trip3d" }],
+  "d1_databases": [{ "binding": "DB", "database_name": "trip3d", "database_id": "b41dd4bc-19de-46dd-94a4-d19c972eb347" }],
   "triggers": { "crons": ["0 0 * * *", "0 1 * * 1"] },
   "observability": { "enabled": true }
 }
