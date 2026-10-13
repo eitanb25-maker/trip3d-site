@@ -25,7 +25,7 @@
       bar.style.cssText = (admin ? "position:sticky;top:0;" : "position:fixed;left:0;right:0;bottom:0;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));") + "z-index:99998;padding:8px 14px;display:flex;gap:10px;align-items:center;justify-content:center;text-align:center;font:600 14px/1.4 system-ui,Arial,sans-serif;color:#1c1917;box-shadow:0 -2px 12px rgba(0,0,0,.25)";
       var s = document.createElement("span"); s.id = "maintbar_t"; bar.appendChild(s);
       var x = document.createElement("button"); x.type = "button"; x.textContent = "✕"; x.setAttribute("aria-label", T("סגירה", "Close"));
-      x.style.cssText = "border:0;background:transparent;color:inherit;font:inherit;cursor:pointer;padding:2px 6px"; x.onclick = function () { dismissed = barKind; removeBar(); };
+      x.style.cssText = "border:0;background:transparent;color:inherit;font:inherit;cursor:pointer;padding:2px 6px!important;width:auto!important;margin:0!important;display:inline-block!important;flex:none;box-shadow:none"; x.onclick = function () { dismissed = barKind; removeBar(); };
       bar.appendChild(x); document.body.appendChild(bar);
     }
     barKind = kind; bar.style.background = color || "#f59e0b"; bar.querySelector("#maintbar_t").textContent = text;
