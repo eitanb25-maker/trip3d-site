@@ -189,6 +189,12 @@ export default async (req) => {
       } catch (e) { h.storage = false; h.storageError = String((e && e.message) || e).slice(0, 200); }
       return J(h);
     }
+    if (route === "ping" && m === "GET") {
+      // בדיקת חיות מינימלית לניטור חיצוני (UptimeRobot וכד'): בלי פרטים רגישים
+      let ok = !!(process.env.SESSION_SECRET && process.env.SESSION_SECRET.length >= 16);
+      try { await (await store()).get("settings"); } catch { ok = false; }
+      return J({ ok }, ok ? 200 : 503);
+    }
     const st = await store();
     const S = await getSettings();
     const me = await authUser(req);
@@ -539,6 +545,19 @@ export default async (req) => {
       const id = Date.now() + "-" + rid(3);
       await st.setJSON("r/" + id, { id, uid: me.uid, name: me.name, email: me.email, ts: Date.now(), message: msg, tool: TOOLS.includes(b.tool) ? b.tool : "", country: clean(b.country, 40), code: String(b.code || "").slice(0, 40000), status: "open" });
       if (S.notifyReport) await notify(`🐞 דיווח על בעיה\n${me.name} (${me.email})\n${msg.slice(0, 300)}`);
+      return J({ ok: true });
+    }
+
+    if (R === "POST suggest") {
+      const b = await body(req, 5000);
+      if (b.website) return J({ ok: true }); // honeypot
+      const msg = clean(b.message, 1000);
+      if (msg.length < 5) return E(400, "כתבו כמה מילים");
+      if (await rateHit("sg:" + ipHash(req), 5, 3600e3)) return E(429, "אפשר לשלוח עד 5 הצעות בשעה");
+      const em = me ? me.email : (() => { const e = clean(b.email, 120).toLowerCase(); return emailOk(e) ? e : ""; })();
+      const id = Date.now() + "-" + rid(3), name = me ? me.name : "אורח";
+      await st.setJSON("r/" + id, { id, uid: me ? me.uid : "", name, email: em, ts: Date.now(), message: msg, tool: "", type: "suggest", page: clean(b.page, 40), status: "open" });
+      if (S.notifyReport) await notify(`💡 הצעה לשיפור\n${name}${em ? " (" + em + ")" : ""}\n${msg.slice(0, 300)}`);
       return J({ ok: true });
     }
 
