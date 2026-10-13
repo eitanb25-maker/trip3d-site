@@ -7,9 +7,9 @@ export const DEFAULTS = {
   inviteOnly: false, dlLimit: 5, notifyDownload: true, notifyReport: true, errAlert: true, errThreshold: 5, blocks: [], abuseDl: 20, refBonus: 1, refMax: 5, extBackup: true, aiOn: false, aiLimit: 10, aiGlobal: 300, early: [], vip: [], galReward: 1, streakOn: true, lbOn: true,
   requireVerify: false, notifySecurity: true, autoBackup: true,
   welcomeGift: 2, challengeOn: true, challengeN: 3, challengeReward: 3, annivGift: 3, refPrizeOn: true, goalTarget: 1000, bonusSched: [], texts: {}, subsOn: false, subPlans: [
-    { id: "plus", emoji: "🧳", name: "מטייל", price: "19₪ לחודש", days: 30, desc: "לכל מי שיוצר כל שבוע", items: [{ type: "credits", n: 3 }, { type: "daily", n: 5 }, { type: "ai", n: 10 }, { type: "projects", n: 10 }, { type: "gallery", n: 2 }] },
-    { id: "pro", emoji: "🧭", name: "חוקר", price: "39₪ לחודש", days: 30, hot: true, desc: "הכול פתוח, בלי לספור הורדות", items: [{ type: "credits", n: 10 }, { type: "unlimited", n: 0 }, { type: "ai", n: 30 }, { type: "projects", n: 30 }, { type: "gallery", n: 5 }, { type: "early", n: 0 }] },
-    { id: "pro-year", emoji: "🌍", name: "נווד עולמי", price: "349₪ לשנה", days: 365, desc: "כל מה שב'חוקר' + בונוס, ומחיר של 9 חודשים בערך", items: [{ type: "credits", n: 40 }, { type: "unlimited", n: 0 }, { type: "ai", n: 50 }, { type: "projects", n: 50 }, { type: "gallery", n: 8 }, { type: "early", n: 0 }] },
+    { id: "plus", emoji: "🧳", name: "מטייל", price: "19₪ לחודש", days: 30, desc: "לכל מי שיוצר כל שבוע", items: [{ type: "credits", n: 3 }, { type: "daily", n: 5 }, { type: "projects", n: 10 }, { type: "gallery", n: 2 }] },
+    { id: "pro", emoji: "🧭", name: "חוקר", price: "39₪ לחודש", days: 30, hot: true, desc: "הכול פתוח, בלי לספור הורדות", items: [{ type: "credits", n: 10 }, { type: "unlimited", n: 0 }, { type: "projects", n: 30 }, { type: "gallery", n: 5 }, { type: "early", n: 0 }] },
+    { id: "pro-year", emoji: "🌍", name: "נווד עולמי", price: "349₪ לשנה", days: 365, desc: "כל מה שב'חוקר' + בונוס, ומחיר של 9 חודשים בערך", items: [{ type: "credits", n: 40 }, { type: "unlimited", n: 0 }, { type: "projects", n: 50 }, { type: "gallery", n: 8 }, { type: "early", n: 0 }] },
   ], subPayUrl: "", subPayNote: "", goalBonus: 2, perkVerify: true, thanksReward: 2, cowBonus: 1, weekendBonus: 0, bonusWin: null, hofAuto: true,
 };
 
@@ -371,7 +371,7 @@ export async function externalBackup(enc, key) {
 
 
 // ---------- הטבות, תגים ומובילי החודש ----------
-export const SUB_TYPES = ["daily", "unlimited", "ai", "projects", "gallery", "early", "credits"];
+export const SUB_TYPES = ["daily", "unlimited", "projects", "gallery", "early", "credits"];
 export function planItems(x) {
   let it = Array.isArray(x.items) ? x.items : x.perk ? [{ type: x.perk === "daily" ? "daily" : "unlimited", n: x.n }] : [];
   return it.filter((i) => SUB_TYPES.includes(i.type)).map((i) => ({ type: i.type, n: i.type === "unlimited" || i.type === "early" ? 0 : Math.max(1, Math.min(100, Math.floor(+i.n) || 1)) })).filter((i, k, a) => a.findIndex((j) => j.type === i.type) === k);
@@ -478,7 +478,7 @@ export async function topCountries(days = 7) {
 export const liveDoc = (d) => (d && d.until > Date.now() ? d : null);
 export async function perkInfo(S) {
   const st = await store(), [cow, hof, pick, goal] = await st.getMany(["cow/current", "hof/current", "cwk/current", "sys/goal"]);
-  return { subs: S.subsOn && (S.subPlans || []).length ? { plans: S.subPlans, payUrl: S.subPayUrl || "", payNote: S.subPayNote || "" } : null, bonus: bonusNow(S), next: bonusNext(S), texts: S.texts || {}, cow: liveDoc(cow) ? { country: cow.country, until: cow.until, bonus: S.cowBonus } : null, hof: liveDoc(hof) ? { from: hof.from, until: hof.until, top: hof.top } : null,
+  return { subs: S.subsOn && (S.subPlans || []).length ? { plans: S.subPlans.map((p) => ({ ...p, items: planItems(p) })), payUrl: S.subPayUrl || "", payNote: S.subPayNote || "" } : null, bonus: bonusNow(S), next: bonusNext(S), texts: S.texts || {}, cow: liveDoc(cow) ? { country: cow.country, until: cow.until, bonus: S.cowBonus } : null, hof: liveDoc(hof) ? { from: hof.from, until: hof.until, top: hof.top } : null,
     pick: liveDoc(pick) ? { id: pick.id, name: pick.name, author: pick.author, country: pick.country, likes: pick.likes } : null, goal: await goalState(S, goal) };
 }
 // יעד קהילתי חודשי: הורדות של כל האתר; כשמגיעים אליו מופעל בונוס ל-24 שעות

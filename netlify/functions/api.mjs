@@ -694,7 +694,7 @@ const inner = async (req) => {
       if (!pl) return E(404, "מסלול לא נמצא");
       if (await rateHit("sr:" + me.uid, 3, 3600e3)) return E(429, "כבר שלחתם בקשה. נחזור אליכם בהקדם");
       const rid2 = Date.now() + "-" + rid(3);
-      await st.setJSON("r/" + rid2, { id: rid2, uid: me.uid, name: me.name, email: me.email, ts: Date.now(), message: `בקשת מנוי: ${pl.name} (${pl.price || "ללא מחיר"})`, status: "open", page: "sub" });
+      await st.setJSON("r/" + rid2, { id: rid2, uid: me.uid, name: me.name, email: me.email, ts: Date.now(), message: `בקשת מנוי: ${pl.name} (${pl.price || "ללא מחיר"})`, plan: pl.id, status: "open", page: "sub" });
       globalThis.__att = null;
       await notify(`⭐ בקשת מנוי\n${me.name} (${me.email})\nמסלול: ${pl.name}`);
       return J({ ok: true });
@@ -1097,6 +1097,34 @@ const inner = async (req) => {
         const k = clean(url.searchParams.get("key"), 40), v = k.startsWith("bk/") ? await st.get(k) : null;
         if (!v) return E(404, "לא נמצא");
         return new Response(JSON.stringify(v), { headers: { "content-type": "application/json", "content-disposition": `attachment; filename="backup-${k.slice(3)}.enc.json"` } });
+      }
+      if (R === "POST admin/selftest") {
+        const e = process.env, out = [], add = (id, name, ok, detail, warn) => out.push({ id, name, ok: !!ok, warn: !!warn && !ok, detail: detail || "" });
+        try { const k = "health/st" + rid(3); await st.setJSON(k, { t: Date.now() }); const v = await st.get(k); await st.delete(k); add("storage", "אחסון (קריאה וכתיבה)", v && v.t, v && v.t ? "תקין" : "הכתיבה לא חזרה"); } catch (x) { add("storage", "אחסון (קריאה וכתיבה)", false, String((x && x.message) || x).slice(0, 150)); }
+        add("secret", "מפתח התחברות (SESSION_SECRET)", e.SESSION_SECRET && e.SESSION_SECRET.length >= 16, e.SESSION_SECRET ? (e.SESSION_SECRET.length >= 16 ? "תקין" : "קצר מדי (לפחות 16 תווים)") : "חסר");
+        add("admin", "הגדרת מנהל (ADMIN_EMAIL + קוד התקנה)", ADMIN_MAIL() && SETUP(), "");
+        add("mail", "שליחת מיילים (RESEND_API_KEY + FROM_EMAIL)", mailEnabled(), mailEnabled() ? "מוגדר. לבדיקה אמיתית לחצו על 'שליחת מייל בדיקה'" : "לא מוגדר. מיילי אימות ואיפוס סיסמה לא יישלחו", true);
+        add("notify", "התראות למנהל (טלגרם / דיסקורד / מייל)", (e.TELEGRAM_BOT_TOKEN && e.TELEGRAM_CHAT_ID) || e.DISCORD_WEBHOOK_URL || (e.RESEND_API_KEY && e.NOTIFY_EMAIL), "בלי ערוץ התראות לא תקבלו הודעה על דיווחים ובקשות מנוי", true);
+        add("ai", "עוזר AI (מפתח Anthropic או Gemini)", e.ANTHROPIC_API_KEY || e.GEMINI_API_KEY, "בלי מפתח הבוט עונה רק מתשובות מוכנות", true);
+        add("google", "כניסה עם Google", e.GOOGLE_CLIENT_ID, "לא חובה", true);
+        add("turnstile", "הגנת בוטים (Turnstile)", e.TURNSTILE_SECRET && e.TURNSTILE_SITE_KEY, "לא חובה, מומלץ לפני פרסום רחב", true);
+        add("siteurl", "כתובת האתר (SITE_URL)", e.SITE_URL, e.SITE_URL ? e.SITE_URL : "משמשת בקישורים שבמיילים", true);
+        try { const us = await listAll("u/", 500, false); add("admins", "יש לפחות מנהל אחד", us.some((u) => u.role === "admin"), us.length + " משתמשים רשומים"); } catch (x) { add("admins", "יש לפחות מנהל אחד", false, "שגיאה בקריאת משתמשים"); }
+        add("subs", "מנויים", !S.subsOn || (S.subPlans || []).length > 0, S.subsOn ? (S.subPlans || []).length + " מסלולים פעילים באתר" : "כבויים (תדליק אותם בלשונית מנויים)", true);
+        add("maint", "מצב תחזוקה כבוי", !S.maint, S.maint ? "מצב תחזוקה דלוק: הורדות חסומות למשתמשים" : "כבוי");
+        add("backup", "גיבוי חיצוני מוגדר", extTargets().length > 0, extTargets().length ? "יעדים: " + extTargets().join(", ") : "אין יעד חיצוני; יש גיבוי פנימי בלבד", true);
+        await audit(me, "selftest", "", out.filter((x) => !x.ok).length + " לא תקין");
+        return J({ ok: out.every((x) => x.ok || x.warn), checks: out, at: Date.now() });
+      }
+      if (R === "POST admin/test-notify") {
+        if (await rateHit("tn:" + me.uid, 6, 600e3)) return E(429, "אפשר עד 6 בדיקות ב-10 דקות");
+        const e = process.env, text = `🔔 הודעת בדיקה מלוח הבקרה (${new Date().toLocaleString("he-IL", { timeZone: "Asia/Jerusalem" })})`, res = [];
+        const run = async (name, fn) => { try { const r = await fn(); res.push({ name, ok: r.ok, detail: r.ok ? "נשלח" : "שגיאה " + r.status }); } catch (x) { res.push({ name, ok: false, detail: "אין חיבור" }); } };
+        if (e.TELEGRAM_BOT_TOKEN && e.TELEGRAM_CHAT_ID) await run("טלגרם", () => fetch(`https://api.telegram.org/bot${e.TELEGRAM_BOT_TOKEN}/sendMessage`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ chat_id: e.TELEGRAM_CHAT_ID, text }) }));
+        if (e.DISCORD_WEBHOOK_URL) await run("דיסקורד", () => fetch(e.DISCORD_WEBHOOK_URL, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ content: text }) }));
+        if (e.RESEND_API_KEY && e.NOTIFY_EMAIL) await run("מייל התראות", () => fetch("https://api.resend.com/emails", { method: "POST", headers: { "content-type": "application/json", authorization: "Bearer " + e.RESEND_API_KEY }, body: JSON.stringify({ from: e.FROM_EMAIL || "onboarding@resend.dev", to: [e.NOTIFY_EMAIL], subject: "בדיקת התראות", text }) }));
+        await audit(me, "notify:test", "", res.map((x) => x.name + ":" + (x.ok ? "ok" : "fail")).join(","));
+        return J({ ok: res.length > 0 && res.every((x) => x.ok), results: res, none: res.length === 0 });
       }
       if (R === "POST admin/test-mail") {
         const b = await body(req, 400), to = clean(b.to || me.email, 120).toLowerCase();
