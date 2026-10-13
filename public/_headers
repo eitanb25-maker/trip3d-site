@@ -7,6 +7,14 @@
   Cache-Control: no-store
 /maint.js
   Cache-Control: no-cache
+/admin.html
+  Cache-Control: no-cache
+/guidetab.js
+  Cache-Control: no-cache
+/news.js
+  Cache-Control: no-cache
+/polish.css
+  Cache-Control: no-cache
 /*
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
