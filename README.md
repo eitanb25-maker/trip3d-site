@@ -210,3 +210,10 @@
 INSERT INTO kv (k, v) VALUES ('sys/env', '{"ADMIN_EMAIL":"you@example.com","ADMIN_SETUP_CODE":"קוד-לבחירתך"}') ON CONFLICT(k) DO UPDATE SET v = excluded.v;
 ```
 (אם הטבלה `kv` עדיין לא קיימת, פותחים קודם את האתר פעם אחת.) המפתח `sys/env` לא נכלל בגיבויים.
+
+### עוזר AI עם Gemini (חינם, בלי כרטיס אשראי)
+מפתח מ-aistudio.google.com/apikey. ב-Cloudflare, בקונסולת D1:
+```sql
+UPDATE kv SET v = json_set(v, '$.GEMINI_API_KEY', 'המפתח-שלך') WHERE k = 'sys/env';
+```
+(אופציונלי: `GEMINI_MODEL`; ברירת המחדל `gemini-flash-latest`.) אחר כך מדליקים את העוזר בהגדרות לוח הבקרה. אם קיים גם `ANTHROPIC_API_KEY`, הוא מקבל עדיפות.

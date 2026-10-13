@@ -177,7 +177,7 @@ export default async (req) => {
     const route = url.pathname.replace(/^\/api\/?/, "").replace(/\/$/, "");
     const m = req.method;
     if (route === "health" && m === "GET") {
-      const h = { secret: !!(process.env.SESSION_SECRET && process.env.SESSION_SECRET.length >= 16), adminEmail: !!ADMIN_MAIL(), setupCode: !!SETUP(), mail: mailEnabled(), google: !!process.env.GOOGLE_CLIENT_ID, turnstile: !!(process.env.TURNSTILE_SECRET && process.env.TURNSTILE_SITE_KEY), telegram: !!(process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID), discord: !!process.env.DISCORD_WEBHOOK_URL, ai: !!process.env.ANTHROPIC_API_KEY, ext: extTargets(), siteUrl: !!process.env.SITE_URL, node: process.version };
+      const h = { secret: !!(process.env.SESSION_SECRET && process.env.SESSION_SECRET.length >= 16), adminEmail: !!ADMIN_MAIL(), setupCode: !!SETUP(), mail: mailEnabled(), google: !!process.env.GOOGLE_CLIENT_ID, turnstile: !!(process.env.TURNSTILE_SECRET && process.env.TURNSTILE_SITE_KEY), telegram: !!(process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID), discord: !!process.env.DISCORD_WEBHOOK_URL, ai: !!(process.env.ANTHROPIC_API_KEY || process.env.GEMINI_API_KEY), ext: extTargets(), siteUrl: !!process.env.SITE_URL, node: process.version };
       try {
         const s0 = await store(), k = "health/" + rid(3);
         await s0.setJSON(k, { t: Date.now() });
@@ -208,7 +208,7 @@ export default async (req) => {
         mailEnabled: mailEnabled(), env: isProd() ? "production" : "staging", requireVerify: S.requireVerify, turnstileSiteKey: process.env.TURNSTILE_SITE_KEY || "", contactEmail: process.env.CONTACT_EMAIL || "",
         early: S.early || [], vip: S.vip || [],
         blocks: activeBlocks(S).map((b) => ({ type: b.type, key: b.key, until: b.until || 0, msg: b.msg || "" })),
-        aiEnabled: !!(S.aiOn && process.env.ANTHROPIC_API_KEY && !findBlock(S, "feature", "ai")),
+        aiEnabled: !!(S.aiOn && (process.env.ANTHROPIC_API_KEY || process.env.GEMINI_API_KEY) && !findBlock(S, "feature", "ai")),
       });
     }
     if (R === "GET me") {
@@ -565,8 +565,8 @@ export default async (req) => {
     if (R === "POST ai") {
       if (!me) return E(401, "כדי לדבר עם העוזר צריך להתחבר");
       if (me.blocked) return E(403, "החשבון חסום");
-      const key = process.env.ANTHROPIC_API_KEY;
-      if (!S.aiOn || (!key && !globalThis.__aiHook)) return E(503, "העוזר לא פעיל כרגע");
+      const key = process.env.ANTHROPIC_API_KEY, gkey = process.env.GEMINI_API_KEY;
+      if (!S.aiOn || (!key && !gkey && !globalThis.__aiHook)) return E(503, "העוזר לא פעיל כרגע");
       { const bk = findBlock(S, "feature", "ai"); if (bk) return E(503, bk.msg || "העוזר מושבת זמנית"); }
       const b = await body(req, 8000);
       const msgs = (Array.isArray(b.messages) ? b.messages : []).slice(-6).map((x) => ({ role: x && x.role === "assistant" ? "assistant" : "user", content: String((x && x.content) || "").replace(/[\u0000-\u0008\u000b-\u001f]/g, "").slice(0, 1000) })).filter((x) => x.content.trim());
@@ -581,7 +581,15 @@ export default async (req) => {
       let reply = "";
       try {
         if (globalThis.__aiHook) reply = await globalThis.__aiHook({ msgs, lang, ctx });
-        else {
+        else if (!key && gkey) {
+          const sys = AI_SYSTEM + `\nReply in ${lang}. The user is currently using tool/country: ${ctx.trim() || "none"}.`;
+          const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(process.env.GEMINI_MODEL || "gemini-flash-latest")}:generateContent`, { method: "POST", signal: AbortSignal.timeout(25000),
+            headers: { "content-type": "application/json", "x-goog-api-key": gkey },
+            body: JSON.stringify({ systemInstruction: { parts: [{ text: sys }] }, contents: msgs.map((x) => ({ role: x.role === "assistant" ? "model" : "user", parts: [{ text: x.content }] })), generationConfig: { maxOutputTokens: 800 } }) });
+          if (!r.ok) { console.error("ai", r.status, (await r.text()).slice(0, 300)); return E(502, "העוזר לא זמין כרגע, נסו שוב בעוד רגע"); }
+          const d = await r.json();
+          reply = (((d.candidates || [])[0] || {}).content?.parts || []).map((c) => c.text || "").join("\n").trim();
+        } else {
           const r = await fetch("https://api.anthropic.com/v1/messages", { method: "POST", signal: AbortSignal.timeout(25000),
             headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01" },
             body: JSON.stringify({ model: process.env.ANTHROPIC_MODEL || "claude-haiku-5-5", max_tokens: 500, system: AI_SYSTEM + `\nReply in ${lang}. The user is currently using tool/country: ${ctx.trim() || "none"}.`, messages: msgs }) });
@@ -909,7 +917,7 @@ export default async (req) => {
         const items = await listAll("d/", 200);
         return J({ items: items.map((d) => ({ id: d.id, name: d.name, tool: d.tool, country: d.country, ts: d.ts, fb: d.fb ? (d.fb.ok ? "ok" : "bad") : "" })) });
       }
-      if (R === "GET admin/settings") return J({ settings: S, aiKey: !!process.env.ANTHROPIC_API_KEY, ext: extTargets() });
+      if (R === "GET admin/settings") return J({ settings: S, aiKey: !!(process.env.ANTHROPIC_API_KEY || process.env.GEMINI_API_KEY), ext: extTargets() });
       if (R === "PUT admin/settings") {
         const b = (await body(req, 8000)).settings || {};
         const next = { ...S };
