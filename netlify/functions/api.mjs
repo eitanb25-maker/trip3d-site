@@ -380,9 +380,9 @@ const inner = async (req) => {
 
     if (R === "POST me/redeem") {
       if (!me) return E(401, "נדרשת התחברות");
-      if (!canPerk(me, S)) return E(403, "כדי לממש קודים צריך לאמת את כתובת המייל", { code: "verify" });
+      if (!canPerk(me, S)) return me.sus ? E(403, "החשבון סומן לבדיקה ולכן אי אפשר לממש קודים כרגע. פנו אלינו דרך 'הצעה לשיפור'", { code: "sus" }) : E(403, "כדי לממש קודים צריך לאמת את כתובת המייל (נשלח אליכם מייל אימות)", { code: "verify" });
       if (await rateHit("rd:" + me.uid, 10, 3600e3)) return E(429, "יותר מדי ניסיונות. נסו שוב בעוד שעה");
-      const b = await body(req, 500), code = clean(b.code, 24).toUpperCase().replace(/\s/g, "");
+      const b = await body(req, 500), code = clean(b.code, 24).toUpperCase().replace(/[^A-Z0-9\u05d0-\u05ea_-]/g, "");
       let pc = code && (await st.get("pc/" + code));
       if (!pc && code === "TRIP5") pc = await seedTrip5(st);
       if (!pc || (pc.expires && pc.expires < Date.now()) || (pc.max > 0 && pc.uses >= pc.max)) return E(400, "הקוד לא תקף או שפג תוקפו");
