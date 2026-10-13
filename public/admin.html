@@ -296,6 +296,21 @@ function notifyCard(){
  const out=h("div",{role:"status",cls:"muted",text:"שולח הודעת בדיקה לכל ערוצי ההתראות שהוגדרו (טלגרם, דיסקורד, מייל התראות)."});
  const btn=h("button",{cls:"pri",text:"🔔 שליחת התראת בדיקה",disabled:RO,on:{click:async()=>{btn.disabled=true;out.textContent="שולח…";try{const r=await api("POST","/admin/test-notify",{});out.replaceChildren(...(r.none?[h("p",{style:"color:var(--bad)",text:"❌ לא הוגדר אף ערוץ התראות (TELEGRAM_BOT_TOKEN+TELEGRAM_CHAT_ID, DISCORD_WEBHOOK_URL או NOTIFY_EMAIL)."})]:r.results.map(x=>h("div",{style:"color:var(--"+(x.ok?"ok":"bad")+")",text:(x.ok?"✅ ":"❌ ")+x.name+": "+x.detail}))))}catch(e){out.textContent="❌ "+e.message}btn.disabled=false}}});
  return h("div",{cls:"card"},h("h2",{text:"🔔 בדיקת התראות למנהל"}),h("p",{cls:"muted",text:"ההתראות הן מה שמודיע לך על דיווחים, בקשות מנוי והצעות."}),btn,out)}
+function googleCard(hl){
+ const org=location.origin,cp=(t,e)=>navigator.clipboard.writeText(t).then(()=>alert("הועתק")).catch(()=>{});
+ const step=(n,t)=>h("li",{style:"margin:6px 0"},t);
+ return h("div",{cls:"card"},h("h2",{text:"🔑 הגדרת כניסה עם Google"}),
+  h("p",{style:"font-weight:700;color:var(--"+(hl.google?"ok":"bad")+")",text:hl.google?"הוגדר ערך GOOGLE_CLIENT_ID. אם בבדיקה הכללית השורה 'כניסה עם Google' ירוקה, הכפתור מופיע במסך ההתחברות":"⚪ עדיין לא מוגדר: בלי זה אין כפתור Google באתר"}),
+  h("p",{cls:"muted",text:"את המזהה יוצרים בחשבון Google שלך (בחינם, בערך 5 דקות). אין צורך בסיסמה או סוד, רק במזהה לקוח ציבורי."}),
+  h("ol",{style:"padding-inline-start:20px;line-height:1.7"},
+   step(1,"נכנסים ל-console.cloud.google.com ויוצרים פרויקט חדש (או בוחרים קיים)."),
+   step(2,"APIs & Services ← OAuth consent screen: בוחרים External, ממלאים שם אפליקציה ומייל, ובסוף לוחצים Publish app."),
+   step(3,"Credentials ← Create credentials ← OAuth client ID ← Application type: Web application."),
+   h("li",{style:"margin:6px 0"},"ב-Authorized JavaScript origins לוחצים Add URI ומדביקים: ",h("code",{text:org,style:"user-select:all"})," ",h("button",{text:"העתקה",style:"margin:0;padding:2px 10px",on:{click:()=>cp(org)}})," (אם יש גם דומיין משלכם, מוסיפים אותו כאן בנוסף)."),
+   step(5,"לוחצים Create ומעתיקים את ה-Client ID (נגמר ב-.apps.googleusercontent.com)."),
+   step(6,"בלוח של Cloudflare: Workers & Pages ← trip3d-site ← Settings ← Variables and Secrets ← Add: שם GOOGLE_CLIENT_ID, ערך ה-Client ID ← Deploy."),
+   step(7,"חוזרים לכאן ולוחצים 'הרצת כל הבדיקות': השורה 'כניסה עם Google' אמורה להפוך ל-✅. אחרי דקה רעננו את האתר ותראו את הכפתור.")),
+  h("p",{cls:"muted",text:"הערה: נרשמים עם Google מקבלים חשבון רגיל לכל דבר. אם המייל שלהם כבר רשום באתר, החשבונות מתחברים אוטומטית."}))}
 async function vTests(){
  let hl={};try{hl=await api("GET","/health")}catch(e){}
  const res=h("div",{});
@@ -305,7 +320,7 @@ async function vTests(){
  const lk=(t,u)=>h("a",{href:u,target:"_blank",rel:"noopener",text:t,style:"display:inline-block;padding:7px 14px;border:1px solid var(--bd);border-radius:99px;margin:0 0 6px 6px;text-decoration:none;color:var(--tx)"});
  $("main").replaceChildren(h("h1",{text:"🧪 בדיקות"}),h("p",{cls:"muted",text:"כל הבדיקות של האתר במקום אחד. שום דבר כאן לא משנה נתונים של משתמשים."}),
   h("div",{cls:"card"},h("h2",{text:"🩺 בדיקה כללית של האתר"}),h("p",{cls:"muted",text:"בודק אחסון, מפתחות, מיילים, התראות, AI, מנויים ועוד, ואומר מה חסר."}),rb,res),
-  mailCard(hl),notifyCard(),
+  mailCard(hl),notifyCard(),googleCard(hl),
   h("div",{cls:"card"},h("h2",{text:"🔗 בדיקות מהירות בדפדפן"}),lk("האתר (בלי מסך תחזוקה)","/?nomaint=1"),lk("דף סטטוס","/status.html"),lk("בדיקת חיות /api/ping","/api/ping"),lk("מצב מערכת /api/health","/api/health"),lk("מדריך","/guide.html"),lk("גלריה","/gallery.html")));
  run()}
 const _vO30=vOverview;vOverview=async function(){await _vO30();

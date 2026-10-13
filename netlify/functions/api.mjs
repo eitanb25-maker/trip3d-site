@@ -1106,7 +1106,7 @@ const inner = async (req) => {
         add("mail", "שליחת מיילים (RESEND_API_KEY + FROM_EMAIL)", mailEnabled(), mailEnabled() ? "מוגדר. לבדיקה אמיתית לחצו על 'שליחת מייל בדיקה'" : "לא מוגדר. מיילי אימות ואיפוס סיסמה לא יישלחו", true);
         add("notify", "התראות למנהל (טלגרם / דיסקורד / מייל)", (e.TELEGRAM_BOT_TOKEN && e.TELEGRAM_CHAT_ID) || e.DISCORD_WEBHOOK_URL || (e.RESEND_API_KEY && e.NOTIFY_EMAIL), "בלי ערוץ התראות לא תקבלו הודעה על דיווחים ובקשות מנוי", true);
         add("ai", "עוזר AI (מפתח Anthropic או Gemini)", e.ANTHROPIC_API_KEY || e.GEMINI_API_KEY, "בלי מפתח הבוט עונה רק מתשובות מוכנות", true);
-        add("google", "כניסה עם Google", e.GOOGLE_CLIENT_ID, "לא חובה", true);
+        { const g = e.GOOGLE_CLIENT_ID || ""; if (!g) add("google", "כניסה עם Google", false, "לא מוגדר. לכפתור 'כניסה עם Google' באתר צריך GOOGLE_CLIENT_ID (ההוראות בכרטיס למטה)", true); else add("google", "כניסה עם Google", /^[\w-]+\.apps\.googleusercontent\.com$/.test(g.trim()), /^[\w-]+\.apps\.googleusercontent\.com$/.test(g.trim()) ? "מוגדר. הכפתור מופיע במסך ההתחברות" : "הערך לא נראה כמו מזהה לקוח של Google (אמור להסתיים ב-.apps.googleusercontent.com)"); }
         add("turnstile", "הגנת בוטים (Turnstile)", e.TURNSTILE_SECRET && e.TURNSTILE_SITE_KEY, "לא חובה, מומלץ לפני פרסום רחב", true);
         add("siteurl", "כתובת האתר (SITE_URL)", e.SITE_URL, e.SITE_URL ? e.SITE_URL : "משמשת בקישורים שבמיילים", true);
         try { const us = await listAll("u/", 500, false); add("admins", "יש לפחות מנהל אחד", us.some((u) => u.role === "admin"), us.length + " משתמשים רשומים"); } catch (x) { add("admins", "יש לפחות מנהל אחד", false, "שגיאה בקריאת משתמשים"); }
