@@ -439,7 +439,9 @@ const INTEG_GROUPS=[
  {id:"tg",ic:"✈️",t:"התראות בטלגרם",need:["TELEGRAM_BOT_TOKEN","TELEGRAM_CHAT_ID"],f:[["TELEGRAM_BOT_TOKEN","טוקן הבוט",1],["TELEGRAM_CHAT_ID","מזהה צ'אט (אפשר לזהות אוטומטית)"]],tg:1,
   steps:["בטלגרם מחפשים את @BotFather ושולחים לו /newbot, ובוחרים שם לבוט.","מעתיקים את הטוקן שהוא נותן ושומרים אותו כאן.","פותחים את הבוט שיצרתם, לוחצים Start ושולחים לו הודעה כלשהי.","חוזרים לכאן ולוחצים 'זיהוי אוטומטי' כדי שהמערכת תמצא את מזהה הצ'אט שלכם."]},
  {id:"dc",ic:"💬",t:"התראות בדיסקורד",need:["DISCORD_WEBHOOK_URL"],f:[["DISCORD_WEBHOOK_URL","כתובת Webhook",1]],
-  steps:["בדיסקורד: הגדרות הערוץ ← Integrations ← Webhooks ← New Webhook.","Copy Webhook URL ומדביקים כאן."]},
+  steps:["נכנסים ל-discord.com (או מתקינים את האפליקציה) ופותחים חשבון חינם.","לוחצים על + בצד ← Create My Own ← For me and my friends ← נותנים שם לשרת.","בשרת: גלגל השיניים ליד הערוץ #general ← Integrations ← Webhooks ← New Webhook.","נותנים לו שם (למשל 'בוט האתר') ולוחצים Copy Webhook URL ומדביקים כאן.","'שליחת התראת בדיקה' בכרטיס הבדיקות תשלח הודעה לערוץ. בנייד: מתקינים את דיסקורד ומפעילים התראות לשרת."]},
+ {id:"sl",ic:"🟣",t:"התראות ב-Slack",need:["SLACK_WEBHOOK_URL"],f:[["SLACK_WEBHOOK_URL","כתובת Webhook (מתחילה ב-https://hooks.slack.com/services/)",1]],
+  steps:["נכנסים ל-api.slack.com/apps ← Create New App ← From scratch ← בוחרים Workspace.","Incoming Webhooks ← מפעילים (On).","Add New Webhook to Workspace ← בוחרים ערוץ ← Allow.","מעתיקים את הכתובת ומדביקים כאן."]},
  {id:"ne",ic:"📬",t:"התראות במייל",need:["NOTIFY_EMAIL"],f:[["NOTIFY_EMAIL","לאיזה מייל לשלוח התראות"]],steps:["דורש שהמיילים (Resend) כבר מוגדרים. מכניסים כאן את הכתובת שלך."]},
  {id:"gg",ic:"🔑",t:"כניסה עם Google",need:["GOOGLE_CLIENT_ID"],f:[["GOOGLE_CLIENT_ID","Client ID (נגמר ב-.apps.googleusercontent.com)"]],
   steps:["console.cloud.google.com ← APIs & Services ← Credentials ← Create credentials ← OAuth client ID ← Web application.","ב-Authorized JavaScript origins מוסיפים את כתובת האתר (https://trip3d-site.eitanb25.workers.dev).","מעתיקים את ה-Client ID ומדביקים כאן. הכפתור יופיע באתר תוך דקה."]},
@@ -466,7 +468,7 @@ async function vTodo(){
  const goBtn=x=>x.go?h("a",{href:x.go,target:"_blank",rel:"noopener",style:"display:inline-block;padding:7px 12px;border:1px solid var(--bd);border-radius:10px;color:var(--ac);text-decoration:none;font-weight:600",text:"פתח ↗"}):(x.tab?h("button",{text:"עבור ללשונית "+x.tab,on:{click:()=>{TAB=x.tab;render()}}}):"");
  const autoCard=x=>h("div",{cls:"card",style:"background:var(--bg);"+(x.done?"opacity:.75":"")},
   h("div",{cls:"row"},h("b",{text:(x.done?"✅ ":"⏳ ")+x.title}),h("span",{cls:"tag "+(x.done?"ok":SEV[x.sev][1]),text:x.done?(x.okAuto?"הוגדר":"טופל"):SEV[x.sev][0]})),
-  h("p",{text:x.why}),x.how&&!x.done?h("p",{cls:"muted",text:"איך עושים: "+x.how}):"",
+  h("p",{text:x.why}),x.how&&!x.done?h("p",{cls:"muted",style:"white-space:pre-line",text:"איך עושים:\n"+x.how}):"",
   h("div",{cls:"row"},x.done?"":goBtn(x),x.okAuto?"":h("button",{text:x.dismissed?"החזר לרשימה":(x.manual?"סמנתי כטופל":"לא רלוונטי לי"),disabled:RO,on:{click:async()=>{await api("POST","/admin/todo",{dismiss:x.key,undo:x.dismissed});render()}}})));
  const open=d.auto.filter(x=>!x.done),done=d.auto.filter(x=>x.done);
  const ti=h("input",{placeholder:"מה צריך לזכור? (למשל: לענות לחברת ההדפסה)",maxlength:140,style:"flex:1;min-width:220px"}),no=h("input",{placeholder:"הערה (לא חובה)",maxlength:600,style:"flex:1;min-width:200px"}),du=h("input",{type:"date",title:"תאריך יעד (לא חובה)"}),er=h("span",{cls:"muted"});

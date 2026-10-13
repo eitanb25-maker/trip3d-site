@@ -170,6 +170,8 @@ export async function notify(text, file) {
   }
   if (e.DISCORD_WEBHOOK_URL)
     tasks.push(fetch(e.DISCORD_WEBHOOK_URL, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ content: text.slice(0, 1900) }) }));
+  if (e.SLACK_WEBHOOK_URL)
+    tasks.push(fetch(e.SLACK_WEBHOOK_URL, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text: text.slice(0, 3000) }) }));
   if (e.RESEND_API_KEY && e.NOTIFY_EMAIL)
     tasks.push(fetch("https://api.resend.com/emails", {
       method: "POST",
