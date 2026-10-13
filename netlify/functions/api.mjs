@@ -144,11 +144,13 @@ function csv(rows) {
 const galPub = (g) => ({ id: g.id, name: g.name, tool: g.tool, country: g.country, author: g.author || "", ts: g.ts, template: !!g.template, feat: !!(g.featured && g.featured > Date.now()) });
 // מוסיף לכל יצירה את התגים של היוצר (רק אם השם שלו מוצג)
 async function withBadges(gs) {
-  const st = await store(), cache = {};
+  const st = await store(), cache = {}, uids = [...new Set(gs.filter((g) => g.author && g.uid).map((g) => g.uid))];
+  const users = uids.length ? await st.getMany(uids.map((u) => "u/" + u)) : [];
+  uids.forEach((uid, i) => { const u = users[i]; cache[uid] = u && !u.blocked ? (u.badges || []).filter((b) => BADGES[b]) : []; });
   const out = [];
   for (const g of gs) {
     const o = galPub(g);
-    if (g.author && g.uid) { if (!(g.uid in cache)) { const u = await st.get("u/" + g.uid); cache[g.uid] = u && !u.blocked ? (u.badges || []).filter((b) => BADGES[b]) : []; } o.bd = cache[g.uid]; }
+    if (g.author && g.uid) o.bd = cache[g.uid] || [];
     out.push(o);
   }
   return out;
@@ -156,10 +158,8 @@ async function withBadges(gs) {
 
 async function listAll(prefix, limit = 300, desc = true) {
   const st = await store();
-  let keys = await st.list(prefix);
-  keys = desc ? keys.slice(-limit).reverse() : keys.slice(0, limit);
   const out = [];
-  for (const k of keys) { const v = await st.get(k); if (v) out.push({ ...v, _k: k }); }
+  for (const { k, v } of await st.scan(prefix, { desc, limit })) if (v) out.push({ ...v, _k: k });
   return out;
 }
 
@@ -188,6 +188,10 @@ export default async (req) => {
         for (const key of (await s0.list("u/")).slice(0, 100)) { const u = await s0.get(key); if (u && u.role === "admin") { h.hasAdmin = true; break; } }
       } catch (e) { h.storage = false; h.storageError = String((e && e.message) || e).slice(0, 200); }
       return J(h);
+    }
+    if (route === "maint" && m === "GET") {
+      const c = await (await store()).get("maintctl");
+      return J(c || { _none: true }, 200, { "cache-control": "no-store" });
     }
     if (route === "ping" && m === "GET") {
       // בדיקת חיות מינימלית לניטור חיצוני (UptimeRobot וכד'): בלי פרטים רגישים
@@ -220,8 +224,8 @@ export default async (req) => {
         if (d && !d.fb && Date.now() - d.ts > 30 * 60e3 && Date.now() - d.ts < 14 * 864e5) pending = { id: d.id, tool: d.tool, country: d.country, ts: d.ts };
       }
       const msgs = [];
-      for (const k of (await st.list("m/" + me.uid + "/")).slice(-10)) { const v = await st.get(k); if (v && !v.read) msgs.push({ id: v.id, ts: v.ts, subject: v.subject, body: v.body }); }
-      for (const k of (await st.list("bc/")).slice(-5)) { const v = await st.get(k); if (v && v.ts > (me.bcSeen || me.created || 0)) msgs.push({ id: v.id, ts: v.ts, subject: v.subject, body: v.body }); }
+      for (const { v } of (await st.scan("m/" + me.uid + "/", { desc: true, limit: 10 })).reverse()) { if (v && !v.read) msgs.push({ id: v.id, ts: v.ts, subject: v.subject, body: v.body }); }
+      for (const { v } of (await st.scan("bc/", { desc: true, limit: 5 })).reverse()) { if (v && v.ts > (me.bcSeen || me.created || 0)) msgs.push({ id: v.id, ts: v.ts, subject: v.subject, body: v.body }); }
       return J({ user: pub(me), blocked: !!me.blocked, quota: q, early: hasEarly(me), streak: me.streak && me.streak.d >= dayKey(Date.now() - 864e5) ? me.streak.n : 0, pending, messages: msgs.sort((x, y) => x.ts - y.ts) });
     }
 
@@ -366,7 +370,7 @@ export default async (req) => {
     }
     if (R === "GET me/export") {
       if (!me) return E(401, "נדרשת התחברות");
-      const projects = []; for (const k of await st.list("p/" + me.uid + "/")) { const v = await st.get(k); if (v) projects.push(v); }
+      const projects = []; for (const { v } of await st.scan("p/" + me.uid + "/")) { if (v) projects.push(v); }
       const downloads = []; for (const id of me.dls || []) { const d = await st.get("d/" + id); if (d) downloads.push({ ts: d.ts, tool: d.tool, country: d.country, feedback: d.fb }); }
       const { salt, hash, ...safe } = me;
       return J({ account: safe, projects, downloads }, 200, { "content-disposition": 'attachment; filename="my-data.json"' });
@@ -611,7 +615,7 @@ export default async (req) => {
         const feat = (await listAll("gl/", 300)).filter((g) => g.status === "approved" && g.featured && g.featured > Date.now()).sort((a, b) => b.featured - a.featured).slice(0, 6);
         for (const g of feat) { gs.push(g); seen.add(g.id); }
       }
-      for (const k of keys.slice(off, off + 36)) { const g = await st.get("gl/" + (await st.get(k))); if (g && g.status === "approved" && !seen.has(g.id)) gs.push(g); }
+      { const ids = await st.getMany(keys.slice(off, off + 36)), docs = await st.getMany(ids.map((id) => "gl/" + id)); for (const g of docs) if (g && g.status === "approved" && !seen.has(g.id)) gs.push(g); }
       return J({ items: await withBadges(gs), more: keys.length > off + 36 }, 200, { "cache-control": "public, max-age=60" });
     }
     if (route === "gallery/top" && m === "GET") {
@@ -672,8 +676,8 @@ export default async (req) => {
       if (!me) return E(401, "נדרשת התחברות");
       const id = route.split("/")[1];
       if (m === "GET" && !id) {
-        const keys = (await st.list("p/" + me.uid + "/")).slice(-30).reverse(), out = [];
-        for (const k of keys) { const v = await st.get(k); if (v) out.push({ id: v.id, name: v.name, tool: v.tool, ts: v.ts, thumb: v.thumb }); }
+        const out = [];
+        for (const { v } of await st.scan("p/" + me.uid + "/", { desc: true, limit: 30 })) { if (v) out.push({ id: v.id, name: v.name, tool: v.tool, ts: v.ts, thumb: v.thumb }); }
         return J({ items: out });
       }
       if (m === "GET" && id) { const v = await st.get("p/" + me.uid + "/" + clean(id, 40)); return v ? J(v) : E(404, "לא נמצא"); }
@@ -816,6 +820,18 @@ export default async (req) => {
         else await awardBadge(st, u, b.badge);
         await audit(me, b.on === false ? "badge:remove" : "badge:give", u.email, b.badge);
         return J({ ok: true, badges: u.badges || [] });
+      }
+      if (R === "GET admin/maint") return J({ ctl: (await st.get("maintctl")) || null });
+      if (R === "PUT admin/maint") {
+        const b = await body(req, 600), mode = String(b.mode || ""), msg = clean(b.msg, 200), now = Date.now();
+        let ctl = null;
+        if (mode === "on") ctl = { on: true, warn: false, msg, since: now };
+        else if (mode === "warn") { const mins = Math.min(120, Math.max(1, +b.minutes || 5)); ctl = { on: false, warn: true, at: now + mins * 60e3, msg, since: now }; }
+        else if (mode === "off") ctl = { on: false, warn: false, msg: "", since: "" };
+        else if (mode !== "clear") return E(400, "מצב לא תקין");
+        if (ctl) await st.setJSON("maintctl", ctl); else await st.delete("maintctl");
+        await audit(me, "maint:" + mode, "", msg);
+        return J({ ok: true, ctl });
       }
       if (R === "GET admin/leaderboard") {
         const mk = clean(url.searchParams.get("month"), 7) || monthKey();

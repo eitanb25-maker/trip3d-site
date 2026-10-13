@@ -20,6 +20,9 @@ export async function store() {
       setJSON: async (k, v) => { m.set(k, JSON.stringify(v)); },
       delete: async (k) => { m.delete(k); },
       list: async (p) => [...m.keys()].filter((k) => k.startsWith(p)).sort(),
+      scan: async (p, o = {}) => { let ks = [...m.keys()].filter((k) => k.startsWith(p)).sort(); if (o.desc) ks.reverse(); if (o.limit) ks = ks.slice(0, o.limit); return ks.map((k) => ({ k, v: JSON.parse(m.get(k)) })); },
+      getMany: async (ks) => ks.map((k) => (m.has(k) ? JSON.parse(m.get(k)) : null)),
+      deleteMany: async (ks) => { ks.forEach((k) => m.delete(k)); },
     };
     return _mem;
   }
@@ -35,6 +38,13 @@ export async function store() {
       const r = await s.list({ prefix: p });
       return (r.blobs || []).map((b) => b.key).sort();
     },
+    scan: async (p, o = {}) => {
+      const r = await s.list({ prefix: p });
+      let ks = (r.blobs || []).map((b) => b.key).sort(); if (o.desc) ks.reverse(); if (o.limit) ks = ks.slice(0, o.limit);
+      return Promise.all(ks.map(async (k) => ({ k, v: await s.get(k, { type: "json" }) })));
+    },
+    getMany: (ks) => Promise.all(ks.map((k) => s.get(k, { type: "json" }))),
+    deleteMany: async (ks) => { await Promise.all(ks.map((k) => s.delete(k))); },
   };
 }
 
@@ -46,6 +56,10 @@ function d1store(db) {
   const rawGet = async (k) => { await init(); return db.prepare("SELECT v FROM kv WHERE k = ?1").bind(k).first("v"); };
   const rawSet = async (k, v) => { await init(); await db.prepare("INSERT INTO kv (k, v) VALUES (?1, ?2) ON CONFLICT(k) DO UPDATE SET v = excluded.v").bind(k, v).run(); };
   const rawDel = async (k) => { await init(); await db.prepare("DELETE FROM kv WHERE k = ?1").bind(k).run(); };
+  const parseV = async (k, v) => {
+    if (v.startsWith("\u0001chunks:")) { const n = +v.slice(8); let t = ""; for (let i = 0; i < n; i++) t += (await rawGet(CK(k, i))) || ""; return JSON.parse(t); }
+    return JSON.parse(v);
+  };
   return {
     get: async (k) => {
       const v = await rawGet(k); if (v == null) return null;
@@ -69,6 +83,27 @@ function d1store(db) {
       await init();
       const r = await db.prepare("SELECT k FROM kv WHERE k >= ?1 AND k < ?2 AND substr(k, 1, 1) != char(1) ORDER BY k").bind(p, p + "\uffff").all();
       return (r.results || []).map((x) => x.k);
+    },
+    // קריאה מרוכזת: שאילתה אחת במקום get לכל מפתח (ל-D1 החינמי יש תקרה של שאילתות לבקשה)
+    scan: async (p, o = {}) => {
+      await init();
+      const q = "SELECT k, v FROM kv WHERE k >= ?1 AND k < ?2 AND substr(k, 1, 1) != char(1) ORDER BY k" + (o.desc ? " DESC" : "") + (o.limit ? " LIMIT " + (o.limit | 0) : "");
+      const r = await db.prepare(q).bind(p, p + "\uffff").all();
+      return Promise.all((r.results || []).map(async (x) => ({ k: x.k, v: await parseV(x.k, x.v) })));
+    },
+    deleteMany: async (ks) => { // רק לערכים קטנים (בלי פיצול): מחיקה מרוכזת
+      await init();
+      for (let i = 0; i < ks.length; i += 90) { const part = ks.slice(i, i + 90); await db.prepare("DELETE FROM kv WHERE k IN (" + part.map((_, j) => "?" + (j + 1)).join(",") + ")").bind(...part).run(); }
+    },
+    getMany: async (ks) => {
+      await init();
+      const out = new Map();
+      for (let i = 0; i < ks.length; i += 90) {
+        const part = ks.slice(i, i + 90);
+        const r = await db.prepare("SELECT k, v FROM kv WHERE k IN (" + part.map((_, j) => "?" + (j + 1)).join(",") + ")").bind(...part).all();
+        for (const x of r.results || []) out.set(x.k, x.v);
+      }
+      return Promise.all(ks.map(async (k) => (out.has(k) ? parseV(k, out.get(k)) : null)));
     },
   };
 }
@@ -123,13 +158,8 @@ export async function notify(text, file) {
 
 export async function rangeStats(days) {
   const st = await store();
-  const keys = (await st.list("s/")).slice(-days);
-  const series = [];
-  for (const k of keys) {
-    const v = (await st.get(k)) || {};
-    series.push({ d: k.slice(2), ...v });
-  }
-  return series;
+  const rows = (await st.scan("s/", { desc: true, limit: days })).reverse();
+  return rows.map(({ k, v }) => ({ d: k.slice(2), ...(v || {}) }));
 }
 
 export function sumGroup(series, g) {
@@ -223,8 +253,8 @@ export async function makeBackup() {
   const st = await store();
   const out = { v: 1, ts: Date.now(), settings: await st.get("settings"), items: {} };
   let size = 0;
-  for (const p of BK_PREFIXES) for (const k of await st.list(p)) {
-    const v = await st.get(k); if (v === null || v === undefined) continue;
+  for (const p of BK_PREFIXES) for (const { k, v } of await st.scan(p)) {
+    if (v === null || v === undefined) continue;
     const n = JSON.stringify(v).length;
     if (["p/", "gt/", "gp/"].includes(p) && size > 12e6) continue;
     size += n; out.items[k] = v;
@@ -374,4 +404,18 @@ export async function awardMonthly(month, force) {
   }
   await st.setJSON("lbaw/" + month, { ts: Date.now(), winners: out });
   return { done: true, winners: out };
+}
+
+// ---------- ניקוי נתונים ישנים (רץ מדי יום) ----------
+export async function cleanupOld() {
+  const st = await store(), now = Date.now(), r = { rl: 0, tokens: 0, history: 0, ai: 0 }, CAP = 360;
+  const take = (arr, key) => { const part = arr.slice(0, Math.max(0, CAP - Object.values(r).reduce((a, b) => a + b, 0))); r[key] = part.length; return part; };
+  const rl = (await st.scan("rl/")).filter((x) => x.v && now - (x.v.ts || 0) > 3 * 864e5).map((x) => x.k);
+  const tk = (await st.scan("t/")).filter((x) => x.v && x.v.exp && x.v.exp < now - 864e5).map((x) => x.k);
+  const cut = now - 90 * 864e5;
+  const hs = (await st.list("h/")).filter((k) => { const t = +k.slice(2).split("-")[0]; return t && t < cut; });
+  const aiCut = dayKey(cut), ai = (await st.list("ai/")).filter((k) => k.slice(3) < aiCut);
+  const del = [...take(rl, "rl"), ...take(tk, "tokens"), ...take(hs, "history"), ...take(ai, "ai")];
+  if (del.length) await st.deleteMany(del);
+  return r;
 }

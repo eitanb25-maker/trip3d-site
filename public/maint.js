@@ -3,6 +3,7 @@
    {"on":false,"warn":true,"at":"2026-10-13T08:30:00+03:00","msg":"..."}
                                                   → התראה מוקדמת עד השעה at, ואז תחזוקה (עד 12 שעות, כרשת ביטחון)
    מי שנכנס/מרענן בזמן תחזוקה רואה מסך מלא. מי שכבר באמצע עבודה רואה רק פס, בלי לאבד את מה שעשה.
+   אפשר גם לשלוט מלוח הבקרה (סקירה ← תחזוקה): ההגדרה שם גוברת על הקובץ. ‏"נקה" מחזיר את השליטה לקובץ.
    לוח הבקרה מציג תמיד רק פס עליון. כניסה לבדיקה בלי המסך: ?nomaint=1 */
 (function () {
   var admin = /\/admin\.html$/.test(location.pathname), first = null, overlay = null, bar = null, barKind = "", dismissed = "", last = null, tmr = null;
@@ -62,7 +63,11 @@
     }
   }
   function check() {
-    fetch("/maintenance.json?t=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (m) { last = m; render(); }).catch(function () {});
+    // קודם מה שהוגדר מלוח הבקרה (/api/maint); אם לא הוגדר שם כלום – הקובץ maintenance.json
+    fetch("/api/maint", { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }).then(function (c) {
+      if (c && !c._none) { last = c; render(); return; }
+      return fetch("/maintenance.json?t=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (m) { last = m; render(); });
+    }).catch(function () {});
   }
   window.__maintCheck = check;
   function start() { check(); setInterval(check, 60000); tmr = setInterval(function () { if (last && barKind === "warn") render(); }, 15000); }

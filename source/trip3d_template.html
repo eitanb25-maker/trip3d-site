@@ -655,6 +655,18 @@ function printCheck(P,sc){const out={thin:{},tiny:{},flt:{},skipped:false},comps
  comps.forEach(c=>{const dx=(c.b[3]-c.b[0])*sc,dy=(c.b[4]-c.b[1])*sc,dz=(c.b[5]-c.b[2])*sc,mn=Math.min(dx,dy),mx=Math.max(dx,dy);
   if(mx<1.5&&dz<1.5)add(out.tiny,c.n);else if((mn<.6&&mx>=1.5)||dz<.15)add(out.thin,c.n)});
  if(comps.length<=1500)comps.forEach(c=>{const z0=c.b[2]*sc;if(z0<=gz+.15)return;const ok=comps.some(o=>o!==c&&o.b[5]*sc>=z0-.15&&o.b[2]*sc<z0-.05&&o.b[0]<c.b[3]&&o.b[3]>c.b[0]&&o.b[1]<c.b[4]&&o.b[4]>c.b[1]);if(!ok)add(out.flt,c.n)});
+ if(gz<1e8){let ov=0,bd=0;const U=[],D=[];let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  P.forEach(p=>p.geoms.forEach(ge=>{const g=ge.index?ge.toNonIndexed():ge,a=g.attributes.position.array;for(let i=0;i<a.length;i+=9){const ux=a[i+3]-a[i],uy=a[i+4]-a[i+1],uz=a[i+5]-a[i+2],vx=a[i+6]-a[i],vy=a[i+7]-a[i+1],vz=a[i+8]-a[i+2],cx=uy*vz-uz*vy,cy=uz*vx-ux*vz,cz=ux*vy-uy*vx,l=Math.hypot(cx,cy,cz);if(l<1e-9)continue;const nz=cz/l,ar=l/2*sc*sc,zl=Math.min(a[i+2],a[i+5],a[i+8])*sc,zh=Math.max(a[i+2],a[i+5],a[i+8])*sc;
+   if(nz<-.97&&zh<=gz+.15){bd+=ar;continue}
+   if(nz>.3){U.push(i,a);}else if(nz<-.707&&zl>gz+.2)D.push([a[i]*sc,a[i+1]*sc,(a[i+3]*sc),(a[i+4]*sc),(a[i+6]*sc),(a[i+7]*sc),zl,ar]);
+   for(let k=0;k<9;k+=3){const X=a[i+k]*sc,Y=a[i+k+1]*sc;if(X<x0)x0=X;if(X>x1)x1=X;if(Y<y0)y0=Y;if(Y>y1)y1=Y}}}));
+  if(D.length){const cs=Math.max(.5,Math.max(x1-x0,y1-y0)/220),gw=Math.ceil((x1-x0)/cs)+2,H=new Map();
+   for(let t=0;t<U.length;t+=2){const i=U[t],a=U[t+1],px=[a[i]*sc,a[i+3]*sc,a[i+6]*sc],py=[a[i+1]*sc,a[i+4]*sc,a[i+7]*sc],pz=[a[i+2]*sc,a[i+5]*sc,a[i+8]*sc],den=(py[1]-py[2])*(px[0]-px[2])+(px[2]-px[1])*(py[0]-py[2]);if(Math.abs(den)<1e-9)continue;
+    const ix0=Math.max(0,Math.floor((Math.min(...px)-x0)/cs)),ix1=Math.floor((Math.max(...px)-x0)/cs),iy0=Math.max(0,Math.floor((Math.min(...py)-y0)/cs)),iy1=Math.floor((Math.max(...py)-y0)/cs);
+    for(let iy=iy0;iy<=iy1;iy++)for(let ix=ix0;ix<=ix1;ix++){const X=x0+(ix+.5)*cs,Y=y0+(iy+.5)*cs,w0=((py[1]-py[2])*(X-px[2])+(px[2]-px[1])*(Y-py[2]))/den,w1=((py[2]-py[0])*(X-px[2])+(px[0]-px[2])*(Y-py[2]))/den,w2=1-w0-w1;
+     if(w0<-.02||w1<-.02||w2<-.02)continue;const z=Math.round((w0*pz[0]+w1*pz[1]+w2*pz[2])*10)/10,k=iy*gw+ix;let L=H.get(k);if(!L){L=[];H.set(k,L)}if(!L.includes(z))L.push(z)}}
+   D.forEach(d=>{const X=(d[0]+d[2]+d[4])/3,Y=(d[1]+d[3]+d[5])/3,k=Math.floor((Y-y0)/cs)*gw+Math.floor((X-x0)/cs),L=H.get(k);if(!(L&&L.some(z=>z<=d[6]+.1&&z>=d[6]-.6)))ov+=d[7]})}
+  out.ovh=ov;out.bed=bd}
  return out}
 async function prepareFiles(){await new Promise(r=>{setBusy(true,L_("מכין קבצים ובודק את המודל…","Preparing files and checking the model…"));setTimeout(r,40)});const P=build(),z=scaleFor(P),sc=z.sc,n=NC(),all=[].concat(...P.map(p=>p.geoms)),G={},nm=x=>(LANG=="en"?NME:NMH)[x]||x;
   const files=[{name:"all_in_one.stl",data:stl(all,sc),desc:L_("כל החלקים בקובץ אחד – להדפסה בצבע אחד","All parts in one file – for single-color printing")}];
@@ -668,6 +680,8 @@ function pcHtml(pc){if(!pc)return"";if(pc.skipped)return`<div class="chk-box" st
  if(cnt(pc.thin))L.push(L_("פרטים דקים מ-0.6 מ״מ ("+cnt(pc.thin)+"): "+nm(pc.thin)+". ייתכן שלא יודפסו בדיוק. עזרו: מיטה גדולה יותר, שם קצר יותר, או פחות פרטים.","Details thinner than 0.6 mm ("+cnt(pc.thin)+"): "+nm(pc.thin)+". They may not print accurately. Try a larger bed, a shorter name or fewer details."));
  if(cnt(pc.tiny))L.push(L_("פרטים זעירים ("+cnt(pc.tiny)+"): "+nm(pc.tiny)+". עלולים להתנתק מהמשטח בזמן ההדפסה. הוסיפו Brim.","Tiny details ("+cnt(pc.tiny)+"): "+nm(pc.tiny)+". They may detach during printing. Add a brim."));
  if(cnt(pc.flt))L.push(L_("חלקים שנראים צפים בלי משהו מתחתם ("+cnt(pc.flt)+"): "+nm(pc.flt)+". הוסיפו תמיכות או בדקו בתצוגת השכבות.","Parts that look like they float with nothing below ("+cnt(pc.flt)+"): "+nm(pc.flt)+". Add supports or check the layer preview."));
+ if(pc.ovh>300)L.push(L_("שטחים תלויים באוויר בשיפוע חד (כ-"+(pc.ovh/100).toFixed(1)+" סמ״ר): ייתכן שיידרשו תמיכות, או שהצד התחתון יצא מחוספס.","Steep overhangs (about "+(pc.ovh/100).toFixed(1)+" cm²): supports may be needed, or the underside may print rough."));
+ if(pc.bed!=null&&pc.bed<150)L.push(L_("משטח המגע עם המיטה קטן (כ-"+(pc.bed/100).toFixed(1)+" סמ״ר): המודל עלול להתנתק באמצע ההדפסה. הוסיפו Brim.","Small contact area with the bed (about "+(pc.bed/100).toFixed(1)+" cm²): the model may detach mid-print. Add a brim."));
  return L.length?`<div class="chk-box" style="margin:8px 0;font-size:13px;color:#b45309">⚠️ ${L_("בדיקת הדפסתיות (משוערת):","Printability check (approximate):")}<ul style="margin:4px 0 0;padding-inline-start:18px">${L.map(x=>"<li>"+x+"</li>").join("")}</ul></div>`:`<div class="chk-box" style="margin:8px 0;font-size:13px;color:#166534">${L_("✅ בדיקת הדפסתיות: לא נמצאו פרטים דקים מדי או חלקים צפים.","✅ Printability check: no too-thin details or floating parts found.")}</div>`}
 function closeDlg(){$("dlg").style.display="none";PEND=null}
 async function myId(){try{const u=await claude.use("user");return u?await u.id():null}catch(e){return null}}

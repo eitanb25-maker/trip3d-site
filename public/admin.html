@@ -97,10 +97,18 @@ const THEMES=[["auto","🌓 אוטומטי"],["light","☀️ בהיר"],["dark"
 function applyTheme(){let t="auto";try{t=localStorage.adm_theme||"auto"}catch(e){}if(t=="auto")document.documentElement.removeAttribute("data-theme");else document.documentElement.setAttribute("data-theme",t);const b=$("thm");if(b)b.textContent=(THEMES.find(x=>x[0]==t)||THEMES[0])[1]}
 applyTheme();document.addEventListener("DOMContentLoaded",()=>{applyTheme();$("thm").onclick=()=>{let t="auto";try{t=localStorage.adm_theme||"auto"}catch(e){}const n=THEMES[(THEMES.findIndex(x=>x[0]==t)+1)%3][0];try{localStorage.adm_theme=n}catch(e){}applyTheme()}});
 // כרטיס "מצב המערכת" בראש הסקירה
-const _vO=vOverview;vOverview=async function(){await _vO();let hl=null;try{hl=await api("GET","/health")}catch(e){}if(!hl)return;
+const _vO=vOverview;vOverview=async function(){await _vO();let hl=null;try{hl=await api("GET","/health")}catch(e){}hl=hl||{};
  const C=(ok,l,na)=>h("span",{cls:"chip "+(na?"na":ok?"ok":""),title:ok?"פעיל":na?"לא מוגדר (לא חובה)":"חסר"},h("i"),l);
  const card=h("div",{cls:"card"},h("h2",{text:"מצב המערכת"}),h("div",{cls:"chips"},C(hl.secret,"מפתח התחברות"),C(hl.adminEmail&&hl.setupCode,"הגדרת מנהל"),C(hl.mail,"שליחת מיילים",!hl.mail),C(hl.ai,"עוזר AI",!hl.ai),C(hl.google,"כניסה עם Google",!hl.google),C(hl.turnstile,"Turnstile",!hl.turnstile),C(hl.telegram,"טלגרם",!hl.telegram),C(hl.discord,"דיסקורד",!hl.discord),C(hl.siteUrl,"כתובת האתר",!hl.siteUrl)),h("p",{cls:"muted"},"נקודה אפורה = לא מוגדר ולא חובה. ",h("a",{href:"/health.html",text:"בדיקה מלאה",style:"color:var(--ac)"})));
- const m=$("main");m.insertBefore(card,m.firstChild)};
+
+ const mt=h("div",{cls:"card"},h("h2",{text:"🛠 מצב תחזוקה"}),h("p",{cls:"muted",text:"טוען…"}));
+ const drawMt=async()=>{let c=null;try{c=(await api("GET","/admin/maint")).ctl}catch(e){}
+  const now=Date.now(),st=!c?"לא הוגדר מכאן (נשלט מהקובץ maintenance.json)":c.on?"🔴 תחזוקה פעילה":(c.warn&&c.at&&c.at>now)?"🟡 התראה מוקדמת: תחזוקה תתחיל ב-"+new Date(c.at).toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"}):(c.warn&&c.at&&c.at+12*36e5>now)?"🔴 תחזוקה פעילה (אחרי ההתראה)":"🟢 כבוי",
+  msg=h("input",{placeholder:"הודעה למבקרים (לא חובה), למשל: עדכון גרסה",maxlength:200,value:c&&c.msg||"",style:"flex:1;min-width:200px"}),mins=h("select",{},[2,5,10,15,30].map(x=>h("option",{value:x,selected:x==5,text:x+" דקות"}))),
+  go=async(mode)=>{try{await api("PUT","/admin/maint",{mode,msg:msg.value,minutes:+mins.value});drawMt()}catch(e){alert(e.message)}};
+  mt.replaceChildren(h("h2",{text:"🛠 מצב תחזוקה"}),h("p",{},h("b",{text:st})),h("div",{cls:"row"},msg),h("div",{cls:"row"},h("span",{cls:"muted",text:"התראה מראש:"}),mins,h("button",{text:"שלח התראה מוקדמת",disabled:RO,on:{click:()=>go("warn")}}),h("button",{cls:"bad",text:"הדלק תחזוקה עכשיו",disabled:RO,on:{click:()=>go("on")}}),h("button",{cls:"pri",text:"כבה",disabled:RO,on:{click:()=>go("off")}}),h("button",{text:"נקה (חזרה לקובץ)",disabled:RO,on:{click:()=>go("clear")}})),
+  h("p",{cls:"muted",text:"מי שכבר באתר רואה פס אזהרה ולא נחסם; מי שנכנס אחרי ההדלקה רואה מסך תחזוקה. לוח הבקרה לא נחסם לעולם."}))};drawMt();
+ const m=$("main");m.insertBefore(mt,m.firstChild);m.insertBefore(card,m.firstChild)};
 
 function render(){buildNav();try{localStorage.adm_tab=TAB}catch(e){}$("main").replaceChildren(h("p",{cls:"muted",text:"טוען…"}));({"סקירה":vOverview,"משתמשים":vUsers,"משתמש":vUser,"הודעות":vMessages,"אבטחה":vSecurity,"יומן פעולות":vAudit,"גיבויים":vBackups,"הזמנות":vInvites,"דיווחים":vReports,"גלריה":vGallery,"חסימות":vBlocks,"הטבות":vPerks,"משוב":vFeedback,"הגדרות":vSettings,"גרסאות":vChangelog,"יצוא":vExport})[TAB]().catch(e=>$("main").replaceChildren(h("p",{text:"שגיאה: "+e.message})))}
 // ---------- גרפים ----------
