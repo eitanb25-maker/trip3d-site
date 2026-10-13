@@ -1230,5 +1230,7 @@ function addPresets(){try{if(!MULTI||!$("chips")||$("presets"))return;const d=do
   COLLS.forEach(([t,l])=>{const ns=l.map(n=>findC(n)).filter(Boolean);if(ns.length<2)return;const b=document.createElement("button");b.type="button";b.className="chip";b.style.cssText="cursor:pointer;border:1px solid var(--bd);background:var(--card);color:inherit;font:inherit";b.textContent=t;b.onclick=()=>{W.ctys=ns.slice(0,6);renderChips();const e=$("werr");if(e)e.textContent=""};d.append(b)});
   if(d.children.length>1)$("chips").after(d)}catch(e){}}
 try{const _wr=wr;wr=function(){const r=_wr.apply(this,arguments);addPresets();return r}}catch(e){}
+// ---------- קישורים: איך זה עובד + סטטוס ----------
+try{const home=document.querySelector("#home .box");if(home&&!$("lnks")){const p=document.createElement("p");p.id="lnks";p.className="hint";p.style.textAlign="center";p.innerHTML='<a href="/perks.html">❓ '+L_("איך מרוויחים עוד הורדות","How to earn more downloads")+'</a> · <a href="/status.html">🟢 '+L_("סטטוס האתר","Site status")+'</a>';home.append(p)}}catch(e){}
 
 </script></body></html>

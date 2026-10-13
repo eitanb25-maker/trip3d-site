@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>איך זה עובד</title>
+<style>
+:root{--bg:#fbf7f1;--tx:#1d1d1b;--mu:#6b6459;--card:#fff;--bd:#e5ddd0;--ac:#c2410c}
+@media(prefers-color-scheme:dark){:root{--bg:#171716;--tx:#eeede8;--mu:#a8a398;--card:#21201e;--bd:#38352f;--ac:#fb923c}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.7 system-ui,"Segoe UI",Arial,sans-serif}
+main{max-width:820px;margin:auto;padding:22px 18px 60px}header{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+h1{font-size:28px;margin:8px 0}h2{font-size:19px;margin:0 0 6px}a{color:var(--ac)}.mu{color:var(--mu)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:18px 0}
+.c{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px 16px}.c p{margin:4px 0 0;color:var(--mu);font-size:14.5px}
+.live{background:var(--card);border:2px solid var(--ac);border-radius:14px;padding:12px 16px;margin:14px 0;display:none}
+button,.btn{font:inherit;padding:8px 16px;border-radius:99px;border:1px solid var(--bd);background:var(--card);color:var(--tx);cursor:pointer;text-decoration:none;display:inline-block}.btn.pri{background:var(--ac);color:#fff;border-color:var(--ac)}
+:focus-visible{outline:3px solid #f59e0b;outline-offset:2px}
+</style></head><body><main>
+<header><h1 data-l="he">🎁 איך זה עובד</h1><h1 data-l="en">🎁 How it works</h1><div><a class="btn pri" href="/"><span data-l="he">← ליצירה</span><span data-l="en">← Create</span></a> <button id="lb" type="button">English</button></div></header>
+<p class="mu" data-l="he">בוחרים מדינה, מסמנים את המקומות מהטיול, ומורידים קבצי הדפסה תלת-ממדית. ככה מרוויחים עוד הורדות:</p>
+<p class="mu" data-l="en">Pick a country, mark your trip's places and download 3D-print files. Here's how to earn more downloads:</p>
+<div class="live" id="live"></div>
+<div class="grid" id="grid"></div>
+<p class="mu" data-l="he">כל ההטבות דורשות חשבון. כשהאתר מוגדר לשליחת מיילים צריך גם לאמת את כתובת המייל. חשבונות מרובים מאותה כתובת לא מקבלים הטבות.</p>
+<p class="mu" data-l="en">All perks need an account. When email sending is on, you also need to verify your email. Many accounts from one address don't receive perks.</p>
+<p><a href="/gallery.html"><span data-l="he">🖼️ לגלריית הקהילה</span><span data-l="en">🖼️ Community gallery</span></a> · <a href="/status.html"><span data-l="he">🟢 סטטוס האתר</span><span data-l="en">🟢 Site status</span></a></p>
+</main>
+<script>
+const $=id=>document.getElementById(id);let L="he";try{L=localStorage.getItem("trip3d_l")==="en"?"en":"he"}catch(e){}
+const T=[
+["🎟️","קוד קופון","Promo code","יש לכם קוד? מממשים ב'החשבון שלי'. למשל TRIP5 = 5 הורדות.","Got a code? Redeem it in My account. E.g. TRIP5 = 5 downloads."],
+["🎁","מתנת פתיחה","Welcome gift","על ההורדה הראשונה מקבלים הורדות נוספות במתנה.","Your first download comes with bonus downloads."],
+["🔥","רצף יצירה","Creation streak","יוצרים ימים ברצף: בונוס ביום 3, 7 ו-30 (ותג 🔥).","Create on consecutive days: bonus at day 3, 7 and 30 (and a 🔥 badge)."],
+["🎯","אתגר שבועי","Weekly challenge","מזכרות מ-3 מדינות שונות בשבוע = הורדות ותג 🎯.","Souvenirs from 3 different countries in a week = downloads and a 🎯 badge."],
+["🧭","מדינת השבוע","Country of the week","יוצרים מזכרת מהמדינה שנבחרה: בונוס ותג 🧭.","Make a souvenir of the chosen country: bonus and a 🧭 badge."],
+["⚡","בונוס לכולם","Bonus for everyone","בזמן מבצע ('שעה שמחה', סוף שבוע, יעד קהילתי) כולם מקבלים הורדות נוספות ליום.","During offers (happy hour, weekends, community goal) everyone gets extra downloads a day."],
+["🤝","הזמנת חברים","Invite friends","חבר שנרשם ומוריד = הורדות נוספות ליום. מלך ההזמנות החודשי מקבל פרס ותג 👑.","A friend who signs up and downloads = more downloads a day. The monthly top inviter wins a prize and a 👑 badge."],
+["🖼️","גלריה","Gallery","מפרסמים יצירה ומקבלים הורדות כשהיא מאושרת. לייקים ותגובות מקדמים אתכם בדירוג החודשי.","Publish a creation and earn downloads when it's approved. Likes and comments move you up the monthly ranking."],
+["🌟","יצירת השבוע","Creation of the week","היצירה עם הכי הרבה לייקים מוצגת בדף הבית ומקבלת פרס ותג 🌟.","The most-liked creation is shown on the home page and wins a prize and a 🌟 badge."],
+["💡","הצעות ודיווחים","Suggestions and reports","רעיון או באג עוזרים לנו: על משוב מועיל מקבלים 'תודה' + הורדות ותג 💡.","An idea or bug helps us: useful feedback earns a thank-you, downloads and a 💡 badge."],
+["🏅","תגי הישג","Achievement badges","5 מדינות 🗺️, 10 הורדות 🏅, כל הכלים 🛠️ ועוד. מופיעים ליד השם בגלריה.","5 countries 🗺️, 10 downloads 🏅, all tools 🛠️ and more. Shown next to your name in the gallery."],
+["🎂","יום שנה","Anniversary","בכל שנה ביום ההצטרפות מחכה מתנה.","A gift waits for you every year on your join date."],
+["📨","מתנה לחבר","Gift a friend","שולחים הורדה לחבר רשום מתוך 'החשבון שלי'.","Send a download to a registered friend from My account."],
+["🏛️","היכל התהילה","Hall of Fame","שלוש המדינות הכי משומשות בשבוע מוצגות באתר שבוע שלם.","The three most-used countries of the week are shown on the site for a whole week."]];
+function draw(){document.documentElement.lang=L;document.documentElement.dir=L=="en"?"ltr":"rtl";document.querySelectorAll("[data-l]").forEach(e=>{e.style.display=e.dataset.l==L?(e.tagName=="SPAN"?"inline":""):"none"});$("lb").textContent=L=="en"?"עברית":"English";
+ $("grid").replaceChildren(...T.map(t=>{const d=document.createElement("div");d.className="c";const h=document.createElement("h2");h.textContent=t[0]+" "+(L=="en"?t[2]:t[1]);const p=document.createElement("p");p.textContent=L=="en"?t[4]:t[3];d.append(h,p);return d}));drawLive()}
+let C=null;function drawLive(){const e=$("live");if(!C){e.style.display="none";return}const rows=[];
+ if(C.bonus)rows.push("⚡ "+C.bonus.label+" +"+C.bonus.n+(L=="en"?" downloads a day for everyone":" הורדות ליום לכולם"));
+ if(C.goal)rows.push("🎯 "+(L=="en"?"Community goal: ":"יעד קהילתי: ")+C.goal.n+" / "+C.goal.target);
+ if(C.cow)rows.push("🧭 "+(L=="en"?"Country of the week: ":"מדינת השבוע: ")+C.cow.country);
+ if(C.hof&&C.hof.top&&C.hof.top.length)rows.push("🏛️ "+C.hof.top.map((x,i)=>["🥇","🥈","🥉"][i]+" "+x.country).join("  "));
+ if(C.pick)rows.push("🌟 "+C.pick.name);e.style.display=rows.length?"block":"none";e.replaceChildren(...rows.map(t=>{const d=document.createElement("div");d.textContent=t;return d}))}
+$("lb").onclick=()=>{L=L=="en"?"he":"en";try{localStorage.setItem("trip3d_l",L)}catch(e){}draw()};
+draw();fetch("/api/config").then(r=>r.json()).then(c=>{C=c;drawLive()}).catch(()=>{});
+</script></body></html>
