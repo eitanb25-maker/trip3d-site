@@ -507,6 +507,7 @@ const inner = async (req) => {
     if (R === "POST auth/reset") {
       const b = await body(req, 2000), pw = String(b.password || "");
       if (pw.length < 8 || pw.length > 100) return E(400, "הסיסמה צריכה להיות באורך 8 תווים לפחות");
+      if (await rateHit("rs:" + ipHash(req), 20, 3600e3)) return E(429, "יותר מדי ניסיונות. נסו שוב מאוחר יותר");
       const t = await useToken(b.token, "reset");
       if (!t) return E(400, "הקישור לא תקף או שפג תוקפו");
       const u = await st.get("u/" + t.uid);
@@ -564,6 +565,7 @@ const inner = async (req) => {
     if (R === "POST auth/delete") {
       if (!me) return E(401, "נדרשת התחברות");
       const b = await body(req, 2000);
+      if (await rateHit("del:" + me.uid, 10, 3600e3)) return E(429, "יותר מדי ניסיונות. נסו שוב מאוחר יותר");
       if (me.hash) { if (!(await checkPw(String(b.password || ""), me))) return E(401, "סיסמה שגויה"); }
       else if (String(b.confirm || "").toLowerCase() !== me.email) return E(400, "יש להקליד את כתובת המייל לאישור");
       if (me.role === "admin") { const all = await listAll("u/", 500, false); if (all.filter((x) => x.role === "admin" && !x.blocked).length < 2) return E(400, "אי אפשר למחוק את המנהל האחרון"); }
@@ -592,6 +594,7 @@ const inner = async (req) => {
     if (R === "POST me/2fa") {
       if (!me || me.role !== "admin") return E(403, "אימות דו-שלבי זמין למנהל בלבד");
       const b = await body(req, 400), act = clean(b.action, 10);
+      if (await rateHit("2fa:" + me.uid, 20, 3600e3)) return E(429, "יותר מדי ניסיונות. נסו שוב מאוחר יותר");
       if (act === "setup") {
         if (me.totp) return E(400, "כבר מופעל");
         me.totpPending = totpSecret(); await st.setJSON("u/" + me.uid, me);
@@ -659,6 +662,7 @@ const inner = async (req) => {
     if (R === "POST auth/claim-admin") {
       if (!me) return E(401, "נדרשת התחברות");
       const b = await body(req, 1000);
+      if (await rateHit("ca:" + me.uid, 8, 3600e3)) return E(429, "יותר מדי ניסיונות. נסו שוב מאוחר יותר");
       if (!SETUP() || !ADMIN_MAIL()) return E(400, "לא הוגדרו ADMIN_EMAIL ו-ADMIN_SETUP_CODE בשרת");
       if (me.email !== ADMIN_MAIL() || String(b.setup || "").trim() !== SETUP()) { await secEvent("claim_admin_failed", me.email, S); return E(403, "המייל או קוד ההקמה לא תואמים להגדרות השרת"); }
       me.role = "admin"; me.verified = true; await st.setJSON("u/" + me.uid, me);
