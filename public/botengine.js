@@ -24,7 +24,7 @@
   ["לייק,תגובה,לעקוב,עוקב,like,comment,follow","בגלריה אפשר ללחוץ ♥, לכתוב תגובה קצרה (בלי קישורים) ולעקוב אחרי יוצרים. צריך להיות מחוברים.","In the gallery you can press ♥, write a short comment (no links) and follow creators. You need to be signed in.","","/gallery.html|🖼️ לגלריה|🖼️ Open gallery"],
   ["להזמין,הזמנה,חבר,invite,friend,referral","'החשבון שלי' ← 'הזמינו חברים': קישור אישי. על כל חבר שנרשם ומוריד תקבלו הורדות נוספות ליום.","My account → 'Invite friends': a personal link. For every friend who signs up and downloads you get more downloads a day.","acct",""],
   ["מתנה,לשלוח הורדה,gift","'החשבון שלי' ← שדה 'מייל של חבר רשום' ← 'מתנה'. החבר צריך להיות רשום באתר.","My account → the 'friend's email' field → Gift. Your friend must be registered.","acct",""],
-  ["באג,תקלה,בעיה,לא עובד,דיווח,bug,problem,error,broken,not working","לחצו '🐞 דיווח על בעיה' בפינה. הדיווח נשלח למנהל יחד עם הפרויקט שלכם, כדי שיוכל לראות מה קרה.","Press '🐞 Report a problem' in the corner. It's sent to the owner together with your project so they can see what happened.","report",""],
+  ["באג,תקלה,בעיה,לא עובד,דיווח,קפוא,תקוע,נתקע,frozen,stuck,freezes,bug,problem,error,broken,not working","לחצו '🐞 דיווח על בעיה' בפינה. הדיווח נשלח למנהל יחד עם הפרויקט שלכם, כדי שיוכל לראות מה קרה.","Press '🐞 Report a problem' in the corner. It's sent to the owner together with your project so they can see what happened.","report",""],
   ["מחיקה,למחוק חשבון,למחוק את חשבון,לסגור את חשבון,מחיקת חשבון,לסגור חשבון,פרטיות,למחוק,delete,privacy,my data","'החשבון שלי' ← יצוא או מחיקת הנתונים שלכם. מדיניות הפרטיות בקישור.","My account → export or delete your data. The privacy policy is linked.","","/privacy.html|🔒 מדיניות פרטיות|🔒 Privacy policy"],
   ["מחיר,עולה,חינם,price,cost,free,pay","האתר חינמי. יש מכסת הורדות יומית, ואפשר להרוויח עוד בהטבות.","The site is free. There's a daily download limit, and you can earn more with perks.","","/perks.html|🎁 הטבות|🎁 Perks"],
   ["אנגלית,עברית,שפה,english,hebrew,language","הכפתור 'English' / 'עברית' בפינה מחליף שפה. אפשר גם לכתוב לי כאן \"תעבור לאנגלית\" ואני אחליף.","The 'English' / 'עברית' button in the corner switches language. You can also just type \"switch to Hebrew\" here and I'll do it.","",""],
@@ -133,7 +133,7 @@
   ["מעקב הדפסות,הדפסתי,סימון הדפסה,תמונת הדפסה,my prints,printed it,mark printed", "ב'החשבון שלי' ← 'ההדפסות שלי' מסמנים בלחיצה אחת שהדפסתם, ואפשר להוסיף תמונה. הדפסות מזכות בתגים (🖨️), בלי הורדות נוספות.", "In My account → My prints, mark a design as printed in one click and optionally add a photo. Prints earn badges (🖨️), not extra downloads.", "", ""],
   ["דף סטטוס,האם האתר עובד,status page,is the site up", "בדף הסטטוס אפשר לראות אם האתר והשרת פועלים. אם משהו לא עובד שם, זו בעיה בצד שלנו ולא אצלכם.", "The status page shows whether the site and server are up. If something is off there, the issue is on our side, not yours.", "", ""],
   ["מדיניות עוגיות,עוגיות,cookies,tracking,מעקב", "האתר משתמש באחסון מקומי לשמירת שפה, התחברות והעדפות. אין פרסומות ואין מכירת מידע. פרטים בדף הפרטיות.", "The site uses local storage for language, sign-in and preferences. No ads and no selling of data. Details in the privacy page.", "", ""],
-  ["איך מחליפים סיסמה,שינוי סיסמה,change password,new password", "'החשבון שלי' ← שינוי סיסמה. אם שכחתם, השתמשו ב'שכחתי סיסמה' במסך ההתחברות.", "My account → change password. If you forgot it, use 'Forgot password' on the sign-in screen.", "", ""],
+  ["איך מחליפים סיסמה,שינוי סיסמה,change password,new password", "כדי לקבוע סיסמה חדשה לוחצים 'שכחתי סיסמה' במסך ההתחברות ומקבלים למייל קישור לבחירת סיסמה חדשה (הקישור תקף זמן קצר).", "To set a new password, press 'Forgot password' on the sign-in screen; you get an email link to choose a new one (valid for a short time).", "", ""],
   ["מה זה הבוט,מי אתה,מי את,איך הבוט עובד,who are you,what can you do,בוט עזרה", "אני העוזר של האתר: עונה על שאלות על עיצוב, הורדה, הדפסה, הטבות ומנויים. אם אין לי תשובה, אפשר לשלוח את השאלה למנהל ואני אלמד מהתשובה שלו.", "I'm the site's helper: I answer questions about designing, downloading, printing, perks and subscriptions. If I don't know, send the question to the admin and I'll learn from the reply.", "", ""],
   ["שפה אחרת,עוד שפות,ערבית,רוסית,ספרדית,צרפתית,בקשת שפה,אפשר בשפה,another language,more languages,arabic,russian,spanish,french,request a language", "האתר זמין בעברית ובאנגלית. רוצים שפה נוספת? פתחו את לשונית '📖 מדריך' בצד ולחצו '🌐 בקשת שפה', כתבו איזו שפה והמנהל יראה את הבקשה.", "The site is in Hebrew and English. Want another language? Open the '📖 Guide' tab on the side and press '🌐 Request a language', type which one and the admin will see your request.", "", ""],
   ["צאט,צ'אט,לדבר עם המנהל,שיחה עם המנהל,הודעה למנהל,לכתוב למנהל,chat with owner,private chat,message the admin,talk to admin", "יש צ'אט פרטי עם המנהל: 'החשבון שלי' ← '💬 צ'אט פרטי עם המנהל', או הכפתור שמופיע כשאני לא מוצא תשובה. רק אתם והמנהל רואים את השיחה, ותקבלו כאן הודעה כשהוא עונה.", "There's a private chat with the owner: My account → '💬 Private chat with the owner', or the button that appears when I can't answer. Only you and the owner see it, and you'll get a notice when he replies.", "", ""],
@@ -594,9 +594,9 @@
    ru:"Можно зарегистрироваться и войти аккаунтом Google одним нажатием, без пароля.",
    es:"Puedes registrarte e iniciar sesión con una cuenta de Google con un toque, sin contraseña."},
   "איך מחליפים סיסמה":{kw:"تغيير كلمه المرور,сменить пароль,изменить пароль,cambiar contrasena,cambiar la contrasena,change password,change my password",
-   ar:"حسابي ← تغيير كلمة المرور. وإن نسيتها فاستخدم «نسيت كلمة المرور» في شاشة الدخول.",
-   ru:"Мой аккаунт → сменить пароль. Если забыли — используйте «Забыли пароль» на экране входа.",
-   es:"Mi cuenta → cambiar contraseña. Si la olvidaste, usa «Olvidé mi contraseña» en la pantalla de inicio de sesión."},
+   ar:"لتعيين كلمة مرور جديدة اضغط «نسيت كلمة المرور» في شاشة الدخول فيصلك على البريد رابط لاختيار كلمة جديدة (صالح لفترة قصيرة).",
+   ru:"Чтобы задать новый пароль, нажмите «Забыли пароль» на экране входа — на почту придёт ссылка для выбора нового пароля (действует недолго).",
+   es:"Para poner una contraseña nueva, pulsa «Olvidé mi contraseña» en la pantalla de inicio de sesión; recibirás por correo un enlace para elegir otra (válido poco tiempo)."},
   "נעלו לי את הכניסה":{kw:"الدخول مقفل,заблокирован вход,много попыток,acceso bloqueado,demasiados intentos,locked out,too many attempts",
    ar:"بعد عدة محاولات دخول خاطئة يُقفل الدخول لوقت قصير. انتظر بضع دقائق وحاول مجددًا، أو اطلب إعادة تعيين كلمة المرور.",
    ru:"После нескольких неверных попыток входа вход блокируется ненадолго. Подождите несколько минут и попробуйте снова или запросите сброс пароля.",
@@ -1095,6 +1095,58 @@
    es:"El PLA casi no huele, pero aun así imprime en una habitación ventilada y no junto a la cama. El ABS/ASA emite vapores: imprime solo en una habitación ventilada o en una impresora cerrada con filtro. No dejes una impresora funcionando sin vigilancia mucho tiempo."}
   };
   for (const k of Object.keys(ML5)) ML[k] = ML5[k];
+  // ===== v40.3: עוד נושאי חשבון ושימוש =====
+  KB.push(
+  ["איך מתנתקים,להתנתק,יציאה מהחשבון,לצאת מהחשבון,log out,sign out,logout,how do i log out,how to sign out","'החשבון שלי' (הכפתור עם השם שלכם בפינה) ← 'התנתקות'.","My account (the button with your name in the corner) → 'Sign out'.","",""],
+  ["לבטל מיילים,להפסיק לקבל מיילים,לא רוצה מיילים,הודעות במייל,unsubscribe,stop emails,turn off notifications,turn off emails,email preferences","ב'החשבון שלי' יש תיבת סימון 'לקבל הודעות במייל מהאתר' – מסירים אותה כדי להפסיק לקבל מיילים מהאתר. הודעות בתוך האתר (חלון 'חדש' ותיבת ההודעות) מופיעות כשנכנסים.","In My account there is a checkbox 'Receive emails from the site' – untick it to stop site emails. In-site notices (the 'New' popup and the messages window) appear when you sign in.","",""],
+  ["מי עומד מאחורי האתר,מי הבעלים,מי מנהל את האתר,מי יצר את האתר,who runs this site,who owns the site,who made this site,who is behind","האתר מופעל על ידי הבעלים שלו, שקורא כל הודעה. אפשר לפנות אליו דרך 'דיווח על בעיה' או (למחוברים) דרך הצ'אט הפרטי ב'החשבון שלי'.","The site is run by its owner, who reads every message. You can reach him via 'Report a problem' or (when signed in) the private chat in My account.","",""],
+  ["לשנות מייל,לשנות את המייל,להחליף את המייל,שינוי מייל,להחליף מייל,כתובת מייל שגויה,טעיתי במייל,change email,change my email,wrong email,new email address","כרגע אי אפשר לשנות כתובת מייל בעצמכם מתוך החשבון. כתבו לבעלים בצ'אט הפרטי או ב'דיווח על בעיה' ונעזור, או פתחו חשבון חדש בכתובת הנכונה.","Right now you can't change your email address yourself from the account. Write to the owner in the private chat or via 'Report a problem' and we'll help, or open a new account with the right address.","",""],
+  ["החזר כספי,להחזיר כסף,ביטול תשלום,refund,get a refund,money back,cancel payment","האתר חינמי, והמנוי (אם בחרתם בו) מטופל ישירות מול הבעלים ומופעל אחרי אישור תשלום. לבקשת ביטול או החזר כתבו לבעלים בצ'אט הפרטי או ב'דיווח על בעיה' עם פרטי התשלום.","The site is free, and the subscription (if you chose one) is handled directly with the owner and activated after payment is confirmed. For a cancellation or refund write to the owner in the private chat or via 'Report a problem' with the payment details.","",""],
+  ["יש הנחה,הנחות,קוד הנחה,discount,is there a discount,any discounts,promo","אין מחירים באתר עצמו, אבל יש שדה 'יש לי קוד הטבה' ב'החשבון שלי', וגם מבצעים מדי פעם (שעה שמחה, יעד קהילתי) שמופיעים בדף הבית.","There's no price on the site itself, but there is an 'I have a promo code' field in My account, plus occasional promos (happy hour, community goal) shown on the home page.","",""],
+  ["הפרויקט פרטי,מי רואה את הפרויקט,פרטיות הפרויקט,האם אחרים רואים,is my project private,who can see my project,project privacy","פרויקט שמרתם שייך לחשבון שלכם. אחרים רואים אותו רק אם פרסמתם אותו לגלריה (אחרי אישור) או שלחתם קישור שיתוף.","A project you saved belongs to your account. Others only see it if you published it to the gallery (after approval) or sent a share link.","",""],
+  ["להוסיף תמונה,להעלות תמונה,להוסיף לוגו,לוגו משלי,תמונה על המעמד,add a photo,upload a photo,add a logo,my own logo,photo on the stand","כרגע אי אפשר להעלות תמונה או לוגו על הדגם עצמו. תמונה משמשת רק לשכבות מים והרים. כדי לקשר לתמונות אפשר להוסיף קוד QR לאלבום, ואפשר לשלוח רעיון ב'דיווח על בעיה'.","Right now you can't upload a photo or logo onto the model itself. An image is only used for the water and mountain layers. To link to photos you can add a QR code to an album, and you can send an idea via 'Report a problem'.","",""],
+  ["חור לתליה,חור לחוט,חור לתלות,לתלות את זה,איך תולים,hole for hanging,hole for string,hang it,how to hang","מחזיק המפתחות והקישוט (לעץ או לחלון) מגיעים עם טבעת/חור לחוט. מעמד ומגנט לא מיועדים לתלייה – למגנט אפשר להדביק מגנט בגב.","The keychain and the ornament (tree/window) come with a ring/hole for string. The stand and the magnet aren't meant for hanging – the magnet has a pocket for a magnet on the back.","",""]
+  );
+  SYN.push(["באג","המסך קפוא,קפוא,תקוע,האתר קפוא,frozen,site freezes,screen frozen"],["כלים","כמה ערים,כמה מדינות במזכרת אחת,כמה יעדים,multiple cities,several countries"]);
+  const ML6 = {
+  "איך מתנתקים":{kw:"تسجيل الخروج,كيف اخرج من الحساب,выйти из аккаунта,как выйти,cerrar sesion,como cierro sesion,salir de la cuenta",
+   ar:"«حسابي» (الزر الذي يحمل اسمك في الزاوية) ← «تسجيل الخروج».",
+   ru:"«Мой аккаунт» (кнопка с вашим именем в углу) → «Выйти».",
+   es:"Mi cuenta (el botón con tu nombre en la esquina) → «Cerrar sesión»."},
+  "לבטל מיילים":{kw:"ايقاف الرسائل,الغاء الاشتراك في الرسائل,отписаться от писем,отключить уведомления,не хочу письма,dejar de recibir correos,desactivar notificaciones,cancelar correos",
+   ar:"في «حسابي» مربع «تلقّي رسائل بريد من الموقع» – ألغِ تحديده لإيقاف رسائل الموقع. إشعارات داخل الموقع (نافذة «جديد» ونافذة الرسائل) تظهر عند تسجيل الدخول.",
+   ru:"В «Моём аккаунте» есть флажок «Получать письма от сайта» — снимите его, чтобы не получать письма. Уведомления внутри сайта (окно «Новое» и окно сообщений) появляются при входе.",
+   es:"En Mi cuenta hay una casilla «Recibir correos del sitio»: desmárcala para dejar de recibirlos. Los avisos dentro del sitio (ventana «Nuevo» y mensajes) aparecen al iniciar sesión."},
+  "מי עומד מאחורי האתר":{kw:"من وراء الموقع,من صاحب الموقع,من يدير الموقع,кто за сайтом,кто владелец,кто создал сайт,quien esta detras,quien es el dueno,quien creo el sitio",
+   ar:"يديره مالك الموقع الذي يقرأ كل رسالة. يمكنك التواصل معه عبر «الإبلاغ عن مشكلة» أو (إن كنت مسجلًا) الدردشة الخاصة في «حسابي».",
+   ru:"Сайт ведёт его владелец, который читает каждое сообщение. Связаться с ним можно через «Сообщить о проблеме» или (если вы вошли) через личный чат в «Моём аккаунте».",
+   es:"Lo gestiona su propietario, que lee cada mensaje. Puedes contactarlo con «Reportar un problema» o (con sesión iniciada) por el chat privado de Mi cuenta."},
+  "לשנות מייל":{kw:"تغيير البريد,تغيير الايميل,сменить почту,изменить email,cambiar el correo,cambiar mi email,cambiar email",
+   ar:"حاليًا لا يمكنك تغيير عنوان البريد بنفسك من الحساب. اكتب للمالك في الدردشة الخاصة أو عبر «الإبلاغ عن مشكلة» فنساعدك، أو افتح حسابًا جديدًا بالعنوان الصحيح.",
+   ru:"Сейчас самостоятельно сменить адрес почты в аккаунте нельзя. Напишите владельцу в личный чат или через «Сообщить о проблеме» — поможем, либо создайте новый аккаунт с правильным адресом.",
+   es:"Ahora mismo no puedes cambiar tu correo desde la cuenta. Escribe al propietario por el chat privado o con «Reportar un problema» y te ayudamos, o abre una cuenta nueva con el correo correcto."},
+  "החזר כספי":{kw:"استرداد المال,استرجاع المبلغ,возврат денег,вернуть деньги,отмена платежа,reembolso,devolucion del dinero,quiero mi dinero",
+   ar:"الموقع مجاني، والاشتراك (إن اخترته) يُدار مباشرة مع المالك ويُفعَّل بعد تأكيد الدفع. لطلب إلغاء أو استرداد اكتب للمالك في الدردشة الخاصة أو عبر «الإبلاغ عن مشكلة» مع تفاصيل الدفع.",
+   ru:"Сайт бесплатный, а подписка (если вы её выбрали) оформляется напрямую с владельцем и активируется после подтверждения оплаты. Для отмены или возврата напишите владельцу в личный чат или через «Сообщить о проблеме» с данными платежа.",
+   es:"El sitio es gratis y la suscripción (si la elegiste) se gestiona directamente con el propietario y se activa al confirmar el pago. Para cancelar o pedir un reembolso escribe al propietario por el chat privado o con «Reportar un problema» con los datos del pago."},
+  "יש הנחה":{kw:"هل يوجد خصم,تخفيضات,كود خصم,есть ли скидка,скидки,промокод,hay descuento,descuentos,codigo de descuento",
+   ar:"لا توجد أسعار في الموقع نفسه، لكن هناك حقل «لدي رمز مكافأة» في «حسابي»، وعروض من حين لآخر (ساعة سعيدة، هدف مجتمعي) تظهر في الصفحة الرئيسية.",
+   ru:"Цен на самом сайте нет, но в «Моём аккаунте» есть поле «У меня есть промокод», а время от времени бывают акции (счастливый час, цель сообщества) — они показаны на главной.",
+   es:"En el propio sitio no hay precios, pero en Mi cuenta hay un campo «Tengo un código promocional» y de vez en cuando hay promociones (hora feliz, meta comunitaria) que se muestran en la portada."},
+  "הפרויקט פרטי":{kw:"هل مشروعي خاص,من يرى مشروعي,мой проект приватный,кто видит мой проект,mi proyecto es privado,quien ve mi proyecto",
+   ar:"المشروع الذي حفظته يخص حسابك. لا يراه الآخرون إلا إذا نشرته في المعرض (بعد الموافقة) أو أرسلت رابط مشاركة.",
+   ru:"Сохранённый проект принадлежит вашему аккаунту. Другие увидят его, только если вы опубликовали его в галерее (после одобрения) или отправили ссылку.",
+   es:"Un proyecto guardado pertenece a tu cuenta. Otros solo lo ven si lo publicaste en la galería (tras aprobación) o enviaste un enlace para compartir."},
+  "להוסיף תמונה":{kw:"اضافه صوره,رفع صوره,اضافه شعار,شعاري,добавить фото,загрузить фото,добавить логотип,свой логотип,anadir foto,subir foto,anadir logo,mi propio logo",
+   ar:"حاليًا لا يمكن رفع صورة أو شعار على النموذج نفسه. تُستخدم الصورة فقط لطبقتي الماء والجبال. للربط بالصور يمكنك إضافة رمز QR لألبوم، ويمكنك إرسال فكرة عبر «الإبلاغ عن مشكلة».",
+   ru:"Сейчас загрузить фото или логотип прямо на модель нельзя. Изображение используется только для слоёв воды и гор. Чтобы дать ссылку на фото, добавьте QR-код альбома, а идею можно отправить через «Сообщить о проблеме».",
+   es:"Ahora mismo no se puede subir una foto o logo al propio modelo. Una imagen solo se usa para las capas de agua y montañas. Para enlazar fotos puedes añadir un QR a un álbum, y puedes enviar la idea con «Reportar un problema»."},
+  "חור לתליה":{kw:"ثقب للتعليق,فتحه للتعليق,كيف اعلق,отверстие для подвеса,как повесить,agujero para colgar,como colgarlo",
+   ar:"ميدالية المفاتيح والزينة (للشجرة أو النافذة) تأتي بحلقة/ثقب للخيط. القاعدة والمغناطيس غير مخصصين للتعليق – وللمغناطيس جيب لمغناطيس في الخلف.",
+   ru:"Брелок и украшение (для ёлки или окна) идут с кольцом/отверстием для шнурка. Подставка и магнит для подвешивания не предназначены — у магнита сзади есть углубление под магнит.",
+   es:"El llavero y el adorno (árbol/ventana) vienen con anilla/agujero para cordón. La base y el imán no son para colgar; el imán tiene un hueco para el imán detrás."}
+  };
+  for (const k of Object.keys(ML6)) ML[k] = ML6[k];
   for (const e of KB) { const t = String(e[0]).split(",")[0].replace(/^=/, "").trim(), m = ML[t]; if (m && m.kw && !e.mlDone) { e[0] += "," + m.kw; e.mlDone = 1; } }
   // ===== עוד ידע על האתר (עברית/אנגלית) =====
   KB.push(
@@ -1120,7 +1172,7 @@
     ru: "Можете писать мне по-русски — я отвечу на русском. Сам сайт пока только на иврите и английском.",
     es: "Puedes escribirme en español y te responderé en español. El sitio en sí está por ahora solo en hebreo e inglés."
   };
-  const ES_W = "diferencia entre y descomprimir abrir elijo relleno soportes cual otro otra idioma boquilla atascada atasco pieza piezas pais viaje capa primera cama archivos mapa recuerdo hilos imprimir impresora tamano precio gratis regalo hola gracias como puedo quiero donde para porque favor descargar contrasena impresora impresion ayuda archivo cuenta necesito tengo funciona cuanto buenas el la los las un una de que es mi con por se si muy mas pero".split(" "),
+  const ES_W = "cerrar sesion quien esta detras del sitio hay descuentos descuento reembolso cambiar anadir subir foto puedo al cuando cuanto cuantos cuantas quieres contrasena correo diferencia entre y descomprimir abrir elijo relleno soportes cual otro otra idioma boquilla atascada atasco pieza piezas pais viaje capa primera cama archivos mapa recuerdo hilos imprimir impresora tamano precio gratis regalo hola gracias como puedo quiero donde para porque favor descargar contrasena impresora impresion ayuda archivo cuenta necesito tengo funciona cuanto buenas el la los las un una de que es mi con por se si muy mas pero".split(" "),
         EN_W = "nozzle filament comes out clogged stick layer first bed print size price free gift map country trip the is how can do i my to a and what where for not you it of in this that with are have get does want need please hello hi thanks".split(" ");
   const detect = (q, def) => {
     const s = String(q || ""), c = { he: 0, ar: 0, ru: 0, lat: 0 };
