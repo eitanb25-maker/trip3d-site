@@ -1,6 +1,7 @@
 {
   // פריסה ל-Cloudflare Workers (חלופה ל-Netlify). הוראות מלאות ב-README, סעיף Cloudflare.
   "name": "trip3d-site",
+  "keep_vars": true,
   "main": "worker/index.mjs",
   "compatibility_date": "2025-09-01",
   "compatibility_flags": ["nodejs_compat"],
