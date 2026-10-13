@@ -1,7 +1,7 @@
 // שרת האתר: התחברות, הרשאות, מכסות, סטטיסטיקות ולוח בקרה
 import crypto from "node:crypto";
 import { trBody } from "../lib/i18n.mjs";
-import { planItems, VIP_OPTS, PERK_TYPES, TIMED_PERKS, BADGES, activePerks, perkSum, hasEarly, perkText, givePerk, awardBadge, addInbox, leaderboard, awardMonthly, monthKey, alertMail, externalBackup, extTargets, activeBlocks, findBlock, BLOCK_FEATURES, errorSpike, funnelOf, store, getSettings, bump, notify, dayKey, rid, rangeStats, sumGroup, TOOLS, DEFAULTS, mailEnabled, sendMail, sendMailDetail, lastBackupAge, rateHit, secEvent, isProd, audit, weeklyCsv, makeBackup, restoreBackup, encryptBackup, decryptBackup, saveAutoBackup, bonusNow, perkInfo, weekKey, refBoard, awardRefMonthly, weekReport, lbScore, canPerk, aidOf, pickCreation, qHash, normQ, extractKeywords, feed, topCountries, publishHof, setCow, liveDoc } from "../lib/lib.mjs";
+import { planItems, VIP_OPTS, PERK_TYPES, TIMED_PERKS, BADGES, activePerks, perkSum, hasEarly, perkText, givePerk, awardBadge, addInbox, leaderboard, awardMonthly, monthKey, alertMail, externalBackup, extTargets, activeBlocks, findBlock, BLOCK_FEATURES, errorSpike, funnelOf, store, getSettings, bump, notify, dayKey, rid, rangeStats, sumGroup, TOOLS, DEFAULTS, mailEnabled, sendMail, sendMailDetail, lastBackupAge, rateHit, secEvent, isProd, audit, weeklyCsv, makeBackup, restoreBackup, encryptBackup, decryptBackup, saveAutoBackup, bonusNow, perkInfo, weekKey, refBoard, awardRefMonthly, weekReport, lbScore, canPerk, aidOf, pickCreation, qHash, normQ, extractKeywords, feed, topCountries, publishHof, setCow, liveDoc, pushEnabled, pushUser, totpSecret, totpOk } from "../lib/lib.mjs";
 
 export const config = { path: "/api/*" };
 
@@ -45,7 +45,7 @@ async function seedTrip5(st) {
   await st.setJSON("pc/TRIP5", pc); await st.setJSON("sys/seedTRIP5", 1); return pc;
 }
 const emailOk = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e) && e.length <= 120;
-const pub = (u) => u && { uid: u.uid, name: u.name, email: u.email, role: u.role, verified: !!u.verified, mailOk: u.mailOk !== false, google: !!u.google, badges: u.badges || [], sub: u.sub && u.sub.until > Date.now() ? u.sub : null };
+const pub = (u) => u && { uid: u.uid, name: u.name, email: u.email, role: u.role, verified: !!u.verified, mailOk: u.mailOk !== false, google: !!u.google, totp: !!u.totp, caps: u.role === "editor" ? u.caps || [] : undefined, badges: u.badges || [], sub: u.sub && u.sub.until > Date.now() ? u.sub : null };
 const ipOf = (req) => (req.headers.get("cf-connecting-ip") || req.headers.get("x-nf-client-connection-ip") || (req.headers.get("x-forwarded-for") || "").split(",")[0] || req.headers.get("x-real-ip") || "?").trim();
 const ipHash = (req) => crypto.createHash("sha1").update(ipOf(req)).digest("hex").slice(0, 12);
 const sha = (s) => crypto.createHash("sha256").update(s).digest("hex");
@@ -98,7 +98,9 @@ const isAdmin = (u) => u && !u.blocked && u.role === "admin";
 const isStaff = (u) => u && !u.blocked && (u.role === "admin" || u.role === "editor");
 
 const sessionCookie = (req, u) => setCookie(req, sign({ uid: u.uid, exp: Date.now() + 30 * 864e5 }));
+const totpPassed = new WeakSet();
 async function startSession(req, u) {
+  if (u.totp && !totpPassed.has(u)) return E(403, "בחשבון הזה מופעל אימות דו-שלבי: היכנסו עם מייל, סיסמה וקוד מהאפליקציה");
   const st = await store();
   u.last = Date.now();
   await st.setJSON("u/" + u.uid, u);
@@ -155,6 +157,16 @@ function csv(rows) {
   return "\ufeff" + rows.map((r) => r.map(q).join(",")).join("\r\n");
 }
 
+const SEGS = ["all", "sub", "nosub", "expiring", "inactive", "new", "verified"];
+async function segmentUsers(seg) {
+  if (!SEGS.includes(seg)) return null;
+  const now = Date.now();
+  return (await listAll("u/", 2000, false)).filter((u) => !u.blocked && ({
+    all: true, sub: u.sub && u.sub.until > now, nosub: !(u.sub && u.sub.until > now),
+    expiring: u.sub && u.sub.until > now && u.sub.until - now < 7 * 864e5,
+    inactive: (u.last || u.created || 0) < now - 30 * 864e5, new: (u.created || 0) > now - 7 * 864e5, verified: !!u.verified,
+  })[seg]);
+}
 const galPub = (g) => ({ likes: g.likes || 0, aid: g.author && g.uid ? aidOf(g.uid) : "", id: g.id, name: g.name, tool: g.tool, country: g.country, author: g.author || "", ts: g.ts, template: !!g.template, feat: !!(g.featured && g.featured > Date.now()) });
 // מוסיף לכל יצירה את התגים של היוצר (רק אם השם שלו מוצג)
 async function withBadges(gs) {
@@ -218,6 +230,13 @@ const inner = async (req) => {
       let ok = !!(process.env.SESSION_SECRET && process.env.SESSION_SECRET.length >= 16);
       try { await (await store()).get("settings"); } catch { ok = false; }
       return J({ ok }, ok ? 200 : 503);
+    }
+    {
+      // הגבלת קצב כללית לכל כתובת: נגד סריקות וניצול לרעה (בזיכרון, בלי עומס על המסד)
+      const rl = (globalThis.__rl ||= new Map()), now = Date.now(), kk = ipHash(req) + (m === "GET" ? "r" : "w"), cur = rl.get(kk);
+      if (rl.size > 5000) rl.clear();
+      if (!cur || now - cur.t > 60e3) rl.set(kk, { t: now, n: 1 });
+      else if (++cur.n > (m === "GET" ? 600 : 150)) return E(429, "יותר מדי בקשות. נסו שוב בעוד דקה", { "retry-after": 60 });
     }
     const st = await store();
     const S = await getSettings();
@@ -330,8 +349,13 @@ const inner = async (req) => {
       const uid = await st.get("e/" + email);
       const u = uid && (await st.get("u/" + uid));
       if (!u || !u.hash || !(await checkPw(String(b.password || ""), u))) { await lockCheck(email, false); return E(401, "מייל או סיסמה שגויים"); }
-      await lockCheck(email, true);
       if (u.blocked) return E(403, "החשבון חסום");
+      if (u.totp) {
+        if (!String(b.code || "").trim()) return J({ error: "נדרש קוד אימות דו-שלבי", need2fa: true }, 401);
+        if (!totpOk(u.totp, b.code)) { await lockCheck(email, false); await secEvent("bad_2fa", email, S); return E(401, "קוד האימות שגוי"); }
+        totpPassed.add(u);
+      }
+      await lockCheck(email, true);
       return startSession(req, u);
     }
     if (R === "POST auth/google") {
@@ -431,6 +455,41 @@ const inner = async (req) => {
       return J({ ok: true });
     }
     // ---------- צ'אט פרטי משתמש ↔ מנהל ----------
+    if (R === "POST me/2fa") {
+      if (!me || me.role !== "admin") return E(403, "אימות דו-שלבי זמין למנהל בלבד");
+      const b = await body(req, 400), act = clean(b.action, 10);
+      if (act === "setup") {
+        if (me.totp) return E(400, "כבר מופעל");
+        me.totpPending = totpSecret(); await st.setJSON("u/" + me.uid, me);
+        const lbl = encodeURIComponent("Trip3D:" + me.email);
+        return J({ secret: me.totpPending, uri: `otpauth://totp/${lbl}?secret=${me.totpPending}&issuer=Trip3D` });
+      }
+      if (act === "enable") {
+        if (!me.totpPending || !totpOk(me.totpPending, b.code)) return E(400, "הקוד שגוי. נסו שוב עם הקוד העדכני");
+        me.totp = me.totpPending; delete me.totpPending; await st.setJSON("u/" + me.uid, me); await audit(me, "2fa:on", me.email); return J({ ok: true });
+      }
+      if (act === "disable") {
+        if (!me.totp || !totpOk(me.totp, b.code) || !(await checkPw(String(b.password || ""), me))) return E(400, "צריך סיסמה וקוד נוכחי כדי לכבות");
+        delete me.totp; await st.setJSON("u/" + me.uid, me); await audit(me, "2fa:off", me.email); return J({ ok: true });
+      }
+      return E(400, "פעולה לא מוכרת");
+    }
+    if (R === "GET push/key") return J({ key: pushEnabled() ? process.env.VAPID_PUBLIC : "" });
+    if (R === "POST me/push") {
+      if (!me) return E(401, "נדרשת התחברות");
+      const b = await body(req, 2000), sub = b.sub;
+      if (b.off) { me.push = []; await st.setJSON("u/" + me.uid, me); return J({ ok: true }); }
+      if (!sub || !/^https:\/\//.test(String(sub.endpoint || "")) || String(sub.endpoint).length > 600) return E(400, "מנוי לא תקין");
+      me.push = (me.push || []).filter((x) => x.endpoint !== sub.endpoint).concat([{ endpoint: String(sub.endpoint), ts: Date.now() }]).slice(-3);
+      await st.setJSON("u/" + me.uid, me); return J({ ok: true });
+    }
+    if (R === "GET me/push-latest") {
+      if (!me) return J({ title: "Trip3D", body: "יש לך עדכון חדש", url: "/" });
+      const t = await st.get("ch/" + me.uid);
+      if (t && t.uUnread) { const l = (t.msgs || []).filter((x) => x.f === "a").slice(-1)[0]; return J({ title: "הודעה חדשה מהמנהל 💬", body: l ? l.t.slice(0, 120) : "", url: "/" }); }
+      const ms = (await st.scan("m/" + me.uid + "/", { desc: true, limit: 5 })).map((x) => x.v).filter((v) => v && !v.read);
+      return J(ms[0] ? { title: ms[0].subject, body: String(ms[0].body || "").slice(0, 120), url: "/" } : { title: "Trip3D", body: "יש לך עדכון חדש", url: "/" });
+    }
     if (R === "GET me/chat") {
       if (!me) return E(401, "נדרשת התחברות");
       const t = (await st.get("ch/" + me.uid)) || { msgs: [] };
@@ -965,7 +1024,11 @@ const inner = async (req) => {
     if (route.startsWith("admin/")) {
       if (!isStaff(me)) return E(403, "אין הרשאה");
       const a = route.slice(6), write = m !== "GET";
-      if (write && !isAdmin(me)) return E(403, "נדרשת הרשאת מנהל לפעולה הזו");
+      if (write && !isAdmin(me)) {
+        // עורכים יכולים לקבל הרשאת כתיבה מוגבלת לתחום אחד (צ'אט / דיווחים ובוט / גלריה) שהמנהל קבע להם
+        const need = /^chat/.test(a) ? "chat" : /^(report|bot-)/.test(a) ? "reports" : /^(gallery|comment)/.test(a) ? "gallery" : "";
+        if (!(me.role === "editor" && need && (me.caps || []).includes(need))) return E(403, "נדרשת הרשאת מנהל לפעולה הזו");
+      }
 
       if (R === "GET admin/stats") {
         const days = Math.min(90, Math.max(1, +url.searchParams.get("days") || 30));
@@ -983,7 +1046,7 @@ const inner = async (req) => {
       }
       if (R === "GET admin/users") {
         const users = await listAll("u/", 500, false);
-        return J({ users: users.map((u) => ({ uid: u.uid, name: u.name, email: u.email, role: u.role, blocked: !!u.blocked, quota: u.quota ?? null, verified: !!u.verified, dlTotal: u.dlTotal || 0, today: u.dlDay && u.dlDay.d === dayKey() ? u.dlDay.n : 0, d7: sumHist(u.dlHist, 7), d30: sumHist(u.dlHist, 30), bonus: u.bonus || 0, refCount: u.refCount || 0, credits: u.credits || 0, badges: u.badges || [], streak: u.streak ? u.streak.n : 0, perks: (u.perks || []).filter((p) => !p.until || p.until > Date.now()).length, created: u.created, last: u.last, google: !!u.google, note: u.note || "", nc: (u.cset || []).length, sus: !!u.sus, trusted: !!u.trusted, sub: u.sub && u.sub.until > Date.now() ? { name: u.sub.name, emoji: u.sub.emoji || "", until: u.sub.until } : null })), abuseDl: S.abuseDl, defaultLimit: S.dlLimit });
+        return J({ users: users.map((u) => ({ caps: u.caps || [], uid: u.uid, name: u.name, email: u.email, role: u.role, blocked: !!u.blocked, quota: u.quota ?? null, verified: !!u.verified, dlTotal: u.dlTotal || 0, today: u.dlDay && u.dlDay.d === dayKey() ? u.dlDay.n : 0, d7: sumHist(u.dlHist, 7), d30: sumHist(u.dlHist, 30), bonus: u.bonus || 0, refCount: u.refCount || 0, credits: u.credits || 0, badges: u.badges || [], streak: u.streak ? u.streak.n : 0, perks: (u.perks || []).filter((p) => !p.until || p.until > Date.now()).length, created: u.created, last: u.last, google: !!u.google, note: u.note || "", nc: (u.cset || []).length, sus: !!u.sus, trusted: !!u.trusted, sub: u.sub && u.sub.until > Date.now() ? { name: u.sub.name, emoji: u.sub.emoji || "", until: u.sub.until } : null })), abuseDl: S.abuseDl, defaultLimit: S.dlLimit });
       }
       if (R === "GET admin/user") {
         const u = await st.get("u/" + clean(url.searchParams.get("uid"), 20));
@@ -1187,6 +1250,28 @@ const inner = async (req) => {
         await audit(me, "backup:restore", b.key || "file", n + " items");
         return J({ ok: true, restored: n });
       }
+      if (R === "GET admin/segments") {
+        const o = {}; for (const k of SEGS) o[k] = (await segmentUsers(k)).length;
+        return J({ counts: o });
+      }
+      if (R === "GET admin/canned") return J({ items: (await st.get("canned")) || [] });
+      if (R === "PUT admin/canned") {
+        const b = await body(req, 8000);
+        const items = (Array.isArray(b.items) ? b.items : []).map((x) => String(x ?? "").replace(/[\u0000-\u0009\u000b-\u001f]/g, "").trim().slice(0, 300)).filter(Boolean).slice(0, 25);
+        await st.setJSON("canned", items); await audit(me, "canned:save", String(items.length)); return J({ ok: true, items });
+      }
+      if (R === "GET admin/timeline") {
+        const uid = clean(url.searchParams.get("uid"), 20), u = await st.get("u/" + uid);
+        if (!u) return E(404, "משתמש לא נמצא");
+        const ev = [{ ts: u.created, k: "reg", t: "נרשם לאתר" }];
+        if (u.last) ev.push({ ts: u.last, k: "login", t: "כניסה אחרונה" });
+        for (const id of (u.dls || []).slice(-40)) { const d = await st.get("d/" + id); if (d) ev.push({ ts: d.ts, k: "dl", t: `הורדה: ${d.tool}${d.country ? " · " + d.country : ""}${d.fb ? (d.fb.ok ? " · ✅ הצליח" : " · ❌ נכשל") : ""}` }); }
+        for (const x of (await st.scan("pg/", { desc: true, limit: 200 })).map((y) => y.v).filter((y) => y && y.uid === uid)) ev.push({ ts: x.ts, k: "perk", t: "הטבה: " + x.text });
+        const ch = await st.get("ch/" + uid); for (const x of ((ch && ch.msgs) || []).slice(-15)) ev.push({ ts: x.ts, k: "chat", t: (x.f === "a" ? "המנהל: " : "המשתמש: ") + x.t.slice(0, 80) });
+        for (const r of (await listAll("r/", 300)).filter((y) => y.uid === uid)) ev.push({ ts: r.ts, k: "report", t: "דיווח: " + String(r.message || "").slice(0, 80) });
+        for (const a of (await listAll("a/", 400)).filter((y) => y.target === u.email)) ev.push({ ts: a.ts, k: "admin", t: `פעולת מנהל: ${a.action}${a.detail ? " (" + a.detail + ")" : ""}` });
+        return J({ items: ev.filter((e) => e.ts).sort((a, b) => b.ts - a.ts).slice(0, 80) });
+      }
       if (R === "POST admin/message") {
         const b = await body(req, 8000);
         const tx = (s, n) => String(s ?? "").replace(/[\u0000-\u0009\u000b-\u001f]/g, "").trim().slice(0, n);
@@ -1195,6 +1280,17 @@ const inner = async (req) => {
         const withMail = !!b.email && mailEnabled(), id = Date.now() + "-" + rid(2);
         const foot = "\n\n—\nלהפסקת קבלת מיילים: היכנסו לחשבון באתר וכבו את \"לקבל הודעות במייל\".";
         let sent = 0;
+        if (/^seg:/.test(String(b.to))) {
+          const ids = await segmentUsers(String(b.to).slice(4));
+          if (!ids) return E(400, "קבוצה לא מוכרת");
+          for (const u of ids) {
+            await st.setJSON("m/" + u.uid + "/" + id + "-" + u.uid.slice(0, 3), { id: id + "-" + u.uid.slice(0, 3), ts: Date.now(), subject, body: text, read: false, by: me.email });
+            if (withMail && u.mailOk !== false && (await sendMail(u.email, subject, text + foot))) sent++;
+            try { await pushUser(u.uid); } catch {}
+          }
+          await audit(me, "message:" + b.to, subject, `${ids.length} משתמשים` + (withMail ? ", email" : ""));
+          return J({ ok: true, sent, count: ids.length });
+        }
         if (b.to === "all") {
           await st.setJSON("bc/" + id, { id, ts: Date.now(), subject, body: text, by: me.email });
           if (withMail) for (const u of await listAll("u/", 300, false)) { if (u.blocked || u.mailOk === false) continue; if (await sendMail(u.email, subject, text + foot)) sent++; }
@@ -1215,6 +1311,7 @@ const inner = async (req) => {
         if (b.action === "block") { if (self) return E(400, "אי אפשר לחסום את עצמך"); u.blocked = true; }
         else if (b.action === "unblock") u.blocked = false;
         else if (b.action === "setRole") { if (self) return E(400, "אי אפשר לשנות את התפקיד של עצמך"); if (!["viewer", "editor", "admin"].includes(b.role)) return E(400, "תפקיד לא תקין"); u.role = b.role; }
+        else if (b.action === "setCaps") { if (u.role !== "editor") return E(400, "הרשאות מוגבלות הן לעורכים בלבד"); u.caps = (Array.isArray(b.caps) ? b.caps : []).filter((c) => ["chat", "reports", "gallery"].includes(c)); }
         else if (b.action === "setQuota") { u.quota = b.quota === null || b.quota === "" ? null : Math.max(0, Math.min(1000, Math.floor(+b.quota) || 0)); }
         else if (b.action === "resetToday") u.dlDay = { d: dayKey(), n: 0 }
         else if (b.action === "setNote") u.note = clean(b.note, 300);
@@ -1240,7 +1337,7 @@ const inner = async (req) => {
           return J({ ok: true });
         } else return E(400, "פעולה לא מוכרת");
         await st.setJSON("u/" + u.uid, u);
-        await audit(me, "user:" + b.action, u.email, b.action === "setRole" ? b.role : b.action === "setQuota" ? String(b.quota) : "");
+        await audit(me, "user:" + b.action, u.email, b.action === "setRole" ? b.role : b.action === "setCaps" ? (u.caps || []).join(",") : b.action === "setQuota" ? String(b.quota) : "");
         return J({ ok: true });
       }
       if (R === "GET admin/invites") return J({ items: await listAll("i/", 200) });
@@ -1362,6 +1459,7 @@ const inner = async (req) => {
         if (u.mailOk !== false && mailEnabled() && (!t.lastMail || Date.now() - t.lastMail > 3600e3)) { t.lastMail = Date.now(); mailed = await sendMail(u.email, "הודעה חדשה מהמנהל 💬", `שלום ${u.name},\n\nקיבלת הודעה חדשה מהמנהל באתר:\n\n${text.slice(0, 300)}\n\nלהמשך השיחה היכנסו לחשבון ← 'צ׳אט עם המנהל'.`); }
         await st.setJSON("ch/" + uid, t); globalThis.__att = null;
         await audit(me, "chat:reply", u.email, text.slice(0, 60));
+        try { await pushUser(u.uid); } catch {}
         return J({ ok: true, mailed });
       }
       if (R === "GET admin/attention") {
@@ -1488,6 +1586,12 @@ const inner = async (req) => {
         } else if (kind === "reports") {
           rows = [["תאריך", "משתמש", "מייל", "כלי", "מדינה", "הודעה", "סטטוס"]];
           (await listAll("r/", 2000, false)).forEach((r) => rows.push([new Date(r.ts).toISOString(), r.name, r.email, r.tool, r.country, r.message, r.status]));
+        } else if (kind === "perks") {
+          rows = [["תאריך", "נשלח ע״י", "יעד", "כמות נמענים", "הטבה", "הערה"]];
+          (await listAll("pg/", 3000, false)).forEach((x) => rows.push([new Date(x.ts).toISOString(), x.by, x.email || x.target, x.count, x.text, x.note || ""]));
+        } else if (kind === "subs") {
+          rows = [["שם", "מייל", "מסלול", "עד תאריך", "ימים שנותרו"]];
+          (await listAll("u/", 2000, false)).filter((u) => u.sub && u.sub.until).forEach((u) => rows.push([u.name, u.email, u.sub.name, new Date(u.sub.until).toISOString(), Math.ceil((u.sub.until - Date.now()) / 864e5)]));
         } else return E(400, "סוג יצוא לא מוכר");
         return new Response(csv(rows), { headers: { "content-type": "text/csv; charset=utf-8", "content-disposition": `attachment; filename="${kind}.csv"` } });
       }

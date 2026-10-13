@@ -74,7 +74,7 @@ nav#tabs button.nb.on .bdg{background:#fff;color:var(--ac)}
 <script>
 const $=id=>document.getElementById(id);
 const h=(t,a={},...k)=>{const e=document.createElement(t);for(const[x,v]of Object.entries(a)){if(x=="on")Object.entries(v).forEach(([n,f])=>e.addEventListener(n,f));else if(x=="cls")e.className=v;else if(x=="text")e.textContent=v;else if(v!==false&&v!=null)e.setAttribute(x,v===true?"":v)}k.flat().forEach(c=>e.append(c&&c.nodeType?c:document.createTextNode(c??"")));return e};
-async function api(m,p,b){const r=await fetch("/api"+p,{method:m,headers:{"content-type":"application/json"},credentials:"same-origin",body:b?JSON.stringify(b):undefined});let d={};try{d=await r.json()}catch(e){}if(!r.ok)throw Object.assign(new Error(d.error||"שגיאה"),{status:r.status});return d}
+async function api(m,p,b){const r=await fetch("/api"+p,{method:m,headers:{"content-type":"application/json"},credentials:"same-origin",body:b?JSON.stringify(b):undefined});let d={};try{d=await r.json()}catch(e){}if(!r.ok)throw Object.assign(new Error(d.error||"שגיאה"),{status:r.status,need2fa:!!d.need2fa});return d}
 const TN={stand:"מזכרת",multi:"מכמה מדינות",key:"מחזיק מפתחות",magnet:"מגנט",orn:"קישוט",puzzle:"פאזל",holder:"מעמד לטלפון"},TOOLS=Object.keys(TN);
 const fmt=t=>t?new Date(t).toLocaleString("he-IL"):"—",pct=(a,b)=>b?Math.round(100*a/b)+"%":"—";
 let ME=null,RO=true,TAB=(()=>{try{const t=localStorage.adm_tab;return ["סקירה","משתמשים","הודעות","פעילות","בוט","הטבות","מבצעים","חסימות","הזמנות","דיווחים","גלריה","משוב","אבטחה","יומן פעולות","גיבויים","הגדרות","גרסאות","יצוא","מנויים","בדיקות","צ'אט"].includes(t)?t:"סקירה"}catch(e){return"סקירה"}})(),UID=null,PRE=null;
@@ -88,9 +88,9 @@ async function boot(){let me;try{me=await api("GET","/me")}catch(e){}
   h("p",{cls:"muted"},h("a",{href:"/health.html",text:"בדיקת תקינות המערכת",style:"color:var(--ac)"}))))};return}
  ME=me.user;RO=ME.role!="admin";$("gate").replaceChildren();$("who").textContent=ME.name+" · "+(RO?"עורך (קריאה בלבד)":"מנהל");$("out").style.display="";$("out").onclick=async()=>{await api("POST","/auth/logout");location.reload()};
  $("tabs").style.display="flex";render()}
-function showLogin(){const e=h("input",{type:"email",placeholder:"מייל",autocomplete:"email"}),p=h("input",{type:"password",placeholder:"סיסמה",autocomplete:"current-password"}),er=h("p",{cls:"muted",style:"color:var(--bad)"});
- const go=async()=>{try{await api("POST","/auth/login",{email:e.value,password:p.value});location.reload()}catch(x){er.textContent=x.message}};p.onkeydown=ev=>{if(ev.key=="Enter")go()};
- $("gate").replaceChildren(h("div",{cls:"card",id:"login"},h("h2",{text:"כניסה ללוח הבקרה"}),e,p,er,h("button",{cls:"pri",text:"כניסה",on:{click:go}}),h("p",{cls:"muted"},"בעיה בכניסה? ",h("a",{href:"/health.html",text:"בדיקת תקינות המערכת",style:"color:var(--ac)"}))))}
+function showLogin(){const e=h("input",{type:"email",placeholder:"מייל",autocomplete:"email"}),p=h("input",{type:"password",placeholder:"סיסמה",autocomplete:"current-password"}),er=h("p",{cls:"muted",style:"color:var(--bad)"}),cd=h("input",{placeholder:"קוד אימות דו-שלבי (6 ספרות)",inputmode:"numeric",autocomplete:"one-time-code",maxlength:7,style:"display:none"});
+ const go=async()=>{try{await api("POST","/auth/login",{email:e.value,password:p.value,code:cd.value});location.reload()}catch(x){if(x.need2fa){cd.style.display="";cd.focus();er.textContent="הזינו את הקוד מאפליקציית האימות"}else er.textContent=x.message}};p.onkeydown=ev=>{if(ev.key=="Enter")go()};cd.onkeydown=ev=>{if(ev.key=="Enter")go()};
+ $("gate").replaceChildren(h("div",{cls:"card",id:"login"},h("h2",{text:"כניסה ללוח הבקרה"}),e,p,cd,er,h("button",{cls:"pri",text:"כניסה",on:{click:go}}),h("p",{cls:"muted"},"בעיה בכניסה? ",h("a",{href:"/health.html",text:"בדיקת תקינות המערכת",style:"color:var(--ac)"}))))}
 const NAV=[["כללי",[["סקירה","📊"],["פעילות","⚡"]]],["קהילה",[["משתמשים","👥"],["הטבות","🎁"],["מנויים","⭐"],["מבצעים","🎉"],["גלריה","🖼️"],["הזמנות","✉️"],["משוב","💬"],["דיווחים","🚩"]]],["תקשורת",[["צ'אט","🗨️"],["הודעות","📣"],["בוט","🤖"]]],["בטיחות",[["חסימות","⛔"],["אבטחה","🔒"],["יומן פעולות","📜"]]],["מערכת",[["הגדרות","⚙️"],["בדיקות","🧪"],["גיבויים","💾"],["יצוא","📤"],["גרסאות","🆕"]]]];
 const NS=h("input",{cls:"ns",type:"search",placeholder:"חיפוש בתפריט  ( / )",autocomplete:"off"});
 function filterNav(){const q=NS.value.trim();let first=null;document.querySelectorAll("#tabs .ng").forEach(g=>{let any=false;for(let n=g.nextElementSibling;n&&n.classList.contains("nb");n=n.nextElementSibling){const m=!q||n.dataset.t.includes(q);n.hidden=!m;if(m){any=true;first=first||n}}g.hidden=!any});return first}
@@ -359,7 +359,47 @@ async function perkLogCard(uid){
  return h("div",{cls:"card scroll"},h("h2",{text:"📜 הטבות שנשלחו"+(r.items.length?" ("+r.items.length+")":"")}),r.items.length?h("table",{},h("tr",{},["מתי","למי","מה","האם ראה","" ].map(t=>h("th",{text:t}))),...rows):h("p",{cls:"muted",text:"עדיין לא נשלחו הטבות (מהרגע שהתכונה הופעלה). כל הטבה ששולחים תירשם כאן."}))}
 const _vP36=vPerks;vPerks=async function(){await _vP36();try{$("main").append(await perkLogCard(""))}catch(e){}};
 const _vU36=vUser;vUser=async function(){await _vU36();try{$("main").append(await perkLogCard(UID))}catch(e){}};
-function render(){buildNav();try{localStorage.adm_tab=TAB}catch(e){}$("main").replaceChildren(h("p",{cls:"muted",text:"טוען…"}));({"סקירה":vOverview,"משתמשים":vUsers,"משתמש":vUser,"הודעות":vMessages,"אבטחה":vSecurity,"יומן פעולות":vAudit,"גיבויים":vBackups,"הזמנות":vInvites,"דיווחים":vReports,"גלריה":vGallery,"חסימות":vBlocks,"הטבות":vPerks,"מנויים":vSubs,"צ'אט":vChat,"בדיקות":vTests,"מבצעים":vPromo,"פעילות":vActivity,"בוט":vBot,"משוב":vFeedback,"הגדרות":vSettings,"גרסאות":vChangelog,"יצוא":vExport})[TAB]().catch(e=>$("main").replaceChildren(h("p",{text:"שגיאה: "+e.message})))}
+
+// ---- v37: אימות דו-שלבי, קבוצות שידור, תשובות מוכנות, ציר זמן למשתמש ----
+async function twoFaCard(){
+ const msg=h("p",{cls:"muted"}),box=h("div",{cls:"card"},h("h2",{text:"🔐 אימות דו-שלבי (2FA)"}));
+ const draw=()=>{const on=!!ME.totp;box.replaceChildren(h("h2",{text:"🔐 אימות דו-שלבי (2FA)"}),
+  h("p",{cls:"muted",text:on?"פעיל: כניסה דורשת סיסמה וגם קוד בן 6 ספרות מאפליקציית אימות (Google Authenticator / Authy). כניסה עם גוגל או קישור קסם לחשבון הזה חסומה בכוונה.":"מוסיף שכבת הגנה לחשבון המנהל: גם מי שיגנוב את הסיסמה לא ייכנס בלי הטלפון שלך."}),
+  RO?"":on?h("button",{text:"כיבוי האימות הדו-שלבי",on:{click:()=>{const pw=h("input",{type:"password",placeholder:"סיסמה",autocomplete:"current-password"}),cd=h("input",{placeholder:"קוד נוכחי",inputmode:"numeric",maxlength:7});
+     box.append(h("div",{cls:"row",style:"margin-top:8px"},pw,cd,h("button",{cls:"pri",text:"אישור כיבוי",on:{click:async()=>{try{await api("POST","/me/2fa",{action:"disable",password:pw.value,code:cd.value});ME.totp=false;draw()}catch(e){msg.textContent=e.message}}}})))}}}):
+   h("button",{cls:"pri",text:"הפעלת אימות דו-שלבי",on:{click:async()=>{try{const r=await api("POST","/me/2fa",{action:"setup"}),cd=h("input",{placeholder:"קוד מהאפליקציה (6 ספרות)",inputmode:"numeric",maxlength:7});
+     box.replaceChildren(h("h2",{text:"🔐 הפעלת אימות דו-שלבי"}),h("ol",{},h("li",{text:"באפליקציית אימות (Google Authenticator, Authy…) בחרו 'הוספת חשבון' ← 'הזנת מפתח ידנית'."}),h("li",{},"הזינו את המפתח: ",h("code",{text:r.secret,style:"user-select:all;font-size:15px;letter-spacing:1px"})),h("li",{text:"הזינו כאן את הקוד שהאפליקציה מציגה כדי לאשר:"})),
+      h("div",{cls:"row"},cd,h("button",{cls:"pri",text:"אישור והפעלה",on:{click:async()=>{try{await api("POST","/me/2fa",{action:"enable",code:cd.value});ME.totp=true;draw()}catch(e){msg.textContent=e.message}}}})),
+      h("p",{cls:"muted",text:"שמרו את המפתח במקום בטוח: אם תאבדו את הטלפון, השחזור דורש גישה ישירה למסד הנתונים."}),msg)}catch(e){msg.textContent=e.message}}}}),msg)};
+ draw();return box}
+const _vSec37=vSecurity;vSecurity=async function(){await _vSec37();try{$("main").prepend(await twoFaCard())}catch(e){}};
+
+const _vMsg37=vMessages;vMessages=async function(){await _vMsg37();try{
+ const sel=$("main").querySelector("select");if(!sel)return;const r=await api("GET","/admin/segments"),c=r.counts,N={sub:"עם מנוי פעיל",nosub:"בלי מנוי",expiring:"מנוי שמסתיים בשבוע הקרוב",inactive:"לא ביקרו 30 יום",new:"נרשמו השבוע",verified:"עם מייל מאומת"};
+ const og=h("optgroup",{label:"קבוצות"},...Object.keys(N).map(k=>h("option",{value:"seg:"+k,text:"👥 "+N[k]+" ("+c[k]+")"})));sel.insertBefore(og,sel.children[1]);
+}catch(e){}};
+
+const _vChat37=vChat;vChat=async function(){await _vChat37();try{
+ const r=await api("GET","/admin/canned");let items=r.items||[];
+ const chips=h("div",{style:"display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"}),ed=h("textarea",{rows:6,style:"width:100%",placeholder:"שורה לכל תשובה מוכנה",disabled:RO}),msg=h("p",{cls:"muted"});
+ const paint=()=>chips.replaceChildren(...(items.length?items.map(t=>h("button",{text:t.length>38?t.slice(0,36)+"…":t,title:t,on:{click:()=>{const ta=$("main").querySelector("textarea[maxlength='1000']");if(!ta){msg.textContent="פתחו שיחה קודם";return}ta.value=(ta.value?ta.value+"\n":"")+t;ta.focus()}}})):[h("span",{cls:"muted",text:"אין עדיין תשובות מוכנות. הוסיפו למטה."})]));
+ paint();ed.value=items.join("\n");
+ $("main").append(h("div",{cls:"card"},h("h2",{text:"⚡ תשובות מוכנות"}),h("p",{cls:"muted",text:"לחיצה מוסיפה את התשובה לתיבת הכתיבה של השיחה הפתוחה. אפשר לערוך אותה לפני השליחה."}),chips,
+  RO?"":h("details",{},h("summary",{text:"עריכת הרשימה"}),ed,h("button",{cls:"pri",text:"שמירה",on:{click:async()=>{try{const x=await api("PUT","/admin/canned",{items:ed.value.split("\n")});items=x.items;paint();msg.textContent="נשמר ✔"}catch(e){msg.textContent=e.message}}}})),msg))
+}catch(e){}};
+
+const _vU37=vUser;vUser=async function(){await _vU37();try{
+ const r=await api("GET","/admin/timeline?uid="+encodeURIComponent(UID)),IC={reg:"🆕",login:"🔑",dl:"⬇️",perk:"🎁",chat:"💬",report:"🚩",admin:"🛠"};
+ $("main").append(h("div",{cls:"card scroll"},h("h2",{text:"🕒 ציר זמן של המשתמש"}),r.items.length?h("table",{},...r.items.map(e=>h("tr",{},h("td",{text:new Date(e.ts).toLocaleString("he-IL",{day:"2-digit",month:"2-digit",year:"2-digit",hour:"2-digit",minute:"2-digit"}),style:"white-space:nowrap"}),h("td",{text:(IC[e.k]||"•")+" "+e.t})))):h("p",{cls:"muted",text:"אין עדיין פעילות."})))
+}catch(e){}};
+const CAPMAP={"צ'אט":"chat","דיווחים":"reports","בוט":"reports","גלריה":"gallery"};
+const _vU38=vUser;vUser=async function(){await _vU38();try{
+ const d=await api("GET","/admin/user?uid="+encodeURIComponent(UID));if(d.user.role!="editor"||ME.role!="admin")return;
+ const cur=new Set((await api("GET","/admin/users")).users.find(x=>x.uid==UID)?.caps||[]),L={chat:"צ'אט עם משתמשים",reports:"דיווחים ובוט",gallery:"גלריה ותגובות"},m=h("span",{cls:"muted"});
+ $("main").append(h("div",{cls:"card"},h("h2",{text:"🔑 הרשאות לעורך"}),h("p",{cls:"muted",text:"עורך רואה הכול אבל לא משנה כלום. כאן אפשר לתת לו לפעול בתחום אחד בלבד:"}),
+  ...Object.keys(L).map(k=>h("label",{cls:"chk"},h("input",{type:"checkbox",checked:cur.has(k),on:{change:async e=>{e.target.checked?cur.add(k):cur.delete(k);try{await api("POST","/admin/user",{uid:UID,action:"setCaps",caps:[...cur]});m.textContent="נשמר ✔"}catch(x){m.textContent=x.message}}}}),L[k])),m))
+}catch(e){}};
+function render(){RO=!(ME&&(ME.role=="admin"||(ME.caps||[]).includes(CAPMAP[TAB])));buildNav();try{localStorage.adm_tab=TAB}catch(e){}$("main").replaceChildren(h("p",{cls:"muted",text:"טוען…"}));({"סקירה":vOverview,"משתמשים":vUsers,"משתמש":vUser,"הודעות":vMessages,"אבטחה":vSecurity,"יומן פעולות":vAudit,"גיבויים":vBackups,"הזמנות":vInvites,"דיווחים":vReports,"גלריה":vGallery,"חסימות":vBlocks,"הטבות":vPerks,"מנויים":vSubs,"צ'אט":vChat,"בדיקות":vTests,"מבצעים":vPromo,"פעילות":vActivity,"בוט":vBot,"משוב":vFeedback,"הגדרות":vSettings,"גרסאות":vChangelog,"יצוא":vExport})[TAB]().catch(e=>$("main").replaceChildren(h("p",{text:"שגיאה: "+e.message})))}
 // ---------- גרפים ----------
 function lineChart(series,keys,colors,names){const W=720,H=220,P=34,n=series.length,mx=Math.max(1,...series.flatMap(s=>keys.map(k=>s[k]||0))),X=i=>P+(n<2?0:i*(W-P-10)/(n-1)),Y=v=>H-24-(v/mx)*(H-44);
  const ns="http://www.w3.org/2000/svg",svg=document.createElementNS(ns,"svg");svg.setAttribute("viewBox",`0 0 ${W} ${H}`);svg.style.width="100%";
@@ -540,6 +580,6 @@ async function vSettings(){const sr=await api("GET","/admin/settings"),s=sr.sett
   h("div",{cls:"row"},h("button",{cls:"pri",text:"💾 שמירה",disabled:RO,on:{click:save}}),msg)),
   h("div",{cls:"card scroll"},h("h2",{text:"היסטוריית שינויים"}),hist.items.length?h("table",{},h("tr",{},["מתי","מי","מה שונה",""].map(x=>h("th",{text:x}))),...hist.items.map(i=>h("tr",{},h("td",{text:fmt(i.ts)}),h("td",{text:i.by}),h("td",{text:i.diff.join(", ")||"—"}),h("td",{},h("button",{text:"↩ שחזור למצב שלפני",disabled:RO,on:{click:async()=>{if(confirm("לשחזר?")){await api("POST","/admin/revert",{key:i.key});render()}}}}))))):h("p",{cls:"muted",text:"אין שינויים עדיין"})))}
 // ---------- יצוא ----------
-async function vExport(){$("main").replaceChildren(h("div",{cls:"card"},h("h2",{text:"יצוא נתונים (CSV, נפתח באקסל)"}),h("div",{cls:"row"},[["weekly","דוח שבועי"],["users","משתמשים"],["downloads","הורדות"],["reports","דיווחים"]].map(([k,t])=>h("a",{href:"/api/admin/export?kind="+k,download:k+".csv",style:"text-decoration:none"},h("button",{text:"⬇ "+t}))))))}
+async function vExport(){$("main").replaceChildren(h("div",{cls:"card"},h("h2",{text:"יצוא נתונים (CSV, נפתח באקסל)"}),h("div",{cls:"row"},[["weekly","דוח שבועי"],["users","משתמשים"],["downloads","הורדות"],["reports","דיווחים"],["perks","הטבות שנשלחו"],["subs","מנויים"]].map(([k,t])=>h("a",{href:"/api/admin/export?kind="+k,download:k+".csv",style:"text-decoration:none"},h("button",{text:"⬇ "+t}))))))}
 boot();
 </script></body></html>

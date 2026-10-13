@@ -8,7 +8,7 @@
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",
-    "run_worker_first": ["/api/*", "/g/*", "/", "/index.html", "/gallery.html"]
+    "run_worker_first": ["/api/*", "/g/*", "/", "/index.html", "/gallery.html", "/sitemap.xml", "/robots.txt"]
   },
   "d1_databases": [{ "binding": "DB", "database_name": "trip3d", "database_id": "b41dd4bc-19de-46dd-94a4-d19c972eb347" }],
   "triggers": { "crons": ["0 0 * * *", "0 1 * * 1"] },

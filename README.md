@@ -30,6 +30,7 @@
 | `RESEND_API_KEY` + `FROM_EMAIL` | לאימות מייל ואיפוס סיסמה | שליחת מיילים למשתמשים דרך resend.com. **חשוב:** כדי לשלוח לכל משתמש צריך לאמת דומיין ב-Resend ולהשתמש בכתובת ממנו (`FROM_EMAIL=noreply@הדומיין-שלך`). כתובת הניסיון `onboarding@resend.dev` שולחת רק אליכם |
 | `TURNSTILE_SITE_KEY` + `TURNSTILE_SECRET` | אופציונלי | בדיקת "אני לא רובוט" של Cloudflare (חינם) בהרשמה |
 | `GOOGLE_CLIENT_ID` | אופציונלי | להתחברות עם Google (ראו למטה) |
+| `VAPID_PUBLIC`, `VAPID_PRIVATE` | אופציונלי | התראות דחיפה לדפדפן (זוג מפתחות ES256 בפורמט base64url; בלעדיהם הכפתור 🔔 לא מופיע) |
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | אופציונלי | התראות בטלגרם |
 | `DISCORD_WEBHOOK_URL` | אופציונלי | התראות בדיסקורד |
 | `NOTIFY_EMAIL` | אופציונלי | כתובת שמקבלת התראות מנהל במייל (דורש גם `RESEND_API_KEY`) |

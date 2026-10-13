@@ -8,7 +8,7 @@ def rep(a,b,cnt=1):
 # ללא מנגנון הפרסום העצמי של Claude
 rep('%%CFG%%','{}');rep('%%TPL%%','')
 # סקריפט התקשורת לפני שאר הספריות
-rep('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js','<script src="/shim.js"></script>\n<script src="/maint.js" defer></script>\n<script src="/guidetab.js" defer></script>\n<script src="/news.js" defer></script>\n<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js')
+rep('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js','<script src="/shim.js"></script>\n<script src="/maint.js" defer></script>\n<script src="/guidetab.js" defer></script>\n<script src="/news.js" defer></script>\n<script src="/extras.js" defer></script>\n<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js')
 # ניטור משפך
 rep('$("start").onclick=()=>{$("s1").style.display="none";$("s2").style.display="block";wi=0;wr()};','$("start").onclick=()=>{$("s1").style.display="none";$("s2").style.display="block";wi=0;wr();window.TRACK&&TRACK("wizstart")};')
 rep('if(MULTI){multiNames=[...W.ctys];','window.TRACK&&TRACK("build",MULTI?W.ctys.join("+"):W.cty);if(MULTI){multiNames=[...W.ctys];')

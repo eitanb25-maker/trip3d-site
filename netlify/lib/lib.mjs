@@ -426,6 +426,7 @@ export function perkText(p) {
 export async function addInbox(st, uid, subject, body, by = "system") {
   const mid = Date.now() + "-" + rid(2);
   await st.setJSON("m/" + uid + "/" + mid, { id: mid, ts: Date.now(), read: false, by, subject, body });
+  if (pushEnabled()) { try { await pushUser(uid); } catch {} }
   return mid;
 }
 export async function givePerk(st, u, perk, subject, extra) {
@@ -629,4 +630,70 @@ export async function botMissText() {
   const rows = (await st.scan("bm/", { limit: 300 })).map((x) => x.v).filter((v) => v && (v.last || 0) > cut).sort((a, b) => b.n - a.n).slice(0, 10);
   if (!rows.length) return "";
   return "\n\n🤖 שאלות שהבוט לא ידע לענות עליהן השבוע:\n" + rows.map((r) => `• ${r.q} (${r.n}x)`).join("\n") + "\n(ללמד אותו: לוח בקרה ← בוט)";
+}
+
+// ---------- התראות דחיפה (Web Push, בלי תוכן; ה-Service Worker שולף את הטקסט בעצמו) ----------
+export const pushEnabled = () => !!(process.env.VAPID_PUBLIC && process.env.VAPID_PRIVATE);
+const b64u = (buf) => Buffer.from(buf).toString("base64url");
+async function vapidJwt(aud) {
+  const pub = Buffer.from(process.env.VAPID_PUBLIC, "base64url");
+  const jwk = { kty: "EC", crv: "P-256", d: process.env.VAPID_PRIVATE, x: b64u(pub.subarray(1, 33)), y: b64u(pub.subarray(33, 65)), ext: true };
+  const key = await globalThis.crypto.subtle.importKey("jwk", jwk, { name: "ECDSA", namedCurve: "P-256" }, false, ["sign"]);
+  const head = b64u(JSON.stringify({ typ: "JWT", alg: "ES256" })), pay = b64u(JSON.stringify({ aud, exp: Math.floor(Date.now() / 1000) + 12 * 3600, sub: "mailto:" + (process.env.ADMIN_EMAIL || "admin@example.com") }));
+  const sig = await globalThis.crypto.subtle.sign({ name: "ECDSA", hash: "SHA-256" }, key, Buffer.from(head + "." + pay));
+  return head + "." + pay + "." + b64u(sig);
+}
+// שולח התראה ריקה למכשירים של משתמש; מחזיר כמה נשלחו. מכשירים שפג תוקפם נמחקים.
+export async function pushUser(uid) {
+  if (!pushEnabled()) return 0;
+  const st = await store(), u = await st.get("u/" + uid);
+  if (!u || !(u.push || []).length || u.blocked) return 0;
+  let ok = 0; const keep = [];
+  for (const s of u.push) {
+    try {
+      const aud = new URL(s.endpoint).origin;
+      const r = await fetch(s.endpoint, { method: "POST", headers: { authorization: `vapid t=${await vapidJwt(aud)}, k=${process.env.VAPID_PUBLIC}`, ttl: "86400", "content-length": "0" } });
+      if (r.status === 404 || r.status === 410) continue;
+      if (r.ok) ok++;
+      keep.push(s);
+    } catch { keep.push(s); }
+  }
+  if (keep.length !== u.push.length) { u.push = keep; await st.setJSON("u/" + uid, u); }
+  return ok;
+}
+
+// ---------- אימות דו-שלבי (TOTP, תואם Google Authenticator) ----------
+const B32 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+export function totpSecret() {
+  const bytes = globalThis.crypto.getRandomValues(new Uint8Array(20)); let bits = "", out = "";
+  for (const b of bytes) bits += b.toString(2).padStart(8, "0");
+  for (let i = 0; i < bits.length; i += 5) out += B32[parseInt(bits.slice(i, i + 5).padEnd(5, "0"), 2)];
+  return out;
+}
+function b32dec(s) {
+  let bits = ""; for (const c of String(s).toUpperCase().replace(/=+$/, "")) { const i = B32.indexOf(c); if (i >= 0) bits += i.toString(2).padStart(5, "0"); }
+  const out = []; for (let i = 0; i + 8 <= bits.length; i += 8) out.push(parseInt(bits.slice(i, i + 8), 2));
+  return Buffer.from(out);
+}
+export function totpAt(secret, t = Date.now()) {
+  const ctr = Buffer.alloc(8); ctr.writeBigUInt64BE(BigInt(Math.floor(t / 30000)));
+  const h = crypto.createHmac("sha1", b32dec(secret)).update(ctr).digest(), o = h[19] & 15;
+  return String(((h[o] & 127) << 24 | h[o + 1] << 16 | h[o + 2] << 8 | h[o + 3]) % 1e6).padStart(6, "0");
+}
+export const totpOk = (secret, code) => { const c = String(code || "").replace(/\s/g, ""); return /^\d{6}$/.test(c) && [-1, 0, 1].some((d) => totpAt(secret, Date.now() + d * 30000) === c); };
+
+// ---------- תזכורת עדינה לפרויקט שנשמר ולא נפתח ----------
+export async function projectNudges(max = 40) {
+  const st = await store(), now = Date.now(); let n = 0;
+  for (const { v: u } of await st.scan("u/", { limit: 1000 })) {
+    if (n >= max) break;
+    if (!u || u.blocked || !u.last || u.mailOk === false) continue;
+    const idle = (now - u.last) / 864e5;
+    if (idle < 7 || idle > 45 || (u.nudge && now - u.nudge < 30 * 864e5)) continue;
+    const ps = await st.list("p/" + u.uid + "/");
+    if (!ps.length) continue;
+    await addInbox(st, u.uid, "הפרויקט שלך מחכה לך 🧩", `שמרת ${ps.length === 1 ? "פרויקט" : ps.length + " פרויקטים"} בגלריה האישית ועוד לא חזרת אליו. אפשר להמשיך בדיוק מאיפה שעצרת: 'הגלריה שלי' ← פתיחה.`);
+    u.nudge = now; await st.setJSON("u/" + u.uid, u); n++;
+  }
+  return n;
 }
