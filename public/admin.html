@@ -233,16 +233,17 @@ async function vPromo(){const [hub,sr]=await Promise.all([api("GET","/admin/perk
  const num=(v,mx)=>h("input",{type:"number",min:0,max:mx,value:v,style:"width:80px"});
  const wd=d=>d?new Date(d).toLocaleDateString("he-IL",{day:"numeric",month:"short"}):"";
  // בונוס לכולם
- const bn=num(1,20),bh=num(24,336),bl=h("input",{placeholder:"שם (למשל: שעה שמחה)",maxlength:60,style:"flex:1;min-width:140px"}),wk=num(S.weekendBonus||0,20);
+ let an;const bn=num(1,20),bh=num(24,336),bl=h("input",{placeholder:"שם (למשל: שעה שמחה)",maxlength:60,style:"flex:1;min-width:140px"}),wk=num(S.weekendBonus||0,20);
  const c1=h("div",{cls:"card"},h("h2",{text:"⚡ בונוס הורדות לכולם"}),h("p",{cls:"muted",text:"מוסיף הורדות ליום לכל המשתמשים בזמן מוגדר. מוצג למבקרים כפס באתר."}),
   h("p",{},h("b",{text:bw?"🟢 פעיל: +"+bw.n+" ליום עד "+new Date(bw.until).toLocaleString("he-IL",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})+(bw.label?" ("+bw.label+")":""):hub.bonus?"🟢 פעיל כרגע: "+hub.bonus.label+" (+"+hub.bonus.n+")":"⚪ לא פעיל"})),
-  h("div",{cls:"row"},"תוספת ליום:",bn,"למשך (שעות):",bh,bl,h("button",{cls:"pri",text:"הפעל",disabled:RO,on:{click:()=>save({bonusWin:{n:+bn.value,hours:+bh.value,label:bl.value}})}}),h("button",{cls:"bad",text:"בטל",disabled:RO,on:{click:()=>save({bonusWin:null})}})),
+  h("div",{cls:"row"},"תוספת ליום:",bn,"למשך (שעות):",bh,bl,an=h("input",{type:"checkbox",checked:true}),h("label",{},an," שלח הודעה לכולם"),h("button",{cls:"pri",text:"הפעל",disabled:RO,on:{click:()=>save({bonusWin:{n:+bn.value,hours:+bh.value,label:bl.value},announce:an.checked})}}),h("button",{cls:"bad",text:"בטל",disabled:RO,on:{click:()=>save({bonusWin:null})}})),
   h("div",{cls:"row"},"בונוס סוף שבוע אוטומטי (שישי–שבת), תוספת ליום (0 = כבוי):",wk,h("button",{text:"שמירה",disabled:RO,on:{click:()=>save({weekendBonus:+wk.value})}})));
  // מתנות אוטומטיות
- const wg=num(S.welcomeGift,20),tr=num(S.thanksReward,20),cb=num(S.cowBonus,10);
+ const wg=num(S.welcomeGift,20),tr=num(S.thanksReward,20),cb=num(S.cowBonus,10),chN=num(S.challengeN,8),chR=num(S.challengeReward,20),chOn=h("input",{type:"checkbox",checked:S.challengeOn!==false}),an2=num(S.annivGift,20),rpz=h("input",{type:"checkbox",checked:S.refPrizeOn!==false});
  const c2=h("div",{cls:"card"},h("h2",{text:"🎁 מתנות אוטומטיות"}),
   h("div",{cls:"row"},"מתנת פתיחה (על ההורדה הראשונה):",wg),h("div",{cls:"row"},"תודה על משוב (כפתור 'תודה' בדיווחים):",tr),h("div",{cls:"row"},"בונוס מדינת השבוע (הורדה / אישור יצירה בגלריה):",cb),
-  h("div",{cls:"row"},h("button",{cls:"pri",text:"שמירה",disabled:RO,on:{click:()=>save({welcomeGift:+wg.value,thanksReward:+tr.value,cowBonus:+cb.value})}})),
+  h("div",{cls:"row"},h("label",{},chOn," אתגר שבועי: יצירה מ-"),chN," מדינות שונות בשבוע, פרס:",chR," הורדות + תג 🎯"),h("div",{cls:"row"},"מתנת יום שנה להצטרפות (כל שנה):",an2),h("div",{cls:"row"},h("label",{},rpz," פרסים חודשיים למזמינים המובילים (5/3/2 הורדות, בתחילת כל חודש) + תג 👑")),
+  h("div",{cls:"row"},h("button",{cls:"pri",text:"שמירה",disabled:RO,on:{click:()=>save({welcomeGift:+wg.value,thanksReward:+tr.value,cowBonus:+cb.value,challengeOn:chOn.checked,challengeN:+chN.value,challengeReward:+chR.value,annivGift:+an2.value,refPrizeOn:rpz.checked})}})),
   h("p",{cls:"muted",text:"קופונים: בלשונית 'הטבות'. הקוד TRIP5 (5 הורדות, עד 300 משתמשים, 90 יום) נוצר אוטומטית ואפשר למחוק או לשנות אותו. מתנת הורדה לחבר: מתוך 'החשבון שלי' באתר."}));
  // מדינת השבוע
  const ci=h("input",{placeholder:"שם מדינה בדיוק כפי שמופיע באתר",maxlength:40,list:"cl",style:"flex:1;min-width:180px"}),dl=h("datalist",{id:"cl"},hub.month.map(x=>h("option",{value:x.country})));
@@ -259,7 +260,14 @@ async function vPromo(){const [hub,sr]=await Promise.all([api("GET","/admin/perk
    h("label",{},h("input",{type:"checkbox",checked:S.hofAuto!==false,disabled:RO,on:{change:e=>save({hofAuto:e.target.checked})}})," פרסום אוטומטי כל יום שני (3 המדינות המובילות של השבוע, מוצגות שבוע)")),
   hub.past&&hub.past.length?h("p",{cls:"muted",text:"שבועות קודמים: "+hub.past.map(p=>wd(p.from)+": "+p.top.map(x=>x.country).join(", ")).join(" | ")}):"");
  const c5=h("div",{cls:"card scroll"},h("h2",{text:"🌍 מדינות לפי שימוש"}),h("div",{cls:"row",style:"align-items:flex-start"},h("div",{style:"flex:1;min-width:240px"},h("h3",{text:"7 ימים אחרונים"}),tbl(hub.week)),h("div",{style:"flex:1;min-width:240px"},h("h3",{text:"30 ימים אחרונים"}),tbl(hub.month))));
- $("main").replaceChildren(c1,c2,c3,c4,c5)}
+ const c6=h("div",{cls:"card"},h("h2",{text:"👑 מזמינים מובילים החודש"}),hub.refs&&hub.refs.length?h("p",{},hub.refs.map((x,i)=>medal[i]+" "+x.name+" ("+x.n+")").join("   ")):h("p",{cls:"muted",text:"אין עדיין הזמנות שהושלמו החודש"}));
+ const c7=h("div",{cls:"card"},h("h2",{text:"📈 סיכום שבועי והשוואה"}),h("p",{cls:"muted",text:"טוען…"}));
+ $("main").replaceChildren(c1,c2,c3,c4,c6,c5,c7);
+ api("GET","/admin/weekreport").then(w=>{const d=(a,b)=>b?(a>=b?"▲ ":"▼ ")+Math.round(Math.abs(a-b)/b*100)+"%":"",row=(l,a,b)=>h("tr",{},h("td",{text:l}),h("td",{text:a}),h("td",{text:b}),h("td",{text:d(a,b)})),P=w.cur.perks,Q=w.prev.perks,r=w.retention;
+  const pk={welcome:"מתנות פתיחה",coupon:"קופונים",cow:"מדינת השבוע",challenge:"אתגר שבועי",gift:"מתנות לחברים",thanks:"תודות",anniv:"ימי שנה"};
+  c7.replaceChildren(h("h2",{text:"📈 סיכום שבועי והשוואה"}),h("table",{},h("tr",{},["","7 ימים אחרונים","השבוע שלפניו",""].map(x=>h("th",{text:x}))),row("הרשמות",w.cur.reg,w.prev.reg),row("הורדות",w.cur.dl,w.prev.dl),row("משוב: הצליחו",w.cur.fbok,w.prev.fbok),row("משוב: נכשלו",w.cur.fbbad,w.prev.fbbad),...Object.entries(pk).map(([k,l])=>row("🎁 "+l,P[k]||0,Q[k]||0))),
+   h("p",{},h("b",{text:"שימור: "}),r.cohort?r.retained+" מתוך "+r.cohort+" ("+Math.round(r.retained/r.cohort*100)+"%) מהנרשמים לפני 8–30 יום חזרו להוריד אחרי שבוע":"אין עדיין מספיק נתונים",h("br"),"משתמשים פעילים השבוע: "+r.active7+" מתוך "+r.users),
+   h("p",{cls:"muted",text:r.cohort&&r.retained/r.cohort<.2?"שימור נמוך: כדאי להפעיל אתגר שבועי ומבצע בונוס כדי להחזיר משתמשים.":"אם מבצעים מעלים הורדות, השאירו אותם פעילים."}))}).catch(e=>c7.replaceChildren(h("p",{text:"שגיאה: "+e.message})))}
 // ---------- משוב והורדות ----------
 async function vFeedback(){const [f,dl]=await Promise.all([api("GET","/admin/feedback"),api("GET","/admin/downloads")]);
  const by=k=>{const m={};f.items.forEach(i=>{const v=(i[k]||"").trim()||"לא צוין";m[v]=m[v]||[0,0];m[v][i.ok?0:1]++});return Object.entries(m).sort((a,b)=>(b[1][0]+b[1][1])-(a[1][0]+a[1][1]))};

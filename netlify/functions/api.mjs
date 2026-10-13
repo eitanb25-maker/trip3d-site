@@ -1,6 +1,6 @@
 // שרת האתר: התחברות, הרשאות, מכסות, סטטיסטיקות ולוח בקרה
 import crypto from "node:crypto";
-import { VIP_OPTS, PERK_TYPES, TIMED_PERKS, BADGES, activePerks, perkSum, hasEarly, perkText, givePerk, awardBadge, addInbox, leaderboard, awardMonthly, monthKey, alertMail, externalBackup, extTargets, activeBlocks, findBlock, BLOCK_FEATURES, errorSpike, funnelOf, store, getSettings, bump, notify, dayKey, rid, rangeStats, sumGroup, TOOLS, DEFAULTS, mailEnabled, sendMail, rateHit, secEvent, isProd, audit, weeklyCsv, makeBackup, restoreBackup, encryptBackup, decryptBackup, saveAutoBackup, bonusNow, perkInfo, topCountries, publishHof, setCow, liveDoc } from "../lib/lib.mjs";
+import { VIP_OPTS, PERK_TYPES, TIMED_PERKS, BADGES, activePerks, perkSum, hasEarly, perkText, givePerk, awardBadge, addInbox, leaderboard, awardMonthly, monthKey, alertMail, externalBackup, extTargets, activeBlocks, findBlock, BLOCK_FEATURES, errorSpike, funnelOf, store, getSettings, bump, notify, dayKey, rid, rangeStats, sumGroup, TOOLS, DEFAULTS, mailEnabled, sendMail, rateHit, secEvent, isProd, audit, weeklyCsv, makeBackup, restoreBackup, encryptBackup, decryptBackup, saveAutoBackup, bonusNow, perkInfo, weekKey, refBoard, awardRefMonthly, weekReport, lbScore, topCountries, publishHof, setCow, liveDoc } from "../lib/lib.mjs";
 
 export const config = { path: "/api/*" };
 
@@ -147,7 +147,7 @@ function csv(rows) {
   return "\ufeff" + rows.map((r) => r.map(q).join(",")).join("\r\n");
 }
 
-const galPub = (g) => ({ id: g.id, name: g.name, tool: g.tool, country: g.country, author: g.author || "", ts: g.ts, template: !!g.template, feat: !!(g.featured && g.featured > Date.now()) });
+const galPub = (g) => ({ likes: g.likes || 0, id: g.id, name: g.name, tool: g.tool, country: g.country, author: g.author || "", ts: g.ts, template: !!g.template, feat: !!(g.featured && g.featured > Date.now()) });
 // מוסיף לכל יצירה את התגים של היוצר (רק אם השם שלו מוצג)
 async function withBadges(gs) {
   const st = await store(), cache = {}, uids = [...new Set(gs.filter((g) => g.author && g.uid).map((g) => g.uid))];
@@ -222,6 +222,7 @@ export default async (req) => {
       });
     }
     if (R === "GET hof") return J(await perkInfo(S));
+    if (R === "GET ref/top") { const mk = monthKey(); return J({ month: mk, items: (await refBoard(mk)).slice(0, 5).map((x, i) => ({ place: i + 1, name: x.name, n: x.n })) }, 200, { "cache-control": "public, max-age=120" }); }
     if (R === "GET me") {
       if (!me) return J({ user: null });
       const q = await quotaOf(me, S);
@@ -230,10 +231,18 @@ export default async (req) => {
         const d = await st.get("d/" + me.lastDl);
         if (d && !d.fb && Date.now() - d.ts > 30 * 60e3 && Date.now() - d.ts < 14 * 864e5) pending = { id: d.id, tool: d.tool, country: d.country, ts: d.ts };
       }
+      if (S.annivGift > 0 && me.created) {
+        const c = new Date(me.created), n = new Date(), yrs = n.getUTCFullYear() - c.getUTCFullYear();
+        if (yrs >= 1 && c.getUTCMonth() === n.getUTCMonth() && c.getUTCDate() === n.getUTCDate() && me.annGot !== n.getUTCFullYear()) {
+          me.annGot = n.getUTCFullYear(); me.credits = (me.credits || 0) + S.annivGift; await st.setJSON("u/" + me.uid, me);
+          await addInbox(st, me.uid, "🎂 יום הולדת לחשבון שלך!", `עברה ${yrs === 1 ? "שנה" : yrs + " שנים"} מאז שהצטרפת לסטודיו. קיבלת ${S.annivGift} הורדות נוספות במתנה, תודה שאתם איתנו!`);
+          await bump([["perk", "anniv"]]);
+        }
+      }
       const msgs = [];
       for (const { v } of (await st.scan("m/" + me.uid + "/", { desc: true, limit: 10 })).reverse()) { if (v && !v.read) msgs.push({ id: v.id, ts: v.ts, subject: v.subject, body: v.body }); }
       for (const { v } of (await st.scan("bc/", { desc: true, limit: 5 })).reverse()) { if (v && v.ts > (me.bcSeen || me.created || 0)) msgs.push({ id: v.id, ts: v.ts, subject: v.subject, body: v.body }); }
-      return J({ user: pub(me), blocked: !!me.blocked, quota: q, early: hasEarly(me), streak: me.streak && me.streak.d >= dayKey(Date.now() - 864e5) ? me.streak.n : 0, pending, messages: msgs.sort((x, y) => x.ts - y.ts) });
+      return J({ user: pub(me), blocked: !!me.blocked, quota: await quotaOf(me, S), countries: me.cset || [], challenge: S.challengeOn ? { n: S.challengeN, have: me.ch && me.ch.w === weekKey() ? me.ch.c.length : 0, done: !!(me.ch && me.ch.w === weekKey() && me.ch.done), reward: S.challengeReward } : null, early: hasEarly(me), streak: me.streak && me.streak.d >= dayKey(Date.now() - 864e5) ? me.streak.n : 0, pending, messages: msgs.sort((x, y) => x.ts - y.ts) });
     }
 
     if (R === "POST me/redeem") {
@@ -246,7 +255,7 @@ export default async (req) => {
       if ((pc.users || []).includes(me.uid)) return E(400, "כבר מימשתם את הקוד הזה");
       pc.uses++; pc.users = (pc.users || []).concat([me.uid]); await st.setJSON("pc/" + code, pc);
       const perk = { type: pc.type, n: pc.n, key: pc.key || "", until: !TIMED_PERKS.includes(pc.type) || !pc.days ? 0 : Date.now() + pc.days * 864e5, note: pc.note || "" };
-      await givePerk(st, me, perk, "הטבה מקוד " + code + " 🎁");
+      await givePerk(st, me, perk, "הטבה מקוד " + code + " 🎁"); await bump([["perk", "coupon"]]);
       return J({ ok: true, text: perkText(perk) });
     }
     if (R === "GET me/ref") {
@@ -527,26 +536,46 @@ export default async (req) => {
         if (inv && !inv.blocked && inv.uid !== me.uid && !(inv.ipH && inv.ipH === me.ipH) && S.refBonus > 0 && (inv.bonus || 0) < S.refMax) {
           inv.bonus = Math.min(S.refMax, (inv.bonus || 0) + S.refBonus); inv.refCount = (inv.refCount || 0) + 1;
           await st.setJSON("u/" + inv.uid, inv);
+          { const mk = monthKey(), rf = (await st.get("rfm/" + mk)) || {}; rf[inv.uid] = { n: inv.name, c: ((rf[inv.uid] && rf[inv.uid].c) || 0) + 1 }; await st.setJSON("rfm/" + mk, rf); }
           const mid = Date.now() + "-" + rid(2);
           await st.setJSON("m/" + inv.uid + "/" + mid, { id: mid, ts: Date.now(), read: false, by: "system", subject: "חבר הצטרף ושימש באתר 🎉", body: `חבר שהזמנת הוריד את הקובץ הראשון שלו. קיבלת תוספת של ${S.refBonus} הורדות ליום (סה״כ בונוס: ${inv.bonus}).` });
           if (inv.refCount >= 3) await awardBadge(st, inv, "inviter");
         }
       }
-      const gifts = [];
+      const gifts = [], perkB = [];
       if (S.welcomeGift > 0 && !me.welcomed && me.dlTotal === 1) {
-        me.welcomed = true; me.credits = (me.credits || 0) + S.welcomeGift; gifts.push(`${S.welcomeGift} הורדות מתנת פתיחה`);
+        me.welcomed = true; me.credits = (me.credits || 0) + S.welcomeGift; gifts.push(`${S.welcomeGift} הורדות מתנת פתיחה`); perkB.push(["perk", "welcome"]);
         await addInbox(st, me.uid, "מתנת פתיחה 🎁", `ברוכים הבאים! על היצירה הראשונה שלכם קיבלתם ${S.welcomeGift} הורדות נוספות במתנה.`);
       } else if (!me.welcomed) me.welcomed = true;
+      {
+        const cs = country ? country.split("+").map((c) => c.trim()).filter(Boolean) : [], nb = [];
+        { const have = new Set((me.cset || []).map((c) => c.toLowerCase())); me.cset = (me.cset || []).concat(cs.filter((c) => !have.has(c.toLowerCase()) && have.add(c.toLowerCase()))).slice(0, 120); }
+        me.tset = Array.from(new Set([...(me.tset || []), tool]));
+        const add = (id) => { if (!(me.badges || []).includes(id)) { me.badges = (me.badges || []).concat([id]); nb.push(BADGES[id][0] + " " + BADGES[id][1]); } };
+        if (me.cset.length >= 5) add("countries5");
+        if (me.dlTotal >= 10) add("dl10");
+        if (me.tset.length >= TOOLS.length) add("alltools");
+        if (S.challengeOn && cs.length) {
+          const wk = weekKey(), ch = me.ch && me.ch.w === wk ? me.ch : { w: wk, c: [], done: false };
+          for (const c of cs) if (!ch.c.includes(c.toLowerCase())) ch.c.push(c.toLowerCase());
+          if (!ch.done && ch.c.length >= S.challengeN) {
+            ch.done = true; me.credits = (me.credits || 0) + S.challengeReward; add("challenger"); gifts.push(`${S.challengeReward} הורדות על האתגר השבועי 🎯`); perkB.push(["perk", "challenge"]);
+            await addInbox(st, me.uid, "🎯 סיימתם את האתגר השבועי!", `יצרתם מזכרות מ-${S.challengeN} מדינות שונות השבוע. קיבלתם ${S.challengeReward} הורדות נוספות ותג.`);
+          }
+          me.ch = ch;
+        }
+        if (nb.length) { gifts.push("תג חדש: " + nb.join(", ")); await addInbox(st, me.uid, "קיבלת תג חדש 🏆", nb.join("\n")); }
+      }
       if (country && S.cowBonus > 0) {
         const cow = liveDoc(await st.get("cow/current"));
         if (cow && me.cowGot !== cow.from && country.split("+").some((c) => c.trim().toLowerCase() === cow.country.toLowerCase())) {
-          me.cowGot = cow.from; me.credits = (me.credits || 0) + S.cowBonus; gifts.push(`${S.cowBonus} הורדות על מדינת השבוע (${cow.country})`);
+          me.cowGot = cow.from; me.credits = (me.credits || 0) + S.cowBonus; gifts.push(`${S.cowBonus} הורדות על מדינת השבוע (${cow.country})`); perkB.push(["perk", "cow"]);
           await addInbox(st, me.uid, "🧭 מדינת השבוע!", `יצרתם מזכרת של ${cow.country}, מדינת השבוע. קיבלתם ${S.cowBonus} הורדות נוספות${(me.badges || []).includes("explorer") ? "" : " ותג \"חוקר השבוע\""}.`);
           if (!(me.badges || []).includes("explorer")) me.badges = (me.badges || []).concat(["explorer"]);
         }
       }
       await st.setJSON("u/" + me.uid, me);
-      await bump([["dl", tool], ["country", country || "?"]].filter((x) => x[1]));
+      await bump([["dl", tool], ["country", country || "?"], ...perkB].filter((x) => x[1]));
       if (S.notifyDownload) await notify(`⬇️ הורדה חדשה\n${me.name} (${me.email})\nכלי: ${tool}${country ? " · " + country : ""}`);
       return J({ ok: true, id, remaining: q.limit > 0 ? Math.max(0, q.limit - q.used - 1) + (me.credits || 0) : null, credits: me.credits || 0, gifts });
     }
@@ -567,7 +596,7 @@ export default async (req) => {
       else return E(400, "אין לכם הורדה פנויה לתת במתנה");
       gi.n++; to.giftIn = gi; to.credits = (to.credits || 0) + 1;
       await st.setJSON("u/" + me.uid, me); await st.setJSON("u/" + to.uid, to);
-      await addInbox(st, to.uid, "קיבלת מתנה 🎁", `${me.name} שלח/ה לך הורדה אחת במתנה!`);
+      await addInbox(st, to.uid, "קיבלת מתנה 🎁", `${me.name} שלח/ה לך הורדה אחת במתנה!`); await bump([["perk", "gift"]]);
       return J({ ok: true, to: to.name });
     }
 
@@ -652,6 +681,13 @@ export default async (req) => {
 
     // ---------- גלריית קהילה (ציבורית, באישור מנהל) ----------
     if (route === "gallery" && m === "GET") {
+      const cf = clean(url.searchParams.get("country"), 40).toLowerCase(), srt = url.searchParams.get("sort");
+      if (cf || srt === "likes") {
+        const off = Math.max(0, +url.searchParams.get("off") || 0), ids = await st.getMany((await st.list("ga/")).reverse().slice(0, 300));
+        const docs = (await st.getMany(ids.map((id) => "gl/" + id))).filter((g) => g && g.status === "approved" && (!cf || String(g.country || "").split("+").some((c) => c.trim().toLowerCase() === cf)));
+        if (srt === "likes") docs.sort((a, b) => (b.likes || 0) - (a.likes || 0) || b.ts - a.ts);
+        return J({ items: await withBadges(docs.slice(off, off + 36)), more: docs.length > off + 36 }, 200, { "cache-control": "public, max-age=60" });
+      }
       const off = Math.max(0, +url.searchParams.get("off") || 0), keys = (await st.list("ga/")).reverse(), gs = [], seen = new Set();
       if (off === 0) {
         const feat = (await listAll("gl/", 300)).filter((g) => g.status === "approved" && g.featured && g.featured > Date.now()).sort((a, b) => b.featured - a.featured).slice(0, 6);
@@ -659,6 +695,34 @@ export default async (req) => {
       }
       { const ids = await st.getMany(keys.slice(off, off + 36)), docs = await st.getMany(ids.map((id) => "gl/" + id)); for (const g of docs) if (g && g.status === "approved" && !seen.has(g.id)) gs.push(g); }
       return J({ items: await withBadges(gs), more: keys.length > off + 36 }, 200, { "cache-control": "public, max-age=60" });
+    }
+    if (route === "gallery/countries" && m === "GET") {
+      const ids = await st.getMany((await st.list("ga/")).reverse().slice(0, 300)), o = {};
+      for (const g of await st.getMany(ids.map((id) => "gl/" + id))) if (g && g.status === "approved") for (const c of String(g.country || "").split("+")) { const x = c.trim(); if (x) { const e = o[x.toLowerCase()] || (o[x.toLowerCase()] = { country: x, n: 0 }); e.n++; } }
+      return J({ items: Object.values(o).sort((a, b) => b.n - a.n).slice(0, 40) }, 200, { "cache-control": "public, max-age=120" });
+    }
+    if (route === "gallery/like" && m === "POST") {
+      if (!me) return E(401, "כדי לתת לייק צריך להתחבר");
+      if (await rateHit("lk:" + me.uid, 60, 3600e3)) return E(429, "יותר מדי לייקים בשעה האחרונה");
+      const id = clean((await body(req, 300)).id, 40), g = id && (await st.get("gl/" + id));
+      if (!g || g.status !== "approved") return E(404, "לא נמצא");
+      const key = `lk/${me.uid}/${id}`, had = await st.get(key);
+      if (had) { await st.delete(key); g.likes = Math.max(0, (g.likes || 0) - 1); } else { await st.setJSON(key, 1); g.likes = (g.likes || 0) + 1; }
+      await st.setJSON("gl/" + id, g);
+      if (g.uid && g.uid !== me.uid && S.lbOn !== false) {
+        const mk = monthKey(), doc = (await st.get("lb/" + mk)) || {}, e = doc[g.uid] || { n: g.author || "", v: 0, o: 0 };
+        e.l = Math.max(0, (e.l || 0) + (had ? -1 : 1)); if (g.author) e.n = g.author; doc[g.uid] = e; await st.setJSON("lb/" + mk, doc);
+      }
+      return J({ liked: !had, likes: g.likes });
+    }
+    if (route === "gallery/likes" && m === "GET") {
+      if (!me) return J({ ids: [] });
+      return J({ ids: (await st.list(`lk/${me.uid}/`)).map((k) => k.split("/")[2]).slice(0, 300) });
+    }
+    if (route === "gallery/liked" && m === "GET") {
+      if (!me) return J({ items: [] });
+      const ids = (await st.list(`lk/${me.uid}/`)).map((k) => k.split("/")[2]).slice(0, 100);
+      return J({ items: await withBadges((await st.getMany(ids.map((i) => "gl/" + i))).filter((g) => g && g.status === "approved")) });
     }
     if (route === "gallery/top" && m === "GET") {
       const mk = monthKey(), top = (await leaderboard(mk)).slice(0, 5);
@@ -971,7 +1035,7 @@ export default async (req) => {
           const n = S.thanksReward || 0; u.credits = (u.credits || 0) + n; await st.setJSON("u/" + u.uid, u);
           await addInbox(st, u.uid, "תודה על המשוב! 💡", `ההצעה/הדיווח שלך עזרו לנו.${n ? ` קיבלת ${n} הורדות נוספות במתנה` : ""} ותג "תורם רעיונות".`);
           await awardBadge(st, u, "helper", true);
-          r.thanked = Date.now(); r.status = "done"; await st.setJSON("r/" + r.id, r); await audit(me, "report:thank", r.email, String(n));
+          await bump([["perk", "thanks"]]); r.thanked = Date.now(); r.status = "done"; await st.setJSON("r/" + r.id, r); await audit(me, "report:thank", r.email, String(n));
           return J({ ok: true });
         }
         r.status = b.action === "reopen" ? "open" : "done"; await st.setJSON("r/" + r.id, r); await audit(me, "report:" + r.status, r.email);
@@ -999,11 +1063,16 @@ export default async (req) => {
         if (["he", "en"].includes(b.lang)) next.lang = b.lang;
         if ("errThreshold" in b) next.errThreshold = Math.max(1, Math.min(500, Math.floor(+b.errThreshold) || 5));
         for (const [k, mx] of [["abuseDl", 1000], ["refBonus", 10], ["refMax", 50]]) if (k in b) next[k] = Math.max(0, Math.min(mx, Math.floor(+b[k]) || 0));
-        for (const [k, mx] of [["welcomeGift", 20], ["thanksReward", 20], ["cowBonus", 10], ["weekendBonus", 20]]) if (k in b) next[k] = Math.max(0, Math.min(mx, Math.floor(+b[k]) || 0));
-        if ("hofAuto" in b) next.hofAuto = !!b.hofAuto;
+        for (const [k, mx] of [["challengeN", 8], ["challengeReward", 20], ["annivGift", 20], ["welcomeGift", 20], ["thanksReward", 20], ["cowBonus", 10], ["weekendBonus", 20]]) if (k in b) next[k] = Math.max(0, Math.min(mx, Math.floor(+b[k]) || 0));
+        for (const k of ["hofAuto", "challengeOn", "refPrizeOn"]) if (k in b) next[k] = !!b[k];
+        if (next.challengeN < 2) next.challengeN = 2;
         if ("bonusWin" in b) {
           const w = b.bonusWin, n = w && Math.max(0, Math.min(20, Math.floor(+w.n) || 0)), hrs = w && Math.max(0, Math.min(24 * 14, +w.hours || 0));
           next.bonusWin = n && hrs ? { n, from: Date.now(), until: Date.now() + hrs * 36e5, label: clean(w.label, 60) } : null;
+          if (next.bonusWin && b.announce) {
+            const id = Date.now() + "-" + rid(2), lab = next.bonusWin.label || "בונוס לכולם";
+            await st.setJSON("bc/" + id, { id, ts: Date.now(), subject: "⚡ " + lab, body: `עכשיו +${n} הורדות ליום לכולם, עד ${new Date(next.bonusWin.until).toLocaleString("he-IL", { timeZone: "Asia/Jerusalem", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}. מהרו ליצור!`, by: me.email });
+          }
         }
         if ("aiLimit" in b) next.aiLimit = Math.max(0, Math.min(200, Math.floor(+b.aiLimit) || 0));
         if ("aiGlobal" in b) next.aiGlobal = Math.max(1, Math.min(100000, Math.floor(+b.aiGlobal) || 300));
@@ -1016,8 +1085,9 @@ export default async (req) => {
       if (R === "GET admin/perkhub") {
         const [w7, m30] = [await topCountries(7), await topCountries(30)], [cow, hof] = await st.getMany(["cow/current", "hof/current"]);
         const past = (await st.scan("hof/2", { desc: true, limit: 8 })).map((x) => x.v).filter(Boolean);
-        return J({ week: w7, month: m30, cow: liveDoc(cow), hof: liveDoc(hof), past, bonus: bonusNow(S) });
+        return J({ week: w7, month: m30, cow: liveDoc(cow), hof: liveDoc(hof), past, bonus: bonusNow(S), refs: (await refBoard(monthKey())).slice(0, 5) });
       }
+      if (R === "GET admin/weekreport") return J(await weekReport());
       if (R === "POST admin/hof") { const r = await publishHof(true); if (!r.done) return E(400, "אין עדיין נתוני שימוש לפי מדינות"); await audit(me, "hof:publish", "", r.doc.top.map((x) => x.country).join(",")); return J({ ok: true, hof: r.doc }); }
       if (R === "DELETE admin/hof") { await st.delete("hof/current"); await audit(me, "hof:clear"); return J({ ok: true }); }
       if (R === "POST admin/cow") {

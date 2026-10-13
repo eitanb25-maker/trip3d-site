@@ -6,7 +6,7 @@ export const DEFAULTS = {
   tools: {}, banner: "", bannerOn: false, maint: false, lang: "he",
   inviteOnly: false, dlLimit: 5, notifyDownload: true, notifyReport: true, errAlert: true, errThreshold: 5, blocks: [], abuseDl: 20, refBonus: 1, refMax: 5, extBackup: true, aiOn: false, aiLimit: 10, aiGlobal: 300, early: [], vip: [], galReward: 1, streakOn: true, lbOn: true,
   requireVerify: false, notifySecurity: true, autoBackup: true,
-  welcomeGift: 2, thanksReward: 2, cowBonus: 1, weekendBonus: 0, bonusWin: null, hofAuto: true,
+  welcomeGift: 2, challengeOn: true, challengeN: 3, challengeReward: 3, annivGift: 3, refPrizeOn: true, thanksReward: 2, cowBonus: 1, weekendBonus: 0, bonusWin: null, hofAuto: true,
 };
 
 export const isProd = () => !process.env.CONTEXT || process.env.CONTEXT === "production";
@@ -353,7 +353,7 @@ export async function externalBackup(enc, key) {
 export const PERK_TYPES = ["daily", "credits", "unlimited", "ai", "early", "projects", "gallery", "badge"];
 export const VIP_OPTS = ["rim:2", "shape:hex", "shape:oct", "shape:oval", "ps:star", "ps:heart"];
 export const TIMED_PERKS = ["daily", "unlimited", "ai", "early", "projects", "gallery"];
-export const BADGES = { founder: ["🌱", "מייסד", "Founder"], top: ["⭐", "מטייל מוביל", "Top traveler"], maker: ["🎨", "יוצר החודש", "Maker of the month"], inviter: ["🤝", "מזמין", "Inviter"], streak: ["🔥", "רצף יצירה", "Creation streak"], publisher: ["🖼️", "מפרסם בגלריה", "Gallery publisher"], helper: ["💡", "תורם רעיונות", "Helper"], explorer: ["🧭", "חוקר השבוע", "Weekly explorer"] };
+export const BADGES = { founder: ["🌱", "מייסד", "Founder"], top: ["⭐", "מטייל מוביל", "Top traveler"], maker: ["🎨", "יוצר החודש", "Maker of the month"], inviter: ["🤝", "מזמין", "Inviter"], streak: ["🔥", "רצף יצירה", "Creation streak"], publisher: ["🖼️", "מפרסם בגלריה", "Gallery publisher"], helper: ["💡", "תורם רעיונות", "Helper"], explorer: ["🧭", "חוקר השבוע", "Weekly explorer"], challenger: ["🎯", "מנצח האתגר", "Challenge winner"], countries5: ["🗺️", "חוקר עולם", "World explorer"], dl10: ["🏅", "10 הורדות", "10 downloads"], alltools: ["🛠️", "כל הכלים", "All tools"], refstar: ["👑", "מלך ההזמנות", "Invite champion"] };
 export const activePerks = (u, type) => (u.perks || []).filter((p) => (!p.until || p.until > Date.now()) && (!type || p.type === type));
 export const perkSum = (u, type) => activePerks(u, type).reduce((a, p) => a + (+p.n || 0), 0);
 export const hasEarly = (u) => !!u && (u.role === "admin" || u.role === "editor" || activePerks(u, "early").length > 0);
@@ -385,7 +385,7 @@ export async function awardBadge(st, u, id, silent) {
   return true;
 }
 export const monthKey = (t = Date.now()) => dayKey(t).slice(0, 7);
-export const lbScore = (e) => (e.v || 0) + 3 * (e.o || 0);
+export const lbScore = (e) => (e.v || 0) + 3 * (e.o || 0) + 2 * (e.l || 0);
 export async function leaderboard(month) {
   const st = await store(), doc = (await st.get("lb/" + month)) || {};
   return Object.entries(doc).map(([uid, e]) => ({ uid, name: e.n || "", v: e.v || 0, o: e.o || 0, score: lbScore(e) })).filter((x) => x.score >= 5).sort((a, b) => b.score - a.score);
@@ -469,4 +469,38 @@ export async function weeklyPerks() {
   if (S.hofAuto !== false) out.hof = await publishHof(false);
   out.cow = await autoCow();
   return out;
+}
+
+// ---------- אתגר שבועי, דירוג הזמנות ----------
+export const weekKey = (t = Date.now()) => dayKey(t - ((new Date(t).getUTCDay() + 6) % 7) * 864e5);
+export async function refBoard(month) {
+  const st = await store(), doc = (await st.get("rfm/" + month)) || {};
+  return Object.entries(doc).map(([uid, e]) => ({ uid, name: e.n || "", n: e.c || 0 })).filter((x) => x.n > 0).sort((a, b) => b.n - a.n);
+}
+const REF_PRIZES = [5, 3, 2];
+export async function awardRefMonthly(month, force) {
+  const st = await store();
+  if (!force && (await st.get("rfaw/" + month))) return { done: false, reason: "already" };
+  const top = (await refBoard(month)).slice(0, 3), out = [];
+  for (let i = 0; i < top.length; i++) {
+    const u = await st.get("u/" + top[i].uid); if (!u || u.blocked) continue;
+    u.credits = (u.credits || 0) + REF_PRIZES[i]; await st.setJSON("u/" + u.uid, u);
+    await addInbox(st, u.uid, `👑 מקום ${i + 1} במזמינים של ${month}`, `הזמנת הכי הרבה חברים שהורידו קובץ. קיבלת ${REF_PRIZES[i]} הורדות נוספות${i === 0 ? " ותג \"מלך ההזמנות\"" : ""}.`);
+    if (i === 0) await awardBadge(st, u, "refstar", true);
+    out.push({ uid: u.uid, place: i + 1, credits: REF_PRIZES[i] });
+  }
+  await st.setJSON("rfaw/" + month, { ts: Date.now(), winners: out });
+  return { done: true, winners: out };
+}
+// דוח שבועי להשוואה בלוח הבקרה + שימור משתמשים
+export async function weekReport() {
+  const ser = await rangeStats(14), now = Date.now(), c7 = dayKey(now - 7 * 864e5), c14 = dayKey(now - 14 * 864e5);
+  const cur = ser.filter((x) => x.d > c7), prev = ser.filter((x) => x.d > c14 && x.d <= c7);
+  const t = (a, g) => Object.values(sumGroup(a, g)).reduce((x, y) => x + y, 0);
+  const pack = (a) => ({ reg: t(a, "reg"), dl: t(a, "dl"), fbok: t(a, "fbok"), fbbad: t(a, "fbbad"), perks: sumGroup(a, "perk"), tools: sumGroup(a, "dl") });
+  const st = await store(), users = (await st.scan("u/", { limit: 600 })).map((x) => x.v).filter((u) => u && !u.blocked);
+  const dayOf = (t2) => dayKey(t2), coh = users.filter((u) => u.created && u.created < now - 8 * 864e5 && u.created > now - 30 * 864e5 && u.dlTotal > 0);
+  const retained = coh.filter((u) => Object.keys(u.dlHist || {}).some((d) => d >= dayKey(u.created + 7 * 864e5)));
+  const active7 = users.filter((u) => Object.keys(u.dlHist || {}).some((d) => d > c7)).length;
+  return { cur: pack(cur), prev: pack(prev), retention: { cohort: coh.length, retained: retained.length, active7, users: users.length } };
 }

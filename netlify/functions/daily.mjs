@@ -1,5 +1,5 @@
 // גיבוי יומי מוצפן: נשמר באחסון האתר, ואם הוגדר – גם ב-Dropbox / Webhook
-import { saveAutoBackup, externalBackup, extTargets, store, alertMail, awardMonthly, cleanupOld, dayKey, monthKey } from "../lib/lib.mjs";
+import { saveAutoBackup, externalBackup, extTargets, store, alertMail, awardMonthly, awardRefMonthly, cleanupOld, dayKey, monthKey } from "../lib/lib.mjs";
 
 export default async () => {
   try { const c = await cleanupOld(); if (Object.values(c).some(Boolean)) console.log("cleanup", JSON.stringify(c)); } catch (e) { console.error("cleanup failed", e); }
@@ -7,6 +7,7 @@ export default async () => {
     // ביום הראשון בחודש: פרסים אוטומטיים למובילי החודש שהסתיים
     const st0 = await store(), set0 = (await st0.get("settings")) || {};
     if (set0.lbOn !== false && dayKey().endsWith("-01")) await awardMonthly(monthKey(Date.now() - 864e5));
+    if (set0.refPrizeOn !== false && dayKey().endsWith("-01")) await awardRefMonthly(monthKey(Date.now() - 864e5));
   } catch (e) { console.error("monthly award failed", e); }
   try {
     const st = await store();
