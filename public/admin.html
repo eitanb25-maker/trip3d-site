@@ -110,6 +110,11 @@ const _vO=vOverview;vOverview=async function(){await _vO();let hl=null;try{hl=aw
   h("p",{cls:"muted",text:"מי שכבר באתר רואה פס אזהרה ולא נחסם; מי שנכנס אחרי ההדלקה רואה מסך תחזוקה. לוח הבקרה לא נחסם לעולם."}))};drawMt();
  const m=$("main");m.insertBefore(mt,m.firstChild);m.insertBefore(card,m.firstChild)};
 
+
+// קופונים בראש ההגדרות
+const _vS=vSettings;vSettings=async function(){await _vS();let pr=[];try{pr=(await api("GET","/admin/promos")).items}catch(e){}
+ const c=h("div",{cls:"card"},h("h2",{text:"🎟️ קודי קופון"}),pr.length?h("table",{},h("tr",{},["קוד","הטבה","מימושים","בתוקף עד"].map(x=>h("th",{text:x}))),...pr.map(x=>h("tr",{},h("td",{},h("b",{text:x.code,style:"font-size:1.1em;letter-spacing:1px"})),h("td",{text:x.n+" "+(x.type=="credits"?"הורדות":x.type)}),h("td",{text:x.uses+(x.max?" / "+x.max:"")}),h("td",{text:x.expires?new Date(x.expires).toLocaleDateString("he-IL"):"ללא הגבלה"})))):h("p",{cls:"muted",text:"אין קודים"}),h("p",{cls:"muted",text:"יצירה ומחיקה של קודים: לשונית 'הטבות'. משתמשים מממשים ב'החשבון שלי'."}));
+ const m=$("main");m.insertBefore(c,m.firstChild)};
 function render(){buildNav();try{localStorage.adm_tab=TAB}catch(e){}$("main").replaceChildren(h("p",{cls:"muted",text:"טוען…"}));({"סקירה":vOverview,"משתמשים":vUsers,"משתמש":vUser,"הודעות":vMessages,"אבטחה":vSecurity,"יומן פעולות":vAudit,"גיבויים":vBackups,"הזמנות":vInvites,"דיווחים":vReports,"גלריה":vGallery,"חסימות":vBlocks,"הטבות":vPerks,"מבצעים":vPromo,"משוב":vFeedback,"הגדרות":vSettings,"גרסאות":vChangelog,"יצוא":vExport})[TAB]().catch(e=>$("main").replaceChildren(h("p",{text:"שגיאה: "+e.message})))}
 // ---------- גרפים ----------
 function lineChart(series,keys,colors,names){const W=720,H=220,P=34,n=series.length,mx=Math.max(1,...series.flatMap(s=>keys.map(k=>s[k]||0))),X=i=>P+(n<2?0:i*(W-P-10)/(n-1)),Y=v=>H-24-(v/mx)*(H-44);

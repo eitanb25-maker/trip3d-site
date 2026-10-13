@@ -37,6 +37,12 @@ const cookie = (req) => Object.fromEntries((req.headers.get("cookie") || "").spl
 const setCookie = (req, token, clear = false) =>
   `sid=${clear ? "" : token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${clear ? 0 : 2592000}${new URL(req.url).protocol === "https:" ? "; Secure" : ""}`;
 const clean = (s, n = 60) => String(s ?? "").replace(/[\u0000-\u001f<>]/g, "").trim().slice(0, n);
+// קוד ברירת מחדל TRIP5 נוצר אוטומטית פעם אחת (אפשר למחוק או לשנות מלוח הבקרה)
+async function seedTrip5(st) {
+  if (await st.get("sys/seedTRIP5")) return null;
+  const pc = { code: "TRIP5", type: "credits", n: 5, key: "", days: 0, note: "ברוכים הבאים! 5 הורדות במתנה", max: 300, uses: 0, users: [], expires: Date.now() + 90 * 864e5, by: "system", ts: Date.now() };
+  await st.setJSON("pc/TRIP5", pc); await st.setJSON("sys/seedTRIP5", 1); return pc;
+}
 const emailOk = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e) && e.length <= 120;
 const pub = (u) => u && { uid: u.uid, name: u.name, email: u.email, role: u.role, verified: !!u.verified, mailOk: u.mailOk !== false, google: !!u.google, badges: u.badges || [] };
 const ipOf = (req) => (req.headers.get("cf-connecting-ip") || req.headers.get("x-nf-client-connection-ip") || (req.headers.get("x-forwarded-for") || "").split(",")[0] || req.headers.get("x-real-ip") || "?").trim();
@@ -235,11 +241,7 @@ export default async (req) => {
       if (await rateHit("rd:" + me.uid, 10, 3600e3)) return E(429, "יותר מדי ניסיונות. נסו שוב בעוד שעה");
       const b = await body(req, 500), code = clean(b.code, 24).toUpperCase().replace(/\s/g, "");
       let pc = code && (await st.get("pc/" + code));
-      // קוד ברירת מחדל TRIP5 נוצר אוטומטית פעם אחת (אפשר למחוק או לשנות מלוח הבקרה)
-      if (!pc && code === "TRIP5" && !(await st.get("sys/seedTRIP5"))) {
-        pc = { code, type: "credits", n: 5, key: "", days: 0, note: "ברוכים הבאים! 5 הורדות במתנה", max: 300, uses: 0, users: [], expires: Date.now() + 90 * 864e5, by: "system", ts: Date.now() };
-        await st.setJSON("pc/" + code, pc); await st.setJSON("sys/seedTRIP5", 1);
-      }
+      if (!pc && code === "TRIP5") pc = await seedTrip5(st);
       if (!pc || (pc.expires && pc.expires < Date.now()) || (pc.max > 0 && pc.uses >= pc.max)) return E(400, "הקוד לא תקף או שפג תוקפו");
       if ((pc.users || []).includes(me.uid)) return E(400, "כבר מימשתם את הקוד הזה");
       pc.uses++; pc.users = (pc.users || []).concat([me.uid]); await st.setJSON("pc/" + code, pc);
@@ -839,7 +841,7 @@ export default async (req) => {
         await audit(me, "perk:give", b.target + ":" + targets.length, perkText(perk));
         return J({ ok: true, count: targets.length, mailed });
       }
-      if (R === "GET admin/promos") return J({ items: await listAll("pc/", 200) });
+      if (R === "GET admin/promos") { await seedTrip5(st); return J({ items: await listAll("pc/", 200) }); }
       if (R === "POST admin/promo") {
         const b = await body(req, 2000), type = String(b.type);
         if (!PERK_TYPES.includes(type)) return E(400, "סוג הטבה לא מוכר");
