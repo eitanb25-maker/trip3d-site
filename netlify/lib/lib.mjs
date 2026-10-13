@@ -6,7 +6,7 @@ export const DEFAULTS = {
   tools: {}, banner: "", bannerOn: false, maint: false, lang: "he",
   inviteOnly: false, dlLimit: 5, notifyDownload: true, notifyReport: true, errAlert: true, errThreshold: 5, blocks: [], abuseDl: 20, refBonus: 1, refMax: 5, extBackup: true, aiOn: false, aiLimit: 10, aiGlobal: 300, early: [], vip: [], galReward: 1, streakOn: true, lbOn: true,
   requireVerify: false, notifySecurity: true, autoBackup: true,
-  welcomeGift: 2, challengeOn: true, challengeN: 3, challengeReward: 3, annivGift: 3, refPrizeOn: true, goalTarget: 1000, goalBonus: 2, perkVerify: true, thanksReward: 2, cowBonus: 1, weekendBonus: 0, bonusWin: null, hofAuto: true,
+  welcomeGift: 2, challengeOn: true, challengeN: 3, challengeReward: 3, annivGift: 3, refPrizeOn: true, goalTarget: 1000, bonusSched: [], texts: {}, goalBonus: 2, perkVerify: true, thanksReward: 2, cowBonus: 1, weekendBonus: 0, bonusWin: null, hofAuto: true,
 };
 
 export const isProd = () => !process.env.CONTEXT || process.env.CONTEXT === "production";
@@ -409,14 +409,16 @@ export async function awardMonthly(month, force) {
 
 // ---------- ניקוי נתונים ישנים (רץ מדי יום) ----------
 export async function cleanupOld() {
-  const st = await store(), now = Date.now(), r = { rl: 0, tokens: 0, history: 0, ai: 0 }, CAP = 360;
+  const st = await store(), now = Date.now(), r = { rl: 0, tokens: 0, history: 0, ai: 0, feed: 0, botmiss: 0 }, CAP = 360;
   const take = (arr, key) => { const part = arr.slice(0, Math.max(0, CAP - Object.values(r).reduce((a, b) => a + b, 0))); r[key] = part.length; return part; };
   const rl = (await st.scan("rl/")).filter((x) => x.v && now - (x.v.ts || 0) > 3 * 864e5).map((x) => x.k);
   const tk = (await st.scan("t/")).filter((x) => x.v && x.v.exp && x.v.exp < now - 864e5).map((x) => x.k);
   const cut = now - 90 * 864e5;
   const hs = (await st.list("h/")).filter((k) => { const t = +k.slice(2).split("-")[0]; return t && t < cut; });
   const aiCut = dayKey(cut), ai = (await st.list("ai/")).filter((k) => k.slice(3) < aiCut);
-  const del = [...take(rl, "rl"), ...take(tk, "tokens"), ...take(hs, "history"), ...take(ai, "ai")];
+  const fe = (await st.list("fe/")).filter((k) => +k.slice(3).split("-")[0] < now - 7 * 864e5);
+  const bm = (await st.scan("bm/")).filter((x) => x.v && (x.v.last || 0) < now - 60 * 864e5).map((x) => x.k);
+  const del = [...take(rl, "rl"), ...take(tk, "tokens"), ...take(hs, "history"), ...take(ai, "ai"), ...take(fe, "feed"), ...take(bm, "botmiss")];
   if (del.length) await st.deleteMany(del);
   return r;
 }
@@ -427,8 +429,14 @@ export const ilDow = (t = Date.now()) => new Date(new Date(t).toLocaleString("en
 export function bonusNow(S) {
   const now = Date.now(), w = S.bonusWin;
   if (w && w.n > 0 && w.until > now && (!w.from || w.from <= now)) return { n: w.n, label: w.label || "בונוס לכולם", until: w.until };
+  const sc = (Array.isArray(S.bonusSched) ? S.bonusSched : []).find((x) => x.from <= now && x.until > now);
+  if (sc) return { n: sc.n, label: sc.label || "בונוס לכולם", until: sc.until };
   if (S.weekendBonus > 0) { const d = ilDow(); if (d === 5 || d === 6) return { n: S.weekendBonus, label: "בונוס סוף שבוע", until: 0 }; }
   return null;
+}
+export function bonusNext(S) {
+  const now = Date.now(), nx = (Array.isArray(S.bonusSched) ? S.bonusSched : []).filter((x) => x.from > now && x.from < now + 14 * 864e5).sort((a, b) => a.from - b.from)[0];
+  return nx ? { from: nx.from, n: nx.n, label: nx.label || "בונוס לכולם" } : null;
 }
 // סופר שימוש לפי מדינה (מדינות מרובות "א+ב" נספרות לכל אחת)
 export async function topCountries(days = 7) {
@@ -443,7 +451,7 @@ export async function topCountries(days = 7) {
 export const liveDoc = (d) => (d && d.until > Date.now() ? d : null);
 export async function perkInfo(S) {
   const st = await store(), [cow, hof, pick, goal] = await st.getMany(["cow/current", "hof/current", "cwk/current", "sys/goal"]);
-  return { bonus: bonusNow(S), cow: liveDoc(cow) ? { country: cow.country, until: cow.until, bonus: S.cowBonus } : null, hof: liveDoc(hof) ? { from: hof.from, until: hof.until, top: hof.top } : null,
+  return { bonus: bonusNow(S), next: bonusNext(S), texts: S.texts || {}, cow: liveDoc(cow) ? { country: cow.country, until: cow.until, bonus: S.cowBonus } : null, hof: liveDoc(hof) ? { from: hof.from, until: hof.until, top: hof.top } : null,
     pick: liveDoc(pick) ? { id: pick.id, name: pick.name, author: pick.author, country: pick.country, likes: pick.likes } : null, goal: await goalState(S, goal) };
 }
 // יעד קהילתי חודשי: הורדות של כל האתר; כשמגיעים אליו מופעל בונוס ל-24 שעות
@@ -541,4 +549,15 @@ export async function weekReport() {
   const retained = coh.filter((u) => Object.keys(u.dlHist || {}).some((d) => d >= dayKey(u.created + 7 * 864e5)));
   const active7 = users.filter((u) => Object.keys(u.dlHist || {}).some((d) => d > c7)).length;
   return { cur: pack(cur), prev: pack(prev), retention: { cohort: coh.length, retained: retained.length, active7, users: users.length } };
+}
+
+// ---------- בוט העזרה: שאלות שלא נענו ותשובות נלמדות ----------
+const STOP = new Set("מה איך למה איפה האם אני אתם אתה את אנחנו יש אפשר של עם לא זה זאת על כל גם או אבל רק עוד כמו אם אז הוא היא הם הן the how what why can you are and for with this that does not have from your my is it to of in on a an i do".split(" "));
+export const normQ = (q) => String(q || "").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+export const qHash = (q) => crypto.createHash("sha1").update(normQ(q)).digest("hex").slice(0, 12);
+export function extractKeywords(q) {
+  return Array.from(new Set(normQ(q).split(" ").map((w) => w.replace(/^ה+(?=.{3})/, "")).filter((w) => w.length >= 3 && !STOP.has(w)))).slice(0, 8).join(" ");
+}
+export async function feed(text) {
+  try { const st = await store(); await st.setJSON("fe/" + Date.now() + "-" + rid(2), { ts: Date.now(), text: String(text).slice(0, 160) }); } catch (e) { /* לא קריטי */ }
 }

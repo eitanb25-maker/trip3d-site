@@ -232,7 +232,10 @@ let _cbT=0;window.cBlocked=k=>{const b=activeBlk("country",k)||activeBlk("countr
   ["אפליקציה,להתקין,התקנה,מסך הבית,install,app,home screen","מתפריט הדפדפן בוחרים 'התקנה' או 'הוספה למסך הבית', והאתר נפתח כמו אפליקציה.","From your browser menu choose 'Install' or 'Add to home screen' and the site opens like an app.","",""],
   ["שלום,היי,הי,hello,hey,hi ","היי! אפשר לשאול על הורדה, הדפסה, הטבות, הרשמה או תקלות.","Hi! Ask about downloading, printing, perks, signing up or problems.","",""]];
   const norm=t=>String(t).toLowerCase().replace(/[׳'"?!.,]/g," ").split(/\s+/).map(w=>w.replace(/^ה+(?=.{3})/,"")).join(" ");
-  const faq=q=>{const t=" "+norm(q)+" ";let best=null,bs=0;for(const e of KB){let sc=0;for(const k of e[0].split(",")){if(t.includes(norm(k).trim()||"\u0000"))sc+=k.length>=4?2:1}if(sc>bs){bs=sc;best=e}}return bs>=2?best:null};
+  let LKB=null;const loadKb=()=>{if(LKB)return;LKB=[];fetch("/api/kb").then(r=>r.json()).then(d=>{LKB=d.items||[]}).catch(()=>{})};loadKb();
+  const faq=q=>{const t=" "+norm(q)+" ";let best=null,bs=0;for(const e of KB){let sc=0;for(const k of e[0].split(",")){if(t.includes(norm(k).trim()||"\u0000"))sc+=k.length>=4?2:1}if(sc>bs){bs=sc;best=e}}
+    for(const e of (LKB||[])){const kws=norm(e.k).split(" ").filter(w=>w.length>=3);if(!kws.length)continue;const m=kws.filter(w=>t.includes(w));if(m.length>=Math.max(1,Math.ceil(kws.length*.6))&&m.join("").length>=4){const sc=m.length*2+1;if(sc>=bs){bs=sc;best=["",e.a,e.e||e.a,"",""]}}}
+    return bs>=2?best:null};
   const CHIPS=[["איך מורידים?","How do I download?"],["איך מרוויחים הורדות?","How do I earn downloads?"],["שכחתי סיסמה","I forgot my password"],["איך פותחים בסלייסר?","How do I open it in my slicer?"],["הגדרות הדפסה","Print settings"],["דיווח על בעיה","Report a problem"]];
   const doAct=a=>{if(a=="forgot"){$("aip").style.display="none";forgotOpen();$("authm").style.display="flex"}else if(a=="login"){$("aip").style.display="none";authOpen("register")}else if(a=="acct"){if(!API.session){$("aip").style.display="none";authOpen("login")}else{$("aip").style.display="none";acctOpen();$("authm").style.display="flex"}}else if(a=="report"){$("aip").style.display="none";$("rpt").click()}};
   const addBtn=(txt,fn,href)=>{const e=document.createElement(href?"a":"button");e.textContent=txt;if(href){e.href=href;e.target="_blank";e.rel="noopener";e.style.cssText="display:inline-block;margin:4px 6px 0 0;color:var(--ac);font-weight:700"}else{e.type="button";e.style.cssText="width:auto;margin:4px 6px 0 0;padding:4px 12px;border-radius:99px;font-size:13px";e.onclick=fn}$("aim").append(e);$("aim").scrollTop=1e9;return e};
@@ -247,8 +250,8 @@ let _cbT=0;window.cBlocked=k=>{const b=activeBlk("country",k)||activeBlk("countr
     const hit=faq(t);if(hit){answer(hit);busy=false;return}
     if(ai()&&API.session){hist.push({role:"user",content:t});const w=add("assistant","…");
       try{const r=await API.j("POST","/ai",{messages:hist.slice(-6),lang:LANG,ctx:{tool:MULTI?"multi":TOOL,country:curCountry()}});w.textContent=r.reply;hist.push({role:"assistant",content:r.reply});if(r.remaining!=null)$("aih").textContent=L_("נשארו לך ","You have ")+r.remaining+L_(" שאלות היום"," questions left today")}
-      catch(e){hist.pop();w.textContent=e.message||L_("שגיאה","Error");toOwner(t)}busy=false;return}
-    add("assistant",L_("לא מצאתי תשובה מוכנה. אפשר לנסח אחרת, או לשלוח את השאלה למנהל האתר.","I couldn't find a ready answer. Try rephrasing, or send your question to the site owner."));toOwner(t);busy=false};
+      catch(e){hist.pop();w.textContent=e.message||L_("שגיאה","Error");try{API.j("POST","/bot/miss",{q:t}).catch(()=>{})}catch(x){}toOwner(t)}busy=false;return}
+    add("assistant",L_("לא מצאתי תשובה מוכנה. אפשר לנסח אחרת, או לשלוח את השאלה למנהל האתר.","I couldn't find a ready answer. Try rephrasing, or send your question to the site owner."));try{API.j("POST","/bot/miss",{q:t}).catch(()=>{})}catch(x){}toOwner(t);busy=false};
   $("aig").onclick=send;$("aii").onkeydown=e=>{if(e.key=="Enter")send()};
   show();setTimeout(show,1200);const _u=window.updateAcct;window.updateAcct=function(){const r=_u.apply(this,arguments);show();return r};
 })();
@@ -297,7 +300,9 @@ document.addEventListener("change",e=>{const el=e.target;if(!el||el.tagName!="SE
  if(!dock()){const mo=new MutationObserver(()=>{if(dock())mo.disconnect()});mo.observe(document.body,{childList:true});setTimeout(()=>mo.disconnect(),20000)}}
 
 // ---------- הטבות: בונוס לכולם, מדינת השבוע, היכל תהילה ----------
-function perkBar(){const home=document.querySelector("#home .box");if(!home)return;const c=API.cfg||{},rows=[];
+function applyTexts(){const t=(API.cfg&&API.cfg.texts)||{},en=LANG=="en",ti=en?t.homeTitleEn:t.homeTitle,su=en?t.homeSubEn:t.homeSub,h1=document.querySelector("#home .box h1 .tx"),sb=document.querySelector("#home .box .sub");if(ti&&h1)h1.textContent=ti;if(su&&sb)sb.textContent=su}
+function perkBar(){applyTexts();const home=document.querySelector("#home .box");if(!home)return;const c=API.cfg||{},rows=[];
+  if(c.next)rows.push("⏰ "+L_("בקרוב: ","Coming up: ")+c.next.label+" +"+c.next.n+" "+L_("הורדות ליום, ב-","downloads a day, on ")+new Date(c.next.from).toLocaleString(LANG=="en"?"en-GB":"he-IL",{weekday:"long",hour:"2-digit",minute:"2-digit"}));
   if(c.bonus)rows.push("⚡ "+c.bonus.label+" – +"+c.bonus.n+" "+L_("הורדות ליום לכולם","downloads a day for everyone"));
   if(c.goal)rows.push("🎯 "+L_("יעד קהילתי","Community goal")+": "+c.goal.n+" / "+c.goal.target+" "+L_("הורדות החודש","downloads this month")+(c.goal.done?" ✔":" – "+L_("כשמגיעים ליעד כולם מקבלים בונוס","everyone gets a bonus when we reach it")));
   if(c.pick)rows.push("🌟 "+L_("יצירת השבוע","Creation of the week")+": "+c.pick.name+(c.pick.author?" ("+c.pick.author+")":"")+" ♥"+c.pick.likes);

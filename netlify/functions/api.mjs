@@ -1,7 +1,7 @@
 // שרת האתר: התחברות, הרשאות, מכסות, סטטיסטיקות ולוח בקרה
 import crypto from "node:crypto";
 import { trBody } from "../lib/i18n.mjs";
-import { VIP_OPTS, PERK_TYPES, TIMED_PERKS, BADGES, activePerks, perkSum, hasEarly, perkText, givePerk, awardBadge, addInbox, leaderboard, awardMonthly, monthKey, alertMail, externalBackup, extTargets, activeBlocks, findBlock, BLOCK_FEATURES, errorSpike, funnelOf, store, getSettings, bump, notify, dayKey, rid, rangeStats, sumGroup, TOOLS, DEFAULTS, mailEnabled, sendMail, rateHit, secEvent, isProd, audit, weeklyCsv, makeBackup, restoreBackup, encryptBackup, decryptBackup, saveAutoBackup, bonusNow, perkInfo, weekKey, refBoard, awardRefMonthly, weekReport, lbScore, canPerk, aidOf, pickCreation, topCountries, publishHof, setCow, liveDoc } from "../lib/lib.mjs";
+import { VIP_OPTS, PERK_TYPES, TIMED_PERKS, BADGES, activePerks, perkSum, hasEarly, perkText, givePerk, awardBadge, addInbox, leaderboard, awardMonthly, monthKey, alertMail, externalBackup, extTargets, activeBlocks, findBlock, BLOCK_FEATURES, errorSpike, funnelOf, store, getSettings, bump, notify, dayKey, rid, rangeStats, sumGroup, TOOLS, DEFAULTS, mailEnabled, sendMail, rateHit, secEvent, isProd, audit, weeklyCsv, makeBackup, restoreBackup, encryptBackup, decryptBackup, saveAutoBackup, bonusNow, perkInfo, weekKey, refBoard, awardRefMonthly, weekReport, lbScore, canPerk, aidOf, pickCreation, qHash, normQ, extractKeywords, feed, topCountries, publishHof, setCow, liveDoc } from "../lib/lib.mjs";
 
 export const config = { path: "/api/*" };
 
@@ -230,6 +230,14 @@ const inner = async (req) => {
       });
     }
     if (R === "GET hof") return J(await perkInfo(S));
+    if (R === "POST bot/miss") {
+      if (await rateHit("bm:" + ipHash(req), 20, 3600e3)) return J({ ok: true });
+      const q = clean((await body(req, 500)).q, 120);
+      if (normQ(q).length < 3) return J({ ok: true });
+      const key = "bm/" + qHash(q), e = (await st.get(key)) || { q, n: 0, first: Date.now() };
+      e.n++; e.last = Date.now(); await st.setJSON(key, e); return J({ ok: true });
+    }
+    if (R === "GET kb") return J({ items: (await st.scan("kb/", { limit: 300 })).map((x) => x.v).filter(Boolean).map((e) => ({ k: e.k, a: e.a, e: e.e || "" })) }, 200, { "cache-control": "public, max-age=60" });
     if (R === "GET ref/top") { const mk = monthKey(); return J({ month: mk, items: (await refBoard(mk)).slice(0, 5).map((x, i) => ({ place: i + 1, name: x.name, n: x.n })) }, 200, { "cache-control": "public, max-age=120" }); }
     if (R === "GET me") {
       if (!me) return J({ user: null });
@@ -300,7 +308,7 @@ const inner = async (req) => {
       const u = { uid: rid(8), email, name, salt, hash, role: isAdminSetup ? "admin" : "viewer", created: Date.now(), dlTotal: 0, dls: [], verified: isAdminSetup, agreed: Date.now() };
       await attachRef(u, b.ref, req);
       await st.setJSON("e/" + email, u.uid);
-      await bump([["reg", "all"]]);
+      await bump([["reg", "all"]]); await feed("👤 נרשם: " + u.name);
       if (isAdminSetup) await secEvent("admin_created", email, S);
       else if (mailEnabled()) await sendVerify(req, u);
       return startSession(req, u);
@@ -337,7 +345,7 @@ const inner = async (req) => {
         u = { uid: rid(8), email, name: clean(t.name || email.split("@")[0], 40), role: email === adminMail ? "admin" : "viewer", created: Date.now(), dlTotal: 0, dls: [], google: true, verified: true, agreed: Date.now() };
         await attachRef(u, b.ref, req);
         await st.setJSON("e/" + email, u.uid);
-        await bump([["reg", "all"]]);
+        await bump([["reg", "all"]]); await feed("👤 נרשם: " + u.name);
       } else if (email === ADMIN_MAIL() && u.role !== "admin") u.role = "admin";
       if (u.blocked) return E(403, "החשבון חסום");
       return startSession(req, u);
@@ -469,7 +477,7 @@ const inner = async (req) => {
         }
         u = { uid: rid(8), email: t.email, name: t.name || t.email.split("@")[0], role: "viewer", created: Date.now(), dlTotal: 0, dls: [], verified: true, agreed: Date.now(), magic: true };
         await st.setJSON("e/" + t.email, u.uid);
-        await bump([["reg", "all"]]);
+        await bump([["reg", "all"]]); await feed("👤 נרשם: " + u.name);
       } else u.verified = true;
       if (u.blocked) return back(3);
       u.last = Date.now(); await st.setJSON("u/" + u.uid, u);
@@ -591,7 +599,7 @@ const inner = async (req) => {
         }
       }
       await st.setJSON("u/" + me.uid, me);
-      await bump([["dl", tool], ["country", country || "?"], ...perkB].filter((x) => x[1]));
+      await bump([["dl", tool], ["country", country || "?"], ...perkB].filter((x) => x[1])); await feed(`⬇️ ${me.name} הוריד ${tool}${country ? " · " + country : ""}`);
       if (S.notifyDownload) await notify(`⬇️ הורדה חדשה\n${me.name} (${me.email})\nכלי: ${tool}${country ? " · " + country : ""}`);
       return J({ ok: true, id, remaining: q.limit > 0 ? Math.max(0, q.limit - q.used - 1) + (me.credits || 0) : null, credits: me.credits || 0, gifts, note: withheld ? "אמתו את כתובת המייל כדי לקבל מתנות והטבות (נשלח אליכם קישור)" : "" });
     }
@@ -652,6 +660,7 @@ const inner = async (req) => {
       const em = me ? me.email : (() => { const e = clean(b.email, 120).toLowerCase(); return emailOk(e) ? e : ""; })();
       const id = Date.now() + "-" + rid(3), name = me ? me.name : "אורח";
       await st.setJSON("r/" + id, { id, uid: me ? me.uid : "", name, email: em, ts: Date.now(), message: msg, tool: "", type: "suggest", page: clean(b.page, 40), status: "open" });
+      await feed("💡 " + (msg.startsWith("[שאלה מהעוזר]") ? "שאלה מהבוט" : "הצעה חדשה") + ": " + msg.slice(0, 60));
       if (S.notifyReport) await notify(`💡 הצעה לשיפור\n${name}${em ? " (" + em + ")" : ""}\n${msg.slice(0, 300)}`);
       return J({ ok: true });
     }
@@ -843,7 +852,7 @@ const inner = async (req) => {
       if (g.template) await st.setJSON("gp/" + id, String(b.proj).slice(0, 200000));
       await st.setJSON("gl/" + id, g);
       if (auto) await st.setJSON("ga/" + id, id);
-      await bump([["gsub", g.tool]]);
+      await bump([["gsub", g.tool]]); await feed(`🖼️ ${me.name} שלח יצירה: ${g.name}`);
       if (!auto && S.notifyReport) await notify(`🖼️ יצירה חדשה ממתינה לאישור בגלריה\n${me.name}: ${g.name}${g.country ? " · " + g.country : ""}`);
       return J({ ok: true, id, status: g.status });
     }
@@ -881,7 +890,7 @@ const inner = async (req) => {
         const vis = series.reduce((n, s) => n + Object.keys(s.vis || {}).length, 0);
         const errs = await listAll("x/", 30);
         return J({
-          days, series: series.map((s) => ({ d: s.d, open: tot(s.open), wizstart: tot(s.wizstart), build: tot(s.build), dl: tot(s.dl), error: tot(s.error), vis: Object.keys(s.vis || {}).length })),
+          days, series: series.map((s) => ({ d: s.d, open: tot(s.open), wizstart: tot(s.wizstart), build: tot(s.build), dl: tot(s.dl), reg: tot(s.reg), error: tot(s.error), vis: Object.keys(s.vis || {}).length })),
           funnel: funnelOf(series), funnelTool: { dlclick: sum("dlclick"), authview: sum("authview") }, gallery: { sub: tot(sum("gsub")), pending: (await listAll("gl/", 300)).filter((g) => g.status === "pending").length },
           tools: { open: sum("open"), wizstart: sum("wizstart"), build: sum("build"), dl: sum("dl"), fbok: sum("fbok"), fbbad: sum("fbbad") },
           countries: Object.entries(sum("country")).sort((x, y) => y[1] - x[1]).slice(0, 15),
@@ -890,7 +899,7 @@ const inner = async (req) => {
       }
       if (R === "GET admin/users") {
         const users = await listAll("u/", 500, false);
-        return J({ users: users.map((u) => ({ uid: u.uid, name: u.name, email: u.email, role: u.role, blocked: !!u.blocked, quota: u.quota ?? null, verified: !!u.verified, dlTotal: u.dlTotal || 0, today: u.dlDay && u.dlDay.d === dayKey() ? u.dlDay.n : 0, d7: sumHist(u.dlHist, 7), d30: sumHist(u.dlHist, 30), bonus: u.bonus || 0, refCount: u.refCount || 0, credits: u.credits || 0, badges: u.badges || [], streak: u.streak ? u.streak.n : 0, perks: (u.perks || []).filter((p) => !p.until || p.until > Date.now()).length, created: u.created, last: u.last, google: !!u.google })), abuseDl: S.abuseDl, defaultLimit: S.dlLimit });
+        return J({ users: users.map((u) => ({ uid: u.uid, name: u.name, email: u.email, role: u.role, blocked: !!u.blocked, quota: u.quota ?? null, verified: !!u.verified, dlTotal: u.dlTotal || 0, today: u.dlDay && u.dlDay.d === dayKey() ? u.dlDay.n : 0, d7: sumHist(u.dlHist, 7), d30: sumHist(u.dlHist, 30), bonus: u.bonus || 0, refCount: u.refCount || 0, credits: u.credits || 0, badges: u.badges || [], streak: u.streak ? u.streak.n : 0, perks: (u.perks || []).filter((p) => !p.until || p.until > Date.now()).length, created: u.created, last: u.last, google: !!u.google, note: u.note || "", nc: (u.cset || []).length, sus: !!u.sus, trusted: !!u.trusted })), abuseDl: S.abuseDl, defaultLimit: S.dlLimit });
       }
       if (R === "GET admin/user") {
         const u = await st.get("u/" + clean(url.searchParams.get("uid"), 20));
@@ -1069,7 +1078,12 @@ const inner = async (req) => {
         else if (b.action === "unblock") u.blocked = false;
         else if (b.action === "setRole") { if (self) return E(400, "אי אפשר לשנות את התפקיד של עצמך"); if (!["viewer", "editor", "admin"].includes(b.role)) return E(400, "תפקיד לא תקין"); u.role = b.role; }
         else if (b.action === "setQuota") { u.quota = b.quota === null || b.quota === "" ? null : Math.max(0, Math.min(1000, Math.floor(+b.quota) || 0)); }
-        else if (b.action === "resetToday") u.dlDay = { d: dayKey(), n: 0 };
+        else if (b.action === "resetToday") u.dlDay = { d: dayKey(), n: 0 }
+        else if (b.action === "setNote") u.note = clean(b.note, 300);
+        else if (b.action === "giveCredits") {
+          const n = Math.max(1, Math.min(100, Math.floor(+b.n) || 0)); if (!n) return E(400, "כתבו כמה הורדות");
+          u.credits = (u.credits || 0) + n; await addInbox(st, u.uid, "קיבלת הורדות במתנה 🎁", `קיבלת ${n} הורדות נוספות מהמנהל.`);
+        }
         else if (b.action === "delete") {
           if (self) return E(400, "אי אפשר למחוק את עצמך");
           await st.delete("u/" + u.uid); await st.delete("e/" + u.email);
@@ -1145,6 +1159,15 @@ const inner = async (req) => {
             await st.setJSON("bc/" + id, { id, ts: Date.now(), subject: "⚡ " + lab, body: `עכשיו +${n} הורדות ליום לכולם, עד ${new Date(next.bonusWin.until).toLocaleString("he-IL", { timeZone: "Asia/Jerusalem", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}. מהרו ליצור!`, by: me.email });
           }
         }
+        if (b.texts && typeof b.texts === "object") { next.texts = {}; for (const k of ["homeTitle", "homeTitleEn", "homeSub", "homeSubEn"]) { const v = clean(b.texts[k], 120); if (v) next.texts[k] = v; } }
+        if (Array.isArray(b.bonusSched)) {
+          const old = new Set((Array.isArray(S.bonusSched) ? S.bonusSched : []).map((x) => x.id));
+          next.bonusSched = b.bonusSched.slice(0, 12).map((x) => ({ id: clean(x.id, 20) || rid(3), n: Math.max(1, Math.min(20, Math.floor(+x.n) || 1)), from: +x.from || 0, until: +x.until || 0, label: clean(x.label, 60) })).filter((x) => x.from && x.until > x.from && x.until > Date.now());
+          if (b.announce) for (const x of next.bonusSched.filter((y) => !old.has(y.id))) {
+            const id = Date.now() + "-" + rid(2);
+            await st.setJSON("bc/" + id, { id, ts: Date.now(), subject: "⚡ מבצע בקרוב: " + (x.label || "בונוס לכולם"), body: `ב-${new Date(x.from).toLocaleString("he-IL", { timeZone: "Asia/Jerusalem", weekday: "long", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })} יתחיל מבצע: +${x.n} הורדות ליום לכולם. תחזרו!`, by: me.email });
+          }
+        }
         if ("aiLimit" in b) next.aiLimit = Math.max(0, Math.min(200, Math.floor(+b.aiLimit) || 0));
         if ("aiGlobal" in b) next.aiGlobal = Math.max(1, Math.min(100000, Math.floor(+b.aiGlobal) || 300));
         if ("dlLimit" in b) next.dlLimit = Math.max(0, Math.min(1000, Math.floor(+b.dlLimit) || 0));
@@ -1164,6 +1187,45 @@ const inner = async (req) => {
         const tok = await makeToken(u.uid, "reset", 24 * 3600e3); await audit(me, "user:resetlink", u.email);
         return J({ link: siteUrl(req) + "/#reset=" + tok });
       }
+      if (R === "GET admin/attention") {
+        const now = Date.now();
+        if (globalThis.__att && now - globalThis.__att.t < 30e3) return J(globalThis.__att.v);
+        const rs = await listAll("r/", 100), gl = await listAll("gl/", 300), us = (await st.scan("u/", { limit: 600 })).map((x) => x.v).filter(Boolean);
+        const misses = (await st.scan("bm/", { limit: 300 })).filter((x) => x.v).length;
+        const v = { gallery: gl.filter((g) => g.status === "pending").length, reports: rs.filter((r) => r.status === "open" && r.type !== "reset" && r.page !== "bot").length, resets: rs.filter((r) => r.status === "open" && r.type === "reset").length, suspects: us.filter((u) => u.sus && !u.trusted).length, misses };
+        globalThis.__att = { t: now, v }; return J(v);
+      }
+      if (R === "GET admin/feed") return J({ items: (await st.scan("fe/", { desc: true, limit: 60 })).map((x) => x.v).filter(Boolean) });
+      if (R === "GET admin/bot") {
+        const misses = (await st.scan("bm/", { limit: 300 })).filter((x) => x.v).map((x) => ({ key: x.k, ...x.v })).sort((a, b) => b.n - a.n || b.last - a.last).slice(0, 100);
+        const kb = (await st.scan("kb/", { desc: true, limit: 300 })).map((x) => x.v).filter(Boolean);
+        const reports = (await listAll("r/", 100)).filter((r) => r.page === "bot" && r.status === "open").map((r) => ({ id: r.id, name: r.name, email: r.email, ts: r.ts, q: String(r.message || "").replace("[שאלה מהעוזר]", "").trim(), reg: !!r.uid }));
+        return J({ misses, kb, reports });
+      }
+      if (R === "POST admin/bot-answer") {
+        const b = await body(req, 3000), q = clean(b.q, 200), a = clean(b.answer, 800), e = clean(b.answerEn, 800);
+        if (!q || a.length < 2) return E(400, "כתבו שאלה ותשובה");
+        const id = Date.now() + "-" + rid(2), k = clean(b.keywords, 120) || extractKeywords(q);
+        if (!k) return E(400, "לא הצלחתי לחלץ מילות מפתח, כתבו אותן ידנית");
+        await st.setJSON("kb/" + id, { id, q, k, a, e, ts: Date.now(), by: me.email });
+        if (b.key) await st.delete(clean(b.key, 40));
+        let replied = 0; const nq = normQ(q);
+        for (const r of await listAll("r/", 100)) {
+          if (r.page !== "bot" || r.status !== "open" || normQ(String(r.message).replace("[שאלה מהעוזר]", "")) !== nq && r.id !== b.reportId) continue;
+          r.status = "done"; await st.setJSON("r/" + r.id, r);
+          if (r.uid) { await addInbox(st, r.uid, "ענו לשאלה שלך 💬", `השאלה: ${q}\n\n${a}`); replied++; }
+        }
+        await audit(me, "bot:learn", q.slice(0, 60)); globalThis.__att = null;
+        return J({ ok: true, id, replied, keywords: k });
+      }
+      if (R === "POST admin/bot-kb") {
+        const b = await body(req, 3000), id = clean(b.id, 40), cur = id && (await st.get("kb/" + id));
+        if (!cur) return E(404, "לא נמצא");
+        cur.q = clean(b.q, 200) || cur.q; cur.k = clean(b.k, 120) || cur.k; cur.a = clean(b.a, 800) || cur.a; cur.e = clean(b.e, 800);
+        await st.setJSON("kb/" + id, cur); await audit(me, "bot:edit", cur.q.slice(0, 60)); return J({ ok: true });
+      }
+      if (R === "DELETE admin/bot-kb") { const id = clean(url.searchParams.get("id"), 40); await st.delete("kb/" + id); await audit(me, "bot:delete", id); return J({ ok: true }); }
+      if (R === "DELETE admin/bot-miss") { const k = clean(url.searchParams.get("key"), 40); if (k.startsWith("bm/")) await st.delete(k); globalThis.__att = null; return J({ ok: true }); }
       if (R === "POST admin/trust") {
         const b = await body(req, 300), u = await st.get("u/" + clean(b.uid, 20)); if (!u) return E(404, "משתמש לא נמצא");
         if (b.trust === false) { u.trusted = false; } else { u.trusted = true; u.sus = false; }
