@@ -1490,7 +1490,7 @@ const inner = async (req) => {
           const pl = (S.subPlans || []).find((x) => x.id === clean(b.plan, 20)); if (!pl) return E(404, "מסלול לא נמצא");
           const days = Math.max(1, Math.min(366, Math.floor(+b.days) || pl.days)), until = Date.now() + days * 864e5;
           u.perks = activePerks(u).filter((p) => p.note !== "מנוי");
-          for (const it of planItems(pl)) if (it.type === "credits") u.credits = (u.credits || 0) + it.n; else u.perks.push({ id: rid(3), type: it.type, n: it.n, key: "", until, note: "מנוי", ts: Date.now() });
+          for (const it of planItems(pl)) if (it.type === "credits") u.credits = (u.credits || 0) + it.n; else if (it.type === "badge") await awardBadge(st, u, it.key, true); else u.perks.push({ id: rid(3), type: it.type, n: it.n, key: "", until, note: "מנוי", ts: Date.now() });
           u.perks = u.perks.slice(-30);
           await addInbox(st, u.uid, "המנוי שלך הופעל ⭐", `מסלול ${pl.name} פעיל ${days} ימים (עד ${new Date(until).toLocaleDateString("he-IL")}).\n` + planItems(pl).map((i) => "• " + perkText({ ...i, until: 0 })).join("\n"));
           u.sub = { id: pl.id, name: pl.name, emoji: pl.emoji || "", until }; await awardBadge(st, u, "member", true); await audit(me, "sub:give", u.email, pl.name + " " + days + "d");

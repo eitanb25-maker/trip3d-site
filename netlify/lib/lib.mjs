@@ -8,8 +8,8 @@ export const DEFAULTS = {
   requireVerify: false, notifySecurity: true, autoBackup: true,
   welcomeGift: 2, challengeOn: true, challengeN: 3, challengeReward: 3, annivGift: 3, refPrizeOn: true, goalTarget: 1000, bonusSched: [], texts: {}, subsOn: false, subPlans: [
     { id: "plus", emoji: "🧳", name: "מטייל", price: "19₪ לחודש", days: 30, desc: "לכל מי שיוצר כל שבוע", items: [{ type: "credits", n: 3 }, { type: "daily", n: 5 }, { type: "projects", n: 10 }, { type: "gallery", n: 2 }] },
-    { id: "pro", emoji: "🧭", name: "חוקר", price: "39₪ לחודש", days: 30, hot: true, desc: "הכול פתוח, בלי לספור הורדות", items: [{ type: "credits", n: 10 }, { type: "unlimited", n: 0 }, { type: "projects", n: 30 }, { type: "gallery", n: 5 }, { type: "early", n: 0 }] },
-    { id: "pro-year", emoji: "🌍", name: "נווד עולמי", price: "349₪ לשנה", days: 365, desc: "כל מה שב'חוקר' + בונוס, ומחיר של 9 חודשים בערך", items: [{ type: "credits", n: 40 }, { type: "unlimited", n: 0 }, { type: "projects", n: 50 }, { type: "gallery", n: 8 }, { type: "early", n: 0 }] },
+    { id: "pro", emoji: "🧭", name: "חוקר", price: "39₪ לחודש", days: 30, hot: true, desc: "הכול פתוח, בלי לספור הורדות", items: [{ type: "badge", n: 1, key: "clubexp" }, { type: "unlimited", n: 0 }, { type: "ai", n: 15 }, { type: "projects", n: 30 }, { type: "gallery", n: 5 }, { type: "early", n: 0 }] },
+    { id: "pro-year", emoji: "🌍", name: "נווד עולמי", price: "349₪ לשנה", days: 365, desc: "כל מה שב'חוקר' + תג 🌍 נווד עולמי בלעדי ועוד שאלות לעוזר, ומחיר של 9 חודשים בערך", items: [{ type: "badge", n: 1, key: "nomad" }, { type: "unlimited", n: 0 }, { type: "ai", n: 40 }, { type: "projects", n: 50 }, { type: "gallery", n: 8 }, { type: "early", n: 0 }] },
   ], subPayUrl: "", subPayNote: "", goalBonus: 2, perkVerify: true, thanksReward: 2, cowBonus: 1, weekendBonus: 0, bonusWin: null, hofAuto: true,
 };
 
@@ -403,15 +403,15 @@ export async function externalBackup(enc, key) {
 
 
 // ---------- הטבות, תגים ומובילי החודש ----------
-export const SUB_TYPES = ["daily", "unlimited", "projects", "gallery", "early", "credits"];
+export const SUB_TYPES = ["daily", "unlimited", "projects", "gallery", "early", "credits", "ai", "badge"];
 export function planItems(x) {
   let it = Array.isArray(x.items) ? x.items : x.perk ? [{ type: x.perk === "daily" ? "daily" : "unlimited", n: x.n }] : [];
-  return it.filter((i) => SUB_TYPES.includes(i.type)).map((i) => ({ type: i.type, n: i.type === "unlimited" || i.type === "early" ? 0 : Math.max(1, Math.min(100, Math.floor(+i.n) || 1)) })).filter((i, k, a) => a.findIndex((j) => j.type === i.type) === k);
+  return it.filter((i) => SUB_TYPES.includes(i.type) && (i.type !== "badge" || BADGES[i.key])).map((i) => ({ type: i.type, ...(i.type === "badge" ? { key: i.key } : {}), n: i.type === "unlimited" || i.type === "early" ? 0 : i.type === "badge" ? 1 : Math.max(1, Math.min(100, Math.floor(+i.n) || 1)) })).filter((i, k, a) => a.findIndex((j) => j.type === i.type) === k);
 }
 export const PERK_TYPES = ["daily", "credits", "unlimited", "ai", "early", "projects", "gallery", "badge"];
 export const VIP_OPTS = ["rim:2", "shape:hex", "shape:oct", "shape:oval", "ps:star", "ps:heart"];
 export const TIMED_PERKS = ["daily", "unlimited", "ai", "early", "projects", "gallery"];
-export const BADGES = { founder: ["🌱", "מייסד", "Founder"], printer: ["🖨️", "מדפיס", "Printer"], printer10: ["🖨️", "מדפיס מנוסה", "Seasoned printer"], member: ["💎", "חבר מועדון", "Club member"], top: ["⭐", "מטייל מוביל", "Top traveler"], maker: ["🎨", "יוצר החודש", "Maker of the month"], inviter: ["🤝", "מזמין", "Inviter"], streak: ["🔥", "רצף יצירה", "Creation streak"], publisher: ["🖼️", "מפרסם בגלריה", "Gallery publisher"], helper: ["💡", "תורם רעיונות", "Helper"], explorer: ["🧭", "חוקר השבוע", "Weekly explorer"], challenger: ["🎯", "מנצח האתגר", "Challenge winner"], countries5: ["🗺️", "חוקר עולם", "World explorer"], dl10: ["🏅", "10 הורדות", "10 downloads"], alltools: ["🛠️", "כל הכלים", "All tools"], refstar: ["👑", "מלך ההזמנות", "Invite champion"], pick: ["🌟", "יצירת השבוע", "Creation of the week"] };
+export const BADGES = { founder: ["🌱", "מייסד", "Founder"], printer: ["🖨️", "מדפיס", "Printer"], printer10: ["🖨️", "מדפיס מנוסה", "Seasoned printer"], member: ["💎", "חבר מועדון", "Club member"], top: ["⭐", "מטייל מוביל", "Top traveler"], maker: ["🎨", "יוצר החודש", "Maker of the month"], inviter: ["🤝", "מזמין", "Inviter"], streak: ["🔥", "רצף יצירה", "Creation streak"], publisher: ["🖼️", "מפרסם בגלריה", "Gallery publisher"], helper: ["💡", "תורם רעיונות", "Helper"], explorer: ["🧭", "חוקר השבוע", "Weekly explorer"], challenger: ["🎯", "מנצח האתגר", "Challenge winner"], countries5: ["🗺️", "חוקר עולם", "World explorer"], dl10: ["🏅", "10 הורדות", "10 downloads"], alltools: ["🛠️", "כל הכלים", "All tools"], refstar: ["👑", "מלך ההזמנות", "Invite champion"], pick: ["🌟", "יצירת השבוע", "Creation of the week"], nomad: ["🌍", "נווד עולמי", "Global nomad"], clubexp: ["🧭", "חוקר המועדון", "Club explorer"], };
 export const activePerks = (u, type) => (u.perks || []).filter((p) => (!p.until || p.until > Date.now()) && (!type || p.type === type));
 export const perkSum = (u, type) => activePerks(u, type).reduce((a, p) => a + (+p.n || 0), 0);
 export const hasEarly = (u) => !!u && (u.role === "admin" || u.role === "editor" || activePerks(u, "early").length > 0);
