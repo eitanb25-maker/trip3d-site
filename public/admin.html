@@ -65,6 +65,26 @@ main{padding:16px 14px 48px}header{padding:10px 14px}header h1{font-size:15px;fl
 .bdg{margin-inline-start:auto;background:#dc2626;color:#fff;border-radius:99px;font-size:11px;font-weight:700;min-width:18px;height:18px;line-height:18px;text-align:center;padding:0 5px}
 nav#tabs button.nb.on .bdg{background:#fff;color:var(--ac)}
 @media(max-width:820px){nav#tabs{position:fixed;top:auto;bottom:0;left:0;right:0;border-bottom:0;border-top:1px solid var(--bd);padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))}#main{padding-bottom:90px}}
+
+.pg{flex-wrap:wrap;align-items:baseline}.pg h1{font-size:24px}.pg span{font-size:14px}
+.pgt{font-size:24px;margin:0 0 4px}
+details.adv>summary{cursor:pointer;font-weight:700;font-size:16px;padding:2px 0;list-style:none}details.adv>summary::before{content:"◂ ";color:var(--mu)}details.adv[open]>summary::before{content:"▾ "}
+details.adv .card{box-shadow:none;margin:14px 0 0;background:var(--bg)}
+nav#tabs button.ng.agb{display:block;width:100%;border:0;background:transparent;box-shadow:none;text-align:start;cursor:pointer;border-radius:8px}
+nav#tabs button.ng.agb:hover{background:var(--acs)}
+nav#tabs.advc:not(.q) button.nb.adv{display:none}
+nav#tabs button.nb.more{display:none}
+nav#tabs button.nb{position:relative}
+@media(max-width:820px){
+ nav#tabs{gap:2px;padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));justify-content:flex-start}
+ nav#tabs button.nb{flex-direction:column;gap:1px;min-width:62px;padding:5px 8px;border:0;border-radius:12px;font-size:11px;line-height:1.2;justify-content:center}
+ nav#tabs button.nb .ic{font-size:19px;line-height:1.1}
+ nav#tabs button.nb.more{display:flex}
+ nav#tabs .bdg{position:absolute;top:0;inset-inline-end:6px;margin:0;min-width:16px;height:16px;line-height:16px;font-size:10px}
+ nav#tabs .gohome{display:none}
+ #who{display:none}header h1{flex:1 1 auto;font-size:15px}
+ .pg h1{font-size:20px}.pg span{flex-basis:100%}
+}
 </style></head><body>
 <header><h1>🛠 לוח בקרה – מזכרות תלת-ממד</h1><span id="who" class="muted"></span><button id="thm" class="hbtn" title="ערכת נושא"></button><a href="/" id="home" class="hbtn" style="background:var(--ac);color:#fff;border-color:var(--ac);text-decoration:none;font-weight:700;display:inline-flex;align-items:center;gap:6px" aria-label="חזרה לאתר">🏠 חזרה לאתר</a><a href="/botstudio.html" id="bsl" class="hbtn" target="_blank" rel="noopener" style="display:none;border:1px solid var(--bd);color:var(--tx);text-decoration:none;align-items:center;gap:6px">🧠 סטודיו הבוט</a><button id="out" style="display:none">התנתקות</button></header>
 <div id="gate"></div>
@@ -77,8 +97,8 @@ const h=(t,a={},...k)=>{const e=document.createElement(t);for(const[x,v]of Objec
 async function api(m,p,b){const r=await fetch("/api"+p,{method:m,headers:{"content-type":"application/json"},credentials:"same-origin",body:b?JSON.stringify(b):undefined});let d={};try{d=await r.json()}catch(e){}if(!r.ok)throw Object.assign(new Error(d.error||"שגיאה"),{status:r.status,need2fa:!!d.need2fa});return d}
 const TN={stand:"מזכרת",multi:"מכמה מדינות",key:"מחזיק מפתחות",magnet:"מגנט",orn:"קישוט",puzzle:"פאזל",holder:"מעמד לטלפון"},TOOLS=Object.keys(TN);
 const fmt=t=>t?new Date(t).toLocaleString("he-IL"):"—",pct=(a,b)=>b?Math.round(100*a/b)+"%":"—";
-let ME=null,RO=true,TAB=(()=>{try{const t=localStorage.adm_tab;return ["סקירה","משתמשים","הודעות","פעילות","בוט","הטבות","מבצעים","חסימות","הזמנות","דיווחים","גלריה","משוב","אבטחה","יומן פעולות","גיבויים","הגדרות","גרסאות","יצוא","מנויים","בדיקות","צ'אט","תזכורות"].includes(t)?t:"סקירה"}catch(e){return"סקירה"}})(),UID=null,PRE=null;
-const TABS=["תזכורות","סקירה","משתמשים","הודעות","פעילות","בוט","הטבות","מבצעים","חסימות","הזמנות","דיווחים","גלריה","משוב","אבטחה","יומן פעולות","גיבויים","הגדרות","גרסאות","יצוא","מנויים","בדיקות","צ'אט"];
+let ME=null,RO=true,TAB=(()=>{try{const t=localStorage.adm_tab;return ["סקירה","משתמשים","הודעות","פעילות","בוט","הטבות","מבצעים","חסימות","הזמנות","דיווחים","גלריה","משוב","אבטחה","יומן פעולות","גיבויים","הגדרות","גרסאות","מנויים","בדיקות","צ'אט","תזכורות"].includes(t)?t:"סקירה"}catch(e){return"סקירה"}})(),UID=null,PRE=null;
+const TABS=["תזכורות","סקירה","משתמשים","הודעות","פעילות","בוט","הטבות","מבצעים","חסימות","הזמנות","דיווחים","גלריה","משוב","אבטחה","יומן פעולות","גיבויים","הגדרות","גרסאות","מנויים","בדיקות","צ'אט"];
 async function boot(){let me;try{me=await api("GET","/me")}catch(e){}
  if(!me||!me.user){showLogin();return}
  if(!["admin","editor"].includes(me.user.role)){{const sc=h("input",{placeholder:"קוד הקמה (ADMIN_SETUP_CODE)",autocomplete:"off",style:"width:100%;margin:6px 0"}),em=h("p",{cls:"muted",style:"color:var(--bad)"});
@@ -91,12 +111,17 @@ async function boot(){let me;try{me=await api("GET","/me")}catch(e){}
 function showLogin(){const e=h("input",{type:"email",placeholder:"מייל",autocomplete:"email"}),p=h("input",{type:"password",placeholder:"סיסמה",autocomplete:"current-password"}),er=h("p",{cls:"muted",style:"color:var(--bad)"}),cd=h("input",{placeholder:"קוד אימות דו-שלבי (6 ספרות)",inputmode:"numeric",autocomplete:"one-time-code",maxlength:7,style:"display:none"});
  const go=async()=>{try{await api("POST","/auth/login",{email:e.value,password:p.value,code:cd.value});location.reload()}catch(x){if(x.need2fa){cd.style.display="";cd.focus();er.textContent="הזינו את הקוד מאפליקציית האימות"}else er.textContent=x.message}};p.onkeydown=ev=>{if(ev.key=="Enter")go()};cd.onkeydown=ev=>{if(ev.key=="Enter")go()};
  $("gate").replaceChildren(h("div",{cls:"card",id:"login"},h("h2",{text:"כניסה ללוח הבקרה"}),e,p,cd,er,h("button",{cls:"pri",text:"כניסה",on:{click:go}}),h("p",{cls:"muted"},"בעיה בכניסה? ",h("a",{href:"/health.html",text:"בדיקת תקינות המערכת",style:"color:var(--ac)"}))))}
-const NAV=[["כללי",[["סקירה","📊"],["תזכורות","⏰"],["פעילות","⚡"]]],["קהילה",[["משתמשים","👥"],["הטבות","🎁"],["מנויים","⭐"],["מבצעים","🎉"],["גלריה","🖼️"],["הזמנות","✉️"],["משוב","💬"],["דיווחים","🚩"]]],["תקשורת",[["צ'אט","🗨️"],["הודעות","📣"],["בוט","🤖"]]],["בטיחות",[["חסימות","⛔"],["אבטחה","🔒"],["יומן פעולות","📜"]]],["מערכת",[["הגדרות","⚙️"],["בדיקות","🧪"],["גיבויים","💾"],["יצוא","📤"],["גרסאות","🆕"]]]];
+const NAV=[["עיקרי",[["סקירה","📊"],["תזכורות","⏰"],["פעילות","⚡"]]],["אנשים",[["משתמשים","👥"],["צ'אט","🗨️"],["משוב","💬"],["הטבות","🎁"],["מנויים","⭐"]]],["תוכן",[["גלריה","🖼️"],["הודעות","📣"],["בוט","🤖"],["מבצעים","🎉"]]],["בטיחות",[["דיווחים","🚩"],["חסימות","⛔"],["אבטחה","🔒"]]],["מתקדם",[["הגדרות","⚙️"],["גיבויים","💾"],["בדיקות","🧪"],["יומן פעולות","📜"],["הזמנות","✉️"],["גרסאות","🆕"]]]];
 const NS=h("input",{cls:"ns",type:"search",placeholder:"חיפוש בתפריט  ( / )",autocomplete:"off"});
-function filterNav(){const q=NS.value.trim();let first=null;document.querySelectorAll("#tabs .ng").forEach(g=>{let any=false;for(let n=g.nextElementSibling;n&&n.classList.contains("nb");n=n.nextElementSibling){const m=!q||n.dataset.t.includes(q);n.hidden=!m;if(m){any=true;first=first||n}}g.hidden=!any});return first}
+function filterNav(){const q=NS.value.trim();let first=null;$("tabs").classList.toggle("q",!!q);document.querySelectorAll("#tabs .ng").forEach(g=>{let any=false;for(let n=g.nextElementSibling;n&&n.classList.contains("nb");n=n.nextElementSibling){const m=!q||n.dataset.t.includes(q);n.hidden=!m;if(m){any=true;first=first||n}}g.hidden=!any});return first}
 NS.addEventListener("input",filterNav);NS.addEventListener("keydown",e=>{if(e.key=="Enter"){const f=filterNav();if(f)f.click()}if(e.key=="Escape"){NS.value="";filterNav();NS.blur()}});
 document.addEventListener("keydown",e=>{if(e.key=="/"&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)){e.preventDefault();NS.focus()}});
-function buildNav(){const cur=TAB=="משתמש"?"משתמשים":TAB,els=[NS];NAV.forEach(([g,items])=>{els.push(h("div",{cls:"ng",text:g}));items.forEach(([t,ic])=>els.push(h("button",{cls:"nb"+(t==cur?" on":""),"data-t":t,on:{click:()=>{TAB=t;NS.value="";render()}}},h("span",{cls:"ic",text:ic}),h("span",{text:t}),BADGE[t]?h("span",{cls:"bdg",text:BADGE[t]}):"")))});$("tabs").replaceChildren(...els);filterNav();const on=$("tabs").querySelector(".on");if(on&&innerWidth<=820)on.scrollIntoView({inline:"center",block:"nearest"})}
+let ADV=false;try{ADV=localStorage.adm_adv=="1"}catch(e){}
+function buildNav(){const cur=TAB=="משתמש"?"משתמשים":TAB,els=[NS],inAdv=NAV.some(([g,it])=>g=="מתקדם"&&it.some(x=>x[0]==cur)),open=ADV||inAdv,tog=()=>{ADV=!(ADV||inAdv);try{localStorage.adm_adv=ADV?"1":"0"}catch(e){}buildNav()};
+ NAV.forEach(([g,items])=>{const adv=g=="מתקדם";els.push(adv?h("button",{cls:"ng agb",on:{click:tog},text:g+(open?" ▾":" ◂")}):h("div",{cls:"ng",text:g}));
+  items.forEach(([t,ic])=>els.push(h("button",{cls:"nb"+(adv?" adv":"")+(t==cur?" on":""),"data-t":t,on:{click:()=>{TAB=t;NS.value="";render()}}},h("span",{cls:"ic",text:ic}),h("span",{text:t}),BADGE[t]?h("span",{cls:"bdg",text:BADGE[t]}):"")))});
+ els.push(h("button",{cls:"nb more","data-t":"עוד",on:{click:tog}},h("span",{cls:"ic",text:"⋯"}),h("span",{text:open?"פחות":"עוד"})));
+ const nav=$("tabs");nav.replaceChildren(...els);nav.classList.toggle("advc",!open);filterNav();const on=nav.querySelector(".on");if(on&&innerWidth<=820)on.scrollIntoView({inline:"center",block:"nearest"})}
 const THEMES=[["auto","🌓 אוטומטי"],["light","☀️ בהיר"],["dark","🌙 כהה"]];
 function applyTheme(){let t="auto";try{t=localStorage.adm_theme||"auto"}catch(e){}if(t=="auto")document.documentElement.removeAttribute("data-theme");else document.documentElement.setAttribute("data-theme",t);const b=$("thm");if(b)b.textContent=(THEMES.find(x=>x[0]==t)||THEMES[0])[1]}
 applyTheme();document.addEventListener("DOMContentLoaded",()=>{applyTheme();$("thm").onclick=()=>{let t="auto";try{t=localStorage.adm_theme||"auto"}catch(e){}const n=THEMES[(THEMES.findIndex(x=>x[0]==t)+1)%3][0];try{localStorage.adm_theme=n}catch(e){}applyTheme()}});
@@ -457,7 +482,21 @@ async function vTodo(){
   done.length?h("details",{cls:"card"},h("summary",{text:"✅ כבר מטופל ("+done.length+")",style:"cursor:pointer;font-weight:700"}),h("div",{style:"display:grid;gap:8px;margin-top:8px"},done.map(autoCard))):"")}
 const _vBot39=vBot;vBot=async function(){await _vBot39();$("main").prepend(h("div",{cls:"card",style:"border-color:var(--ac)"},h("h2",{text:"🧠 סטודיו הבוט – אזור עבודה מלא"}),h("p",{cls:"muted",text:"מי כתב לבוט ומה הוא ענה, סטטיסטיקות, אוצר מילים ונרדפות, תשובות מותאמות, הגדרות ה-AI ומגרש משחקים לבדיקת תשובות."}),h("a",{href:"/botstudio.html",target:"_blank",rel:"noopener",style:"display:inline-block;padding:8px 16px;border-radius:10px;background:var(--ac);color:#fff;text-decoration:none;font-weight:700",text:"פתיחת סטודיו הבוט ↗"})))};
 
-function render(){RO=!(ME&&(ME.role=="admin"||(ME.caps||[]).includes(CAPMAP[TAB])));buildNav();try{localStorage.adm_tab=TAB}catch(e){}$("main").replaceChildren(h("p",{cls:"muted",text:"טוען…"}));({"סקירה":vOverview,"משתמשים":vUsers,"משתמש":vUser,"הודעות":vMessages,"אבטחה":vSecurity,"יומן פעולות":vAudit,"גיבויים":vBackups,"הזמנות":vInvites,"דיווחים":vReports,"גלריה":vGallery,"חסימות":vBlocks,"הטבות":vPerks,"מנויים":vSubs,"צ'אט":vChat,"בדיקות":vTests,"מבצעים":vPromo,"פעילות":vActivity,"בוט":vBot,"תזכורות":vTodo,"משוב":vFeedback,"הגדרות":vSettings,"גרסאות":vChangelog,"יצוא":vExport})[TAB]().catch(e=>$("main").replaceChildren(h("p",{text:"שגיאה: "+e.message})))}
+function render(){RO=!(ME&&(ME.role=="admin"||(ME.caps||[]).includes(CAPMAP[TAB])));buildNav();try{localStorage.adm_tab=TAB}catch(e){}$("main").replaceChildren(h("p",{cls:"muted",text:"טוען…"}));({"סקירה":vOverview,"משתמשים":vUsers,"משתמש":vUser,"הודעות":vMessages,"אבטחה":vSecurity,"יומן פעולות":vAudit,"גיבויים":vBackups,"הזמנות":vInvites,"דיווחים":vReports,"גלריה":vGallery,"חסימות":vBlocks,"הטבות":vPerks,"מנויים":vSubs,"צ'אט":vChat,"בדיקות":vTests,"מבצעים":vPromo,"פעילות":vActivity,"בוט":vBot,"תזכורות":vTodo,"משוב":vFeedback,"הגדרות":vSettings,"גרסאות":vChangelog,"יצוא":vExport})[TAB]().then(pgHead).catch(e=>$("main").replaceChildren(h("p",{text:"שגיאה: "+e.message})))}
+
+// ---- v42: כותרת וסדר אחיד לכל לשונית ----
+const DESC={"סקירה":"המספרים החשובים ומה שמחכה לטיפול שלך","תזכורות":"דברים שרק את/ה יכול/ה לעשות: מפתחות, הגדרות והחלטות","פעילות":"מה קורה באתר עכשיו","משתמשים":"חיפוש, חסימה וניהול חשבונות","צ'אט":"שיחות פרטיות עם משתמשים","משוב":"משוב על הדפסות והורדות","הטבות":"קרדיטים וקודי קופון","מנויים":"בקשות ומנויים פעילים","גלריה":"אישור יצירות ותגובות","הודעות":"הודעה לכל המשתמשים או לאחד מהם","בוט":"שאלות, תשובות וסטטיסטיקות של הבוט","מבצעים":"מבצעי בונוס, מזמינים מובילים וחשבונות לבדיקה","דיווחים":"דיווחים, הצעות ובקשות איפוס סיסמה","חסימות":"חסימת כתובות ומשתמשים","אבטחה":"אירועי אבטחה והתחברות","הגדרות":"הגדרות האתר, טקסטים וקופונים","גיבויים":"גיבוי, שחזור ויצוא נתונים","בדיקות":"בדיקת מיילים, התראות ותקינות","יומן פעולות":"מי שינה מה ומתי","הזמנות":"קודי הזמנה לחברים","גרסאות":"מה השתנה בכל גרסה"};
+function tidyOverview(m){const K=[...m.children],by=p=>K.find(k=>{const x=k.querySelector&&k.querySelector("h2");return x&&x.textContent.startsWith(p)});
+ K.forEach(k=>{const t=k.textContent||"";if((k.querySelector&&k.querySelector("button.pri")&&t.includes("בדיקות: מיילים"))||(!k.querySelector("h2")&&/יצירות ממתינות לאישור/.test(t)))k.remove()});
+ const od=by("פעילות לפי יום");if(od)od.remove();
+ const att=by("🔔"),tr=by("📈"),rng=K.find(k=>k.classList&&k.classList.contains("row")&&k.querySelector("select")),kp=K.find(k=>!k.querySelector("h2")&&k.querySelector(".kpi"));
+ if(att)att.after(...[rng,kp,tr].filter(Boolean));
+ const sys=["מצב המערכת","🛠","✅","אירועי אבטחה","שגיאות אחרונות","🗑️"].map(by).filter(Boolean);
+ if(sys.length)m.append(h("details",{cls:"card adv"},h("summary",{text:"⚙️ מצב המערכת, תחזוקה ושגיאות"}),...sys))}
+function pgHead(){const m=$("main");if(!m||TAB=="משתמש")return;if(TAB=="סקירה")tidyOverview(m);
+ if(m.firstElementChild&&m.firstElementChild.tagName=="H1"){m.firstElementChild.className="pgt";return}
+ const ic=(NAV.flatMap(x=>x[1]).find(x=>x[0]==TAB)||["",""])[1];
+ m.insertBefore(h("div",{cls:"pg"},h("h1",{text:(ic?ic+" ":"")+TAB}),h("span",{text:DESC[TAB]||""})),m.firstChild)}
 // ---------- גרפים ----------
 function lineChart(series,keys,colors,names){const W=720,H=220,P=34,n=series.length,mx=Math.max(1,...series.flatMap(s=>keys.map(k=>s[k]||0))),X=i=>P+(n<2?0:i*(W-P-10)/(n-1)),Y=v=>H-24-(v/mx)*(H-44);
  const ns="http://www.w3.org/2000/svg",svg=document.createElementNS(ns,"svg");svg.setAttribute("viewBox",`0 0 ${W} ${H}`);svg.style.width="100%";
@@ -638,6 +677,8 @@ async function vSettings(){const sr=await api("GET","/admin/settings"),s=sr.sett
   h("div",{cls:"row"},h("button",{cls:"pri",text:"💾 שמירה",disabled:RO,on:{click:save}}),msg)),
   h("div",{cls:"card scroll"},h("h2",{text:"היסטוריית שינויים"}),hist.items.length?h("table",{},h("tr",{},["מתי","מי","מה שונה",""].map(x=>h("th",{text:x}))),...hist.items.map(i=>h("tr",{},h("td",{text:fmt(i.ts)}),h("td",{text:i.by}),h("td",{text:i.diff.join(", ")||"—"}),h("td",{},h("button",{text:"↩ שחזור למצב שלפני",disabled:RO,on:{click:async()=>{if(confirm("לשחזר?")){await api("POST","/admin/revert",{key:i.key});render()}}}}))))):h("p",{cls:"muted",text:"אין שינויים עדיין"})))}
 // ---------- יצוא ----------
-async function vExport(){$("main").replaceChildren(h("div",{cls:"card"},h("h2",{text:"יצוא נתונים (CSV, נפתח באקסל)"}),h("div",{cls:"row"},[["weekly","דוח שבועי"],["users","משתמשים"],["downloads","הורדות"],["reports","דיווחים"],["perks","הטבות שנשלחו"],["subs","מנויים"]].map(([k,t])=>h("a",{href:"/api/admin/export?kind="+k,download:k+".csv",style:"text-decoration:none"},h("button",{text:"⬇ "+t}))))))}
+function exportCard(){return h("div",{cls:"card"},h("h2",{text:"יצוא נתונים (CSV, נפתח באקסל)"}),h("div",{cls:"row"},[["weekly","דוח שבועי"],["users","משתמשים"],["downloads","הורדות"],["reports","דיווחים"],["perks","הטבות שנשלחו"],["subs","מנויים"]].map(([k,t])=>h("a",{href:"/api/admin/export?kind="+k,download:k+".csv",style:"text-decoration:none"},h("button",{text:"⬇ "+t})))))}
+const _vB3=vBackups;vBackups=async function(){await _vB3();$("main").append(exportCard())};
+async function vExport(){$("main").replaceChildren(exportCard())}
 boot();
 </script></body></html>
