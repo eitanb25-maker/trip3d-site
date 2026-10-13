@@ -1276,7 +1276,8 @@ function addPresets(){try{if(!MULTI||!$("chips")||$("presets"))return;const d=do
   if(d.children.length>1)$("chips").after(d)}catch(e){}}
 try{const _wr=wr;wr=function(){const r=_wr.apply(this,arguments);addPresets();return r}}catch(e){}
 // ---------- קישורים: איך זה עובד + סטטוס ----------
-try{const home=document.querySelector("#home .box");if(home&&!$("lnks")){const p=document.createElement("p");p.id="lnks";p.className="hint";p.style.textAlign="center";p.innerHTML='<a href="/perks.html">❓ '+L_("איך מרוויחים עוד הורדות","How to earn more downloads")+'</a> · <a href="/status.html">🟢 '+L_("סטטוס האתר","Site status")+'</a>';home.append(p)}}catch(e){}
+try{const home=document.querySelector("#home .box");if(home&&!$("lnks")){const p=document.createElement("p");p.id="lnks";p.className="hint";p.style.textAlign="center";p.innerHTML='<a href="/perks.html">❓ '+L_("איך מרוויחים עוד הורדות","How to earn more downloads")+'</a> · <a href="/status.html">🟢 '+L_("סטטוס האתר","Site status")+'</a>';home.append(p);
+  const hb=document.createElement("button");hb.id="homebot";hb.type="button";hb.className="pill";hb.style.cssText="display:block;margin:14px auto 0;padding:12px 20px;font-size:16px;font-weight:700;cursor:pointer";hb.textContent="🤖 "+L_("שאלו את הבוט – עונה על הכול","Ask the helper bot");hb.onclick=()=>{const b=$("aib");if(b)b.click()};home.insertBefore(hb,p)}}catch(e){}
 
 /* נגישות: מסגרת פוקוס ברורה למקלדת + תוויות לכפתורי אייקון */
 (function(){try{const s=document.createElement("style");s.textContent=":focus-visible{outline:3px solid #ffb703!important;outline-offset:2px}@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}";document.head.appendChild(s);
