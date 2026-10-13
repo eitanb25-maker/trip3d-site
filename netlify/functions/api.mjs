@@ -1,7 +1,7 @@
 // שרת האתר: התחברות, הרשאות, מכסות, סטטיסטיקות ולוח בקרה
 import crypto from "node:crypto";
 import { trBody } from "../lib/i18n.mjs";
-import { planItems, VIP_OPTS, PERK_TYPES, TIMED_PERKS, BADGES, activePerks, perkSum, hasEarly, perkText, givePerk, awardBadge, addInbox, leaderboard, awardMonthly, monthKey, alertMail, externalBackup, extTargets, activeBlocks, findBlock, BLOCK_FEATURES, errorSpike, funnelOf, store, getSettings, bump, notify, dayKey, rid, rangeStats, sumGroup, TOOLS, DEFAULTS, mailEnabled, sendMail, rateHit, secEvent, isProd, audit, weeklyCsv, makeBackup, restoreBackup, encryptBackup, decryptBackup, saveAutoBackup, bonusNow, perkInfo, weekKey, refBoard, awardRefMonthly, weekReport, lbScore, canPerk, aidOf, pickCreation, qHash, normQ, extractKeywords, feed, topCountries, publishHof, setCow, liveDoc } from "../lib/lib.mjs";
+import { planItems, VIP_OPTS, PERK_TYPES, TIMED_PERKS, BADGES, activePerks, perkSum, hasEarly, perkText, givePerk, awardBadge, addInbox, leaderboard, awardMonthly, monthKey, alertMail, externalBackup, extTargets, activeBlocks, findBlock, BLOCK_FEATURES, errorSpike, funnelOf, store, getSettings, bump, notify, dayKey, rid, rangeStats, sumGroup, TOOLS, DEFAULTS, mailEnabled, sendMail, sendMailDetail, rateHit, secEvent, isProd, audit, weeklyCsv, makeBackup, restoreBackup, encryptBackup, decryptBackup, saveAutoBackup, bonusNow, perkInfo, weekKey, refBoard, awardRefMonthly, weekReport, lbScore, canPerk, aidOf, pickCreation, qHash, normQ, extractKeywords, feed, topCountries, publishHof, setCow, liveDoc } from "../lib/lib.mjs";
 
 export const config = { path: "/api/*" };
 
@@ -1097,6 +1097,14 @@ const inner = async (req) => {
         const k = clean(url.searchParams.get("key"), 40), v = k.startsWith("bk/") ? await st.get(k) : null;
         if (!v) return E(404, "לא נמצא");
         return new Response(JSON.stringify(v), { headers: { "content-type": "application/json", "content-disposition": `attachment; filename="backup-${k.slice(3)}.enc.json"` } });
+      }
+      if (R === "POST admin/test-mail") {
+        const b = await body(req, 400), to = clean(b.to || me.email, 120).toLowerCase();
+        if (!emailOk(to)) return E(400, "כתובת מייל לא תקינה");
+        if (await rateHit("tm:" + me.uid, 6, 600e3)) return E(429, "אפשר עד 6 בדיקות ב-10 דקות");
+        const r = await sendMailDetail(to, "✉️ מייל בדיקה מהאתר", `שלום ${me.name},\n\nזה מייל בדיקה מלוח הבקרה של סטודיו המזכרות. אם הגיע אליך, שליחת המיילים באתר עובדת.\n\n${new Date().toLocaleString("he-IL", { timeZone: "Asia/Jerusalem" })}`);
+        await audit(me, "mail:test", to, r.ok ? "ok" : (r.step || "") + " " + (r.error || ""));
+        return J({ ...r, to, from: process.env.FROM_EMAIL ? String(process.env.FROM_EMAIL).replace(/^.*</, "").replace(/>.*$/, "") : "" });
       }
       if (R === "POST admin/backup") { const { key, enc } = await saveAutoBackup(); const external = await externalBackup(enc, key); await audit(me, "backup:create", key, JSON.stringify(external)); return J({ ok: true, key, file: enc, external, targets: extTargets() }); }
       if (R === "POST admin/restore") {

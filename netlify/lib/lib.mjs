@@ -204,6 +204,23 @@ export async function sendMail(to, subject, text) {
     return r.ok;
   } catch { return false; }
 }
+// בדיקת מייל למנהל: מחזיר פירוט מה השתבש (בלי לחשוף מפתחות)
+export async function sendMailDetail(to, subject, text) {
+  const miss = [];
+  if (!process.env.RESEND_API_KEY) miss.push("RESEND_API_KEY");
+  if (!process.env.FROM_EMAIL) miss.push("FROM_EMAIL");
+  if (miss.length) return { ok: false, step: "config", error: "חסרים משתני סביבה: " + miss.join(", ") };
+  try {
+    const r = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { "content-type": "application/json", authorization: "Bearer " + process.env.RESEND_API_KEY },
+      body: JSON.stringify({ from: process.env.FROM_EMAIL, to: [to], subject, text }),
+    });
+    let j = {}; try { j = await r.json(); } catch {}
+    if (r.ok) return { ok: true, id: j.id || "" };
+    return { ok: false, step: "resend", status: r.status, error: String(j.message || j.name || "שגיאה מ-Resend").slice(0, 300) };
+  } catch (e) { return { ok: false, step: "network", error: "אין חיבור ל-Resend: " + String(e && e.message || e).slice(0, 120) }; }
+}
 export async function rateHit(key, limit, windowMs) {
   const st = await store();
   const k = "rl/" + key;
