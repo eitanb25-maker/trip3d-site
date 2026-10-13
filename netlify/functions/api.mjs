@@ -1104,10 +1104,10 @@ const inner = async (req) => {
           const pl = (S.subPlans || []).find((x) => x.id === clean(b.plan, 20)); if (!pl) return E(404, "מסלול לא נמצא");
           const days = Math.max(1, Math.min(366, Math.floor(+b.days) || pl.days)), until = Date.now() + days * 864e5;
           u.perks = activePerks(u).filter((p) => p.note !== "מנוי");
-          for (const it of planItems(pl)) u.perks.push({ id: rid(3), type: it.type, n: it.n, key: "", until, note: "מנוי", ts: Date.now() });
+          for (const it of planItems(pl)) if (it.type === "credits") u.credits = (u.credits || 0) + it.n; else u.perks.push({ id: rid(3), type: it.type, n: it.n, key: "", until, note: "מנוי", ts: Date.now() });
           u.perks = u.perks.slice(-30);
           await addInbox(st, u.uid, "המנוי שלך הופעל ⭐", `מסלול ${pl.name} פעיל ${days} ימים (עד ${new Date(until).toLocaleDateString("he-IL")}).\n` + planItems(pl).map((i) => "• " + perkText({ ...i, until: 0 })).join("\n"));
-          u.sub = { id: pl.id, name: pl.name, until }; await audit(me, "sub:give", u.email, pl.name + " " + days + "d");
+          u.sub = { id: pl.id, name: pl.name, emoji: pl.emoji || "", until }; await awardBadge(st, u, "member", true); await audit(me, "sub:give", u.email, pl.name + " " + days + "d");
         }
         else if (b.action === "cancelSub") { u.perks = (u.perks || []).filter((p) => p.note !== "מנוי"); u.sub = null; await audit(me, "sub:cancel", u.email); }
         else if (b.action === "giveCredits") {
@@ -1190,7 +1190,7 @@ const inner = async (req) => {
           }
         }
         if (typeof b.subsOn === "boolean") next.subsOn = b.subsOn;
-        if (Array.isArray(b.subPlans)) next.subPlans = b.subPlans.slice(0, 4).map((x) => ({ id: clean(x.id, 20) || rid(3), name: clean(x.name, 40), price: clean(x.price, 40), days: Math.max(1, Math.min(366, Math.floor(+x.days) || 30)), items: planItems(x), desc: clean(x.desc, 140) })).filter((x) => x.name && x.items.length);
+        if (Array.isArray(b.subPlans)) next.subPlans = b.subPlans.slice(0, 4).map((x) => ({ id: clean(x.id, 20) || rid(3), name: clean(x.name, 40), price: clean(x.price, 40), days: Math.max(1, Math.min(366, Math.floor(+x.days) || 30)), emoji: clean(x.emoji, 4), hot: !!x.hot, items: planItems(x), desc: clean(x.desc, 140) })).filter((x) => x.name && x.items.length);
         if (typeof b.subPayUrl === "string") { const u = b.subPayUrl.trim(); if (u && !/^https:\/\/[^\s]+$/i.test(u)) return E(400, "קישור התשלום חייב להתחיל ב-https://"); next.subPayUrl = clean(u, 300); }
         if (typeof b.subPayNote === "string") next.subPayNote = clean(b.subPayNote, 200);
         if (b.texts && typeof b.texts === "object") { next.texts = {}; for (const k of ["homeTitle", "homeTitleEn", "homeSub", "homeSubEn"]) { const v = clean(b.texts[k], 120); if (v) next.texts[k] = v; } }
