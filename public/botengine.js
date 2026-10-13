@@ -1167,6 +1167,7 @@
     ru: { miss: "Готового ответа не нашёл. Попробуйте переформулировать или отправьте вопрос администратору сайта.", owner: "✉️ Отправить вопрос администратору", chat: "💬 Личный чат с владельцем", sent: "Отправлено администратору, спасибо! 🙏", forgot: "🔑 Сброс пароля", login: "👤 Регистрация / вход", acct: "👤 Открыть «Мой аккаунт»", report: "🐞 Сообщить о проблеме" },
     es: { miss: "No encontré una respuesta lista. Prueba a reformularla o envía tu pregunta al administrador del sitio.", owner: "✉️ Enviar la pregunta al administrador", chat: "💬 Chat privado con el propietario", sent: "Enviado al administrador, ¡gracias! 🙏", forgot: "🔑 Restablecer contraseña", login: "👤 Registro / iniciar sesión", acct: "👤 Abrir «Mi cuenta»", report: "🐞 Informar de un problema" }
   };
+  Object.assign(UI.he, { thanks: "תודה על המשוב 🙏" }); Object.assign(UI.en, { thanks: "Thanks for the feedback 🙏" }); Object.assign(UI.ar, { thanks: "شكرًا على ملاحظتك 🙏" }); Object.assign(UI.ru, { thanks: "Спасибо за отзыв 🙏" }); Object.assign(UI.es, { thanks: "¡Gracias por tu opinión! 🙏" });
   const LANGREQ = {
     ar: "يمكنك الكتابة لي بالعربية وسأجيب بالعربية. واجهة الموقع نفسها حاليًا بالعبرية والإنجليزية فقط.",
     ru: "Можете писать мне по-русски — я отвечу на русском. Сам сайт пока только на иврите и английском.",
@@ -1186,7 +1187,7 @@
     return es > en ? "es" : "en";
   };
   const topicRaw = (e) => String(e[0]).split(",")[0].replace(/^=/, "").trim();
-  const reply = (e, lang) => { if (lang === "he") return e[1]; const ml = !e.cust && ML[topicRaw(e)]; if (lang === "en" || !ml || !ml[lang]) return e[2] || e[1]; return ml[lang]; };
+  const reply = (e, lang) => { if (lang === "he") return e[1]; const ml = e.cust ? e.ml : ML[topicRaw(e)]; if (lang === "en" || !ml || !ml[lang]) return e[2] || e[1]; return ml[lang]; };
   const ui = (lang) => UI[lang] || UI.en;
 
 
@@ -1228,7 +1229,7 @@
       if (!kws.length) continue;
       const m = kws.filter((w) => t.includes(w));
       if (m.length >= Math.max(1, Math.ceil(kws.length * .6)) && m.join("").length >= 4) {
-        const sc = m.length * 2 + 1, e = ["", x.a, x.e || x.a, "", ""]; e.cust = true; e.kw = x.k;
+        const sc = m.length * 2 + 1, e = ["", x.a, x.e || x.a, "", ""]; e.cust = true; e.kw = x.k; e.ml = { ar: x.ar, ru: x.ru, es: x.es };
         list.push({ src: "custom", sc, e });
         if (sc >= bs) { bs = sc; best = e; }
       }

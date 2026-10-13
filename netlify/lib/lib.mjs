@@ -478,7 +478,7 @@ export async function cleanupOld() {
   const aiCut = dayKey(cut), ai = (await st.list("ai/")).filter((k) => k.slice(3) < aiCut);
   const fe = (await st.list("fe/")).filter((k) => +k.slice(3).split("-")[0] < now - 7 * 864e5);
   const bm = (await st.scan("bm/")).filter((x) => x.v && (x.v.last || 0) < now - 60 * 864e5).map((x) => x.k);
-  const bl = (await st.list("bl/")).filter((k) => +k.slice(3).split("-")[0] < now - 45 * 864e5);
+  const bl = [...(await st.list("bl/")), ...(await st.list("bf/"))].filter((k) => +k.slice(3).split("-")[0] < now - 45 * 864e5);
   const tr = (await st.scan("tr/")).filter((x) => x.v && (x.v.ts || 0) < now - 7 * 864e5).map((x) => x.k);
   const pg = (await st.scan("pg/")).filter((x) => x.v && (x.v.ts || 0) < now - 120 * 864e5).map((x) => x.k);
   const del = [...take(pg, "perklog"), ...take(tr, "trash"), ...take(rl, "rl"), ...take(tk, "tokens"), ...take(hs, "history"), ...take(ai, "ai"), ...take(fe, "feed"), ...take(bm, "botmiss"), ...take(bl, "botlog")];

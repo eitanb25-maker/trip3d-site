@@ -328,7 +328,7 @@ const inner = async (req) => {
       if (e.n === 1 && S.notifyReport && !(await rateHit("bmn", 10, 3600e3))) await notify(`🤖 שאלה שהבוט לא ידע לענות עליה:\n${q}\n(לענות: לוח בקרה ← בוט)`);
       return J({ ok: true });
     }
-    if (R === "GET kb") { const cfg = botCfgOf(await st.get("botcfg")); return J({ items: (await st.scan("kb/", { limit: 300 })).map((x) => x.v).filter(Boolean).map((e) => ({ k: e.k, a: e.a, e: e.e || "" })), syn: cfg.syn, greet: cfg.greet }, 200, { "cache-control": "public, max-age=60" }); }
+    if (R === "GET kb") { const cfg = botCfgOf(await st.get("botcfg")); return J({ items: (await st.scan("kb/", { limit: 300 })).map((x) => x.v).filter(Boolean).map((e) => ({ k: e.k, a: e.a, e: e.e || "", ar: e.ar || "", ru: e.ru || "", es: e.es || "" })), syn: cfg.syn, greet: cfg.greet }, 200, { "cache-control": "public, max-age=60" }); }
     if (R === "POST bot/log") {
       if (await rateHit("bl:" + ipHash(req), 80, 3600e3)) return J({ ok: true });
       if (await rateHit("bl:all", 4000, 864e5)) return J({ ok: true });
@@ -336,6 +336,14 @@ const inner = async (req) => {
       const b = await body(req, 2500), q = clean(b.q, 300); if (q.length < 2) return J({ ok: true });
       const src = ["kb", "custom", "ai", "miss", "small"].includes(b.src) ? b.src : "miss", ts = Date.now();
       await st.setJSON("bl/" + String(ts).padStart(13, "0") + "-" + rid(2), { ts, uid: me ? me.uid : "", name: me ? me.name : "", q, src, t: clean(b.t, 60), a: clean(b.a, 220), lang: ["he", "en", "ar", "ru", "es"].includes(b.lang) ? b.lang : "he" });
+      return J({ ok: true });
+    }
+    if (R === "POST bot/rate") {
+      if (await rateHit("br:" + ipHash(req), 60, 3600e3)) return J({ ok: true });
+      const cfg = botCfgOf(await st.get("botcfg")); if (!cfg.log) return J({ ok: true });
+      const b = await body(req, 1500), q = clean(b.q, 300); if (q.length < 2) return J({ ok: true });
+      const ts = Date.now();
+      await st.setJSON("bf/" + String(ts).padStart(13, "0") + "-" + rid(2), { ts, q, t: clean(b.t, 60), up: b.up === true, lang: ["he", "en", "ar", "ru", "es"].includes(b.lang) ? b.lang : "he" });
       return J({ ok: true });
     }
     if (R === "GET ref/top") { const mk = monthKey(); return J({ month: mk, items: (await refBoard(mk)).slice(0, 5).map((x, i) => ({ place: i + 1, name: x.name, n: x.n })) }, 200, { "cache-control": "public, max-age=120" }); }
@@ -1628,11 +1636,11 @@ const inner = async (req) => {
         return J({ misses, kb, reports });
       }
       if (R === "POST admin/bot-answer") {
-        const b = await body(req, 3000), q = clean(b.q, 200), a = clean(b.answer, 800), e = clean(b.answerEn, 800);
+        const b = await body(req, 6000), q = clean(b.q, 200), a = clean(b.answer, 800), e = clean(b.answerEn, 800), ml = { ar: clean(b.ar, 800), ru: clean(b.ru, 800), es: clean(b.es, 800) };
         if (!q || a.length < 2) return E(400, "כתבו שאלה ותשובה");
         const id = Date.now() + "-" + rid(2), k = clean(b.keywords, 120) || extractKeywords(q);
         if (!k) return E(400, "לא הצלחתי לחלץ מילות מפתח, כתבו אותן ידנית");
-        await st.setJSON("kb/" + id, { id, q, k, a, e, ts: Date.now(), by: me.email });
+        await st.setJSON("kb/" + id, { id, q, k, a, e, ...ml, ts: Date.now(), by: me.email });
         if (b.key) await st.delete(clean(b.key, 40));
         let replied = 0; const nq = normQ(q);
         for (const r of await listAll("r/", 100)) {
@@ -1644,10 +1652,41 @@ const inner = async (req) => {
         return J({ ok: true, id, replied, keywords: k });
       }
       if (R === "POST admin/bot-kb") {
-        const b = await body(req, 3000), id = clean(b.id, 40), cur = id && (await st.get("kb/" + id));
+        const b = await body(req, 6000), id = clean(b.id, 40), cur = id && (await st.get("kb/" + id));
         if (!cur) return E(404, "לא נמצא");
-        cur.q = clean(b.q, 200) || cur.q; cur.k = clean(b.k, 120) || cur.k; cur.a = clean(b.a, 800) || cur.a; cur.e = clean(b.e, 800);
+        cur.q = clean(b.q, 200) || cur.q; cur.k = clean(b.k, 120) || cur.k; cur.a = clean(b.a, 800) || cur.a; cur.e = clean(b.e, 800); for (const l of ["ar", "ru", "es"]) if (typeof b[l] === "string") cur[l] = clean(b[l], 800);
         await st.setJSON("kb/" + id, cur); await audit(me, "bot:edit", cur.q.slice(0, 60)); return J({ ok: true });
+      }
+      if (R === "POST admin/bot-translate") {
+        if (!isAdmin(me)) return E(403, "נדרשת הרשאת מנהל");
+        const b = await body(req, 4000), txt = clean(b.text, 800);
+        if (txt.length < 2) return E(400, "אין טקסט לתרגום");
+        if (!process.env.ANTHROPIC_API_KEY && !process.env.GEMINI_API_KEY && !globalThis.__aiHook) return E(503, "אין מפתח AI מוגדר (ANTHROPIC_API_KEY או GEMINI_API_KEY)");
+        if (await rateHit("bt:" + me.uid, 60, 36e5)) return E(429, "יותר מדי בקשות תרגום, נסו שוב מאוחר יותר");
+        const sys = "You translate short customer-support answers for a 3D-printing souvenir website. Translate the user's text into Arabic, Russian and Spanish. Keep names, file names, numbers and emojis as they are. Reply with ONLY a JSON object: {\"ar\":\"...\",\"ru\":\"...\",\"es\":\"...\"}.";
+        try {
+          const raw = await aiAsk({ msgs: [{ role: "user", content: txt }], lang: "English", ctx: "", sys });
+          const m = /\{[\s\S]*\}/.exec(raw || ""); const o = m ? JSON.parse(m[0]) : null;
+          if (!o) return E(502, "התשובה מה-AI לא הייתה תקינה, נסו שוב");
+          return J({ ar: clean(o.ar, 800), ru: clean(o.ru, 800), es: clean(o.es, 800) });
+        } catch (e) { console.error("bot-translate", e); return E(502, "התרגום נכשל: " + String(e.message || e).slice(0, 120)); }
+      }
+      if (R === "POST admin/bot-import") {
+        if (!isAdmin(me)) return E(403, "נדרשת הרשאת מנהל");
+        const b = await body(req, 200000), list = (Array.isArray(b.kb) ? b.kb : []).slice(0, 150); let n = 0;
+        const have = new Set((await st.scan("kb/", { limit: 400 })).map((x) => x.v && normQ(x.v.q)).filter(Boolean));
+        for (const x of list) {
+          const q = clean(x && x.q, 200), k = clean(x && x.k, 120), a = clean(x && x.a, 800);
+          if (!q || !k || a.length < 2 || have.has(normQ(q))) continue;
+          const id = Date.now() + "-" + rid(2) + n; have.add(normQ(q));
+          await st.setJSON("kb/" + id, { id, q, k, a, e: clean(x.e, 800), ar: clean(x.ar, 800), ru: clean(x.ru, 800), es: clean(x.es, 800), ts: Date.now(), by: me.email }); n++;
+        }
+        if (Array.isArray(b.syn) && b.syn.length) {
+          const cfg = botCfgOf(await st.get("botcfg")), seen = new Set(cfg.syn.map((x) => x[0]));
+          for (const x of b.syn.slice(0, 100)) { const c = clean(Array.isArray(x) ? x[0] : "", 40), v = clean(Array.isArray(x) ? x[1] : "", 500); if (c && v && !seen.has(c) && cfg.syn.length < 200) { cfg.syn.push([c, v]); seen.add(c); } }
+          await st.setJSON("botcfg", cfg);
+        }
+        await audit(me, "bot:import", String(n)); return J({ ok: true, imported: n });
       }
       if (R === "DELETE admin/bot-kb") { const id = clean(url.searchParams.get("id"), 40); await trashPut(st, "תשובת בוט", ["kb/" + id]); await st.delete("kb/" + id); await audit(me, "bot:delete", id); return J({ ok: true }); }
       if (R === "DELETE admin/bot-miss") { const k = clean(url.searchParams.get("key"), 40); if (k.startsWith("bm/")) await st.delete(k); globalThis.__att = null; return J({ ok: true }); }
@@ -1668,7 +1707,7 @@ const inner = async (req) => {
         let keys = [];
         if (key.startsWith("bl/")) keys = [key];
         else if (uid) keys = (await st.scan("bl/", { limit: 2000 })).filter((x) => x.v && x.v.uid === uid).map((x) => x.k);
-        else if (url.searchParams.get("all") === "1") keys = await st.list("bl/");
+        else if (url.searchParams.get("all") === "1") keys = [...(await st.list("bl/")), ...(await st.list("bf/"))];
         if (keys.length) await st.deleteMany(keys);
         await audit(me, "bot:log-delete", String(keys.length));
         return J({ ok: true, n: keys.length });
@@ -1688,6 +1727,11 @@ const inner = async (req) => {
         const perDay = []; for (let i = 13; i >= 0; i--) { const d = dayKey(now - i * 864e5); perDay.push({ d, n: logs.filter((x) => dayKey(x.ts) === d).length }); }
         const kbN = (await st.list("kb/")).length;
         return J({ d7: agg(now - 7 * 864e5), d30: agg(now - 30 * 864e5), perDay, kbN, sampled: logs.length >= 2000 });
+      }
+      if (R === "GET admin/bot-rate") {
+        const rows = (await st.scan("bf/", { desc: true, limit: 1000 })).map((x) => x.v).filter(Boolean), now = Date.now(), w = rows.filter((x) => x.ts >= now - 30 * 864e5);
+        const down = new Map(); for (const x of w) if (!x.up) { const n = normQ(x.q), e = down.get(n) || { q: x.q, t: x.t, lang: x.lang, n: 0, last: 0 }; e.n++; e.last = Math.max(e.last, x.ts); down.set(n, e); }
+        return J({ up: w.filter((x) => x.up).length, down: w.filter((x) => !x.up).length, items: [...down.values()].sort((a, b) => b.n - a.n || b.last - a.last).slice(0, 40) });
       }
       if (R === "GET admin/bot-syn") return J({ syn: botCfgOf(await st.get("botcfg")).syn });
       if (R === "PUT admin/bot-syn") {
