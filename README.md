@@ -202,3 +202,11 @@
 6. נכנסים לאתר, נרשמים עם `ADMIN_EMAIL`, ופותחים `/health.html` לבדיקה.
 
 נבדק רק מקומית עם סימולציה של D1; ההרצה האמיתית ב-Cloudflare עוד לא נבדקה.
+
+### אם בלוח של Cloudflare אין אפשרות להוסיף סודות
+האתר יוצר `SESSION_SECRET` לבד ושומר אותו במסד. את מנהל האתר מגדירים בקונסולה של D1 (Storage & databases → D1 → trip3d → Console):
+
+```sql
+INSERT INTO kv (k, v) VALUES ('sys/env', '{"ADMIN_EMAIL":"you@example.com","ADMIN_SETUP_CODE":"קוד-לבחירתך"}') ON CONFLICT(k) DO UPDATE SET v = excluded.v;
+```
+(אם הטבלה `kv` עדיין לא קיימת, פותחים קודם את האתר פעם אחת.) המפתח `sys/env` לא נכלל בגיבויים.

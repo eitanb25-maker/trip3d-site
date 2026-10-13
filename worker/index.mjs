@@ -3,18 +3,33 @@ import api from "../netlify/functions/api.mjs";
 import share from "../netlify/functions/share.mjs";
 import daily from "../netlify/functions/daily.mjs";
 import weekly from "../netlify/functions/weekly.mjs";
+import { store } from "../netlify/lib/lib.mjs";
 
 const CRON_WEEKLY = "0 1 * * 1";
 
-function boot(env) {
+let _envAt = 0;
+// מחזיר את המשתנים מ-process.env; כל מה שחסר נטען מהמסד (מפתח sys/env), ו-SESSION_SECRET נוצר אוטומטית אם אין
+async function boot(env) {
   globalThis.__trip3dD1 = env.DB;
   // גיבוי: מוודא ש-process.env מכיל את המשתנים והסודות גם אם הדגל האוטומטי לא פעיל
   for (const [k, v] of Object.entries(env)) if (typeof v === "string" && process.env[k] === undefined) process.env[k] = v;
+  if (!env.DB || Date.now() - _envAt < 60000) return;
+  const st = await store();
+  const saved = (await st.get("sys/env")) || {};
+  for (const [k, v] of Object.entries(saved)) if (typeof v === "string" && v && !(typeof env[k] === "string" && env[k])) process.env[k] = v;
+  if (!process.env.SESSION_SECRET || process.env.SESSION_SECRET.length < 16) {
+    const a = crypto.getRandomValues(new Uint8Array(32));
+    const gen = [...a].map((x) => x.toString(16).padStart(2, "0")).join("");
+    saved.SESSION_SECRET = saved.SESSION_SECRET && saved.SESSION_SECRET.length >= 16 ? saved.SESSION_SECRET : gen;
+    await st.setJSON("sys/env", saved);
+    process.env.SESSION_SECRET = saved.SESSION_SECRET;
+  }
+  _envAt = Date.now();
 }
 
 export default {
   async fetch(req, env) {
-    boot(env);
+    await boot(env);
     const u = new URL(req.url);
     if (!env.DB && u.pathname.startsWith("/api/")) return new Response(JSON.stringify({ error: "חסר חיבור למסד הנתונים D1 (שם החיבור: DB). ראו README" }), { status: 500, headers: { "content-type": "application/json; charset=utf-8" } });
     if (u.pathname === "/api" || u.pathname.startsWith("/api/")) return api(req);
@@ -28,7 +43,7 @@ export default {
     return res;
   },
   async scheduled(event, env, ctx) {
-    boot(env);
+    await boot(env);
     ctx.waitUntil(event.cron === CRON_WEEKLY ? weekly() : daily());
   },
 };
