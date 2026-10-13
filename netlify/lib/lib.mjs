@@ -119,7 +119,17 @@ export const rid = (n = 6) => crypto.randomBytes(n).toString("hex");
 export async function getSettings() {
   const st = await store();
   const s = (await st.get("settings")) || {};
-  return { ...DEFAULTS, ...s };
+  const out = { ...DEFAULTS, ...s };
+  // מיגרציה חד-פעמית (v42.1): מסלולים שנשמרו עם מתנת ההורדות הישנה (10/40) מקבלים את ברירת המחדל החדשה
+  if (Array.isArray(s.subPlans)) out.subPlans = s.subPlans.map((p) => {
+    const old = { pro: 10, "pro-year": 40 }[p.id], it = Array.isArray(p.items) ? p.items : [];
+    if (old && it.some((i) => i.type === "credits" && i.n === old) && !it.some((i) => i.type === "badge")) {
+      const d = DEFAULTS.subPlans.find((x) => x.id === p.id);
+      if (d) return { ...p, items: d.items, desc: p.desc === "כל מה שב'חוקר' + בונוס, ומחיר של 9 חודשים בערך" ? d.desc : p.desc };
+    }
+    return p;
+  });
+  return out;
 }
 
 export async function bump(items) {
