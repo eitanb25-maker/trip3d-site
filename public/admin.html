@@ -135,7 +135,7 @@ const _vB=vBackups;vBackups=async function(){await _vB();let b=null;try{b=await 
 
 // ================= מרכז טיפול, מספרים על הלשוניות, גרפים =================
 let BADGE={};
-async function refreshBadges(){try{const a=await api("GET","/admin/attention");BADGE={"דיווחים":a.reports+a.resets,"גלריה":a.gallery,"מבצעים":a.suspects,"בוט":a.misses};for(const k in BADGE)if(!BADGE[k])delete BADGE[k];document.querySelectorAll("#tabs button.nb").forEach(b=>{const t=b.dataset.t;let s=b.querySelector(".bdg");if(BADGE[t]){if(!s){s=h("span",{cls:"bdg"});b.append(s)}s.textContent=BADGE[t]}else if(s)s.remove()});return a}catch(e){return null}}
+async function refreshBadges(){try{const a=await api("GET","/admin/attention");BADGE={"דיווחים":a.reports+a.resets,"גלריה":a.gallery,"מבצעים":a.suspects,"בוט":a.misses};for(const k in BADGE)if(!BADGE[k])delete BADGE[k];{const n=Object.values(BADGE).reduce((x,y)=>x+y,0);document.title=(n?"("+n+") ":"")+document.title.replace(/^\(\d+\) /,"")}document.querySelectorAll("#tabs button.nb").forEach(b=>{const t=b.dataset.t;let s=b.querySelector(".bdg");if(BADGE[t]){if(!s){s=h("span",{cls:"bdg"});b.append(s)}s.textContent=BADGE[t]}else if(s)s.remove()});return a}catch(e){return null}}
 setInterval(()=>{if(ME)refreshBadges()},60000);
 const svgNS="http://www.w3.org/2000/svg";
 function chart(rows,key,title,color){ // עמודות יומיות; rows=[{d,..}]

@@ -235,7 +235,9 @@ const inner = async (req) => {
       const q = clean((await body(req, 500)).q, 120);
       if (normQ(q).length < 3) return J({ ok: true });
       const key = "bm/" + qHash(q), e = (await st.get(key)) || { q, n: 0, first: Date.now() };
-      e.n++; e.last = Date.now(); await st.setJSON(key, e); return J({ ok: true });
+      e.n++; e.last = Date.now(); await st.setJSON(key, e); globalThis.__att = null;
+      if (e.n === 1 && S.notifyReport && !(await rateHit("bmn", 10, 3600e3))) await notify(`🤖 שאלה שהבוט לא ידע לענות עליה:\n${q}\n(לענות: לוח בקרה ← בוט)`);
+      return J({ ok: true });
     }
     if (R === "GET kb") return J({ items: (await st.scan("kb/", { limit: 300 })).map((x) => x.v).filter(Boolean).map((e) => ({ k: e.k, a: e.a, e: e.e || "" })) }, 200, { "cache-control": "public, max-age=60" });
     if (R === "GET ref/top") { const mk = monthKey(); return J({ month: mk, items: (await refBoard(mk)).slice(0, 5).map((x, i) => ({ place: i + 1, name: x.name, n: x.n })) }, 200, { "cache-control": "public, max-age=120" }); }
