@@ -45,7 +45,7 @@ async function seedTrip5(st) {
   await st.setJSON("pc/TRIP5", pc); await st.setJSON("sys/seedTRIP5", 1); return pc;
 }
 const emailOk = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e) && e.length <= 120;
-const pub = (u) => u && { uid: u.uid, name: u.name, email: u.email, role: u.role, verified: !!u.verified, mailOk: u.mailOk !== false, google: !!u.google, totp: !!u.totp, tut: !!u.tut, caps: u.role === "editor" ? u.caps || [] : undefined, badges: u.badges || [], sub: u.sub && u.sub.until > Date.now() ? u.sub : null };
+const pub = (u) => u && { uid: u.uid, name: u.name, email: u.email, role: u.role, verified: !!u.verified, mailOk: u.mailOk !== false, google: !!u.google, hasPw: !!u.hash, totp: !!u.totp, tut: !!u.tut, caps: u.role === "editor" ? u.caps || [] : undefined, badges: u.badges || [], sub: u.sub && u.sub.until > Date.now() ? u.sub : null };
 const ipOf = (req) => (req.headers.get("cf-connecting-ip") || req.headers.get("x-nf-client-connection-ip") || (req.headers.get("x-forwarded-for") || "").split(",")[0] || req.headers.get("x-real-ip") || "?").trim();
 const ipHash = (req) => crypto.createHash("sha1").update(ipOf(req)).digest("hex").slice(0, 12);
 const sha = (s) => crypto.createHash("sha256").update(s).digest("hex");
@@ -508,6 +508,44 @@ const inner = async (req) => {
       await st.setJSON("u/" + u.uid, u);
       await lockCheck(u.email, true);
       return J({ ok: true });
+    }
+    if (R === "POST auth/change-password") {
+      if (!me) return E(401, "נדרשת התחברות");
+      const b = await body(req, 2000), pw = String(b.password || "");
+      if (pw.length < 8 || pw.length > 100) return E(400, "הסיסמה החדשה צריכה להיות באורך 8 תווים לפחות");
+      if (await rateHit("cp:" + me.uid, 10, 3600e3)) return E(429, "יותר מדי ניסיונות. נסו שוב מאוחר יותר");
+      if (me.hash) {
+        if (await lockCheck(me.email)) return E(429, "יותר מדי ניסיונות. נסו שוב בעוד כמה דקות");
+        if (!(await checkPw(String(b.current || ""), me))) { await lockCheck(me.email, false); return E(401, "הסיסמה הנוכחית שגויה"); }
+        await lockCheck(me.email, true);
+        if (String(b.current) === pw) return E(400, "הסיסמה החדשה זהה לנוכחית");
+      }
+      const { salt, hash } = await hashPw(pw);
+      me.salt = salt; me.hash = hash; await st.setJSON("u/" + me.uid, me);
+      await audit(me, "user:change-password", me.email);
+      return J({ ok: true });
+    }
+    if (R === "POST auth/change-email") {
+      if (!me) return E(401, "נדרשת התחברות");
+      if (!me.hash) return E(400, "בחשבון שנכנסים אליו רק עם Google אי אפשר להחליף מייל כאן. קבעו קודם סיסמה, או פנו למנהל");
+      const b = await body(req, 2000), email = clean(b.email, 120).toLowerCase();
+      if (await rateHit("ce:" + me.uid, 6, 3600e3)) return E(429, "יותר מדי ניסיונות. נסו שוב מאוחר יותר");
+      if (await lockCheck(me.email)) return E(429, "יותר מדי ניסיונות. נסו שוב בעוד כמה דקות");
+      if (!(await checkPw(String(b.password || ""), me))) { await lockCheck(me.email, false); return E(401, "הסיסמה שגויה"); }
+      await lockCheck(me.email, true);
+      if (!emailOk(email)) return E(400, "כתובת מייל לא תקינה");
+      if (email === me.email) return E(400, "זו כבר כתובת המייל שלכם");
+      if (DISPOSABLE.has(email.split("@")[1])) return E(400, "לא ניתן להשתמש בכתובת מייל זמנית");
+      if (await st.get("e/" + email)) return E(409, "כבר קיים משתמש עם המייל הזה");
+      const old = me.email;
+      await st.setJSON("e/" + email, me.uid); await st.delete("e/" + old);
+      me.email = email; me.verified = false; await st.setJSON("u/" + me.uid, me);
+      await audit(me, "user:change-email", old + " → " + email);
+      if (mailEnabled()) {
+        try { await sendMail(old, "כתובת המייל בחשבון שלכם הוחלפה", `שלום ${me.name},\n\nכתובת המייל בחשבון שלכם הוחלפה ל-${email}.\nאם לא אתם ביצעתם את השינוי, פנו מיד למנהל האתר.`); } catch {}
+        try { await sendVerify(req, me); } catch {}
+      }
+      return J({ ok: true, user: pub(me) });
     }
     if (R === "POST auth/delete") {
       if (!me) return E(401, "נדרשת התחברות");
