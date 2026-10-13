@@ -1,6 +1,6 @@
 // שרת האתר: התחברות, הרשאות, מכסות, סטטיסטיקות ולוח בקרה
 import crypto from "node:crypto";
-import { VIP_OPTS, PERK_TYPES, TIMED_PERKS, BADGES, activePerks, perkSum, hasEarly, perkText, givePerk, awardBadge, addInbox, leaderboard, awardMonthly, monthKey, alertMail, externalBackup, extTargets, activeBlocks, findBlock, BLOCK_FEATURES, errorSpike, funnelOf, store, getSettings, bump, notify, dayKey, rid, rangeStats, sumGroup, TOOLS, DEFAULTS, mailEnabled, sendMail, rateHit, secEvent, isProd, audit, weeklyCsv, makeBackup, restoreBackup, encryptBackup, decryptBackup, saveAutoBackup, bonusNow, perkInfo, weekKey, refBoard, awardRefMonthly, weekReport, lbScore, topCountries, publishHof, setCow, liveDoc } from "../lib/lib.mjs";
+import { VIP_OPTS, PERK_TYPES, TIMED_PERKS, BADGES, activePerks, perkSum, hasEarly, perkText, givePerk, awardBadge, addInbox, leaderboard, awardMonthly, monthKey, alertMail, externalBackup, extTargets, activeBlocks, findBlock, BLOCK_FEATURES, errorSpike, funnelOf, store, getSettings, bump, notify, dayKey, rid, rangeStats, sumGroup, TOOLS, DEFAULTS, mailEnabled, sendMail, rateHit, secEvent, isProd, audit, weeklyCsv, makeBackup, restoreBackup, encryptBackup, decryptBackup, saveAutoBackup, bonusNow, perkInfo, weekKey, refBoard, awardRefMonthly, weekReport, lbScore, canPerk, aidOf, pickCreation, topCountries, publishHof, setCow, liveDoc } from "../lib/lib.mjs";
 
 export const config = { path: "/api/*" };
 
@@ -121,6 +121,13 @@ async function attachRef(u, ref, req) {
   const st = await store();
   u.ipH = ipHash(req);
   await newRef(u);
+  try {
+    if (u.role !== "admin") {
+      const k = "ip/" + u.ipH, doc = ((await st.get(k)) || []).filter((x) => x.ts > Date.now() - 864e5).concat([{ uid: u.uid, ts: Date.now() }]).slice(-30);
+      await st.setJSON(k, doc);
+      if (doc.length >= 6) { u.sus = true; if (doc.length === 6) await secEvent("many_accounts_ip", `${doc.length} חשבונות חדשים מאותה כתובת ב-24 שעות (האחרון: ${u.email})`, await getSettings()); }
+    }
+  } catch (e) { console.error("trackIp", e); }
   const code = clean(ref, 12).toUpperCase();
   if (!code) return;
   const uid = await st.get("rf/" + code);
@@ -147,7 +154,7 @@ function csv(rows) {
   return "\ufeff" + rows.map((r) => r.map(q).join(",")).join("\r\n");
 }
 
-const galPub = (g) => ({ likes: g.likes || 0, id: g.id, name: g.name, tool: g.tool, country: g.country, author: g.author || "", ts: g.ts, template: !!g.template, feat: !!(g.featured && g.featured > Date.now()) });
+const galPub = (g) => ({ likes: g.likes || 0, aid: g.author && g.uid ? aidOf(g.uid) : "", id: g.id, name: g.name, tool: g.tool, country: g.country, author: g.author || "", ts: g.ts, template: !!g.template, feat: !!(g.featured && g.featured > Date.now()) });
 // מוסיף לכל יצירה את התגים של היוצר (רק אם השם שלו מוצג)
 async function withBadges(gs) {
   const st = await store(), cache = {}, uids = [...new Set(gs.filter((g) => g.author && g.uid).map((g) => g.uid))];
@@ -231,7 +238,7 @@ export default async (req) => {
         const d = await st.get("d/" + me.lastDl);
         if (d && !d.fb && Date.now() - d.ts > 30 * 60e3 && Date.now() - d.ts < 14 * 864e5) pending = { id: d.id, tool: d.tool, country: d.country, ts: d.ts };
       }
-      if (S.annivGift > 0 && me.created) {
+      if (S.annivGift > 0 && me.created && canPerk(me, S)) {
         const c = new Date(me.created), n = new Date(), yrs = n.getUTCFullYear() - c.getUTCFullYear();
         if (yrs >= 1 && c.getUTCMonth() === n.getUTCMonth() && c.getUTCDate() === n.getUTCDate() && me.annGot !== n.getUTCFullYear()) {
           me.annGot = n.getUTCFullYear(); me.credits = (me.credits || 0) + S.annivGift; await st.setJSON("u/" + me.uid, me);
@@ -242,11 +249,12 @@ export default async (req) => {
       const msgs = [];
       for (const { v } of (await st.scan("m/" + me.uid + "/", { desc: true, limit: 10 })).reverse()) { if (v && !v.read) msgs.push({ id: v.id, ts: v.ts, subject: v.subject, body: v.body }); }
       for (const { v } of (await st.scan("bc/", { desc: true, limit: 5 })).reverse()) { if (v && v.ts > (me.bcSeen || me.created || 0)) msgs.push({ id: v.id, ts: v.ts, subject: v.subject, body: v.body }); }
-      return J({ user: pub(me), blocked: !!me.blocked, quota: await quotaOf(me, S), countries: me.cset || [], challenge: S.challengeOn ? { n: S.challengeN, have: me.ch && me.ch.w === weekKey() ? me.ch.c.length : 0, done: !!(me.ch && me.ch.w === weekKey() && me.ch.done), reward: S.challengeReward } : null, early: hasEarly(me), streak: me.streak && me.streak.d >= dayKey(Date.now() - 864e5) ? me.streak.n : 0, pending, messages: msgs.sort((x, y) => x.ts - y.ts) });
+      return J({ user: pub(me), blocked: !!me.blocked, quota: await quotaOf(me, S), countries: me.cset || [], perkOk: canPerk(me, S), challenge: S.challengeOn ? { n: S.challengeN, have: me.ch && me.ch.w === weekKey() ? me.ch.c.length : 0, done: !!(me.ch && me.ch.w === weekKey() && me.ch.done), reward: S.challengeReward } : null, early: hasEarly(me), streak: me.streak && me.streak.d >= dayKey(Date.now() - 864e5) ? me.streak.n : 0, pending, messages: msgs.sort((x, y) => x.ts - y.ts) });
     }
 
     if (R === "POST me/redeem") {
       if (!me) return E(401, "נדרשת התחברות");
+      if (!canPerk(me, S)) return E(403, "כדי לממש קודים צריך לאמת את כתובת המייל", { code: "verify" });
       if (await rateHit("rd:" + me.uid, 10, 3600e3)) return E(429, "יותר מדי ניסיונות. נסו שוב בעוד שעה");
       const b = await body(req, 500), code = clean(b.code, 24).toUpperCase().replace(/\s/g, "");
       let pc = code && (await st.get("pc/" + code));
@@ -542,11 +550,12 @@ export default async (req) => {
           if (inv.refCount >= 3) await awardBadge(st, inv, "inviter");
         }
       }
-      const gifts = [], perkB = [];
-      if (S.welcomeGift > 0 && !me.welcomed && me.dlTotal === 1) {
+      const gifts = [], perkB = [], perkOk = canPerk(me, S); let withheld = false;
+      if (S.welcomeGift > 0 && !me.welcomed && me.dlTotal <= 3 && !perkOk) withheld = true;
+      else if (S.welcomeGift > 0 && !me.welcomed && me.dlTotal <= 3) {
         me.welcomed = true; me.credits = (me.credits || 0) + S.welcomeGift; gifts.push(`${S.welcomeGift} הורדות מתנת פתיחה`); perkB.push(["perk", "welcome"]);
         await addInbox(st, me.uid, "מתנת פתיחה 🎁", `ברוכים הבאים! על היצירה הראשונה שלכם קיבלתם ${S.welcomeGift} הורדות נוספות במתנה.`);
-      } else if (!me.welcomed) me.welcomed = true;
+      } else if (!me.welcomed && me.dlTotal > 3) me.welcomed = true;
       {
         const cs = country ? country.split("+").map((c) => c.trim()).filter(Boolean) : [], nb = [];
         { const have = new Set((me.cset || []).map((c) => c.toLowerCase())); me.cset = (me.cset || []).concat(cs.filter((c) => !have.has(c.toLowerCase()) && have.add(c.toLowerCase()))).slice(0, 120); }
@@ -558,7 +567,8 @@ export default async (req) => {
         if (S.challengeOn && cs.length) {
           const wk = weekKey(), ch = me.ch && me.ch.w === wk ? me.ch : { w: wk, c: [], done: false };
           for (const c of cs) if (!ch.c.includes(c.toLowerCase())) ch.c.push(c.toLowerCase());
-          if (!ch.done && ch.c.length >= S.challengeN) {
+          if (!ch.done && ch.c.length >= S.challengeN && !perkOk) withheld = true;
+          if (!ch.done && ch.c.length >= S.challengeN && perkOk) {
             ch.done = true; me.credits = (me.credits || 0) + S.challengeReward; add("challenger"); gifts.push(`${S.challengeReward} הורדות על האתגר השבועי 🎯`); perkB.push(["perk", "challenge"]);
             await addInbox(st, me.uid, "🎯 סיימתם את האתגר השבועי!", `יצרתם מזכרות מ-${S.challengeN} מדינות שונות השבוע. קיבלתם ${S.challengeReward} הורדות נוספות ותג.`);
           }
@@ -568,7 +578,8 @@ export default async (req) => {
       }
       if (country && S.cowBonus > 0) {
         const cow = liveDoc(await st.get("cow/current"));
-        if (cow && me.cowGot !== cow.from && country.split("+").some((c) => c.trim().toLowerCase() === cow.country.toLowerCase())) {
+        if (cow && me.cowGot !== cow.from && !perkOk && country.split("+").some((c) => c.trim().toLowerCase() === cow.country.toLowerCase())) withheld = true;
+        else if (cow && me.cowGot !== cow.from && country.split("+").some((c) => c.trim().toLowerCase() === cow.country.toLowerCase())) {
           me.cowGot = cow.from; me.credits = (me.credits || 0) + S.cowBonus; gifts.push(`${S.cowBonus} הורדות על מדינת השבוע (${cow.country})`); perkB.push(["perk", "cow"]);
           await addInbox(st, me.uid, "🧭 מדינת השבוע!", `יצרתם מזכרת של ${cow.country}, מדינת השבוע. קיבלתם ${S.cowBonus} הורדות נוספות${(me.badges || []).includes("explorer") ? "" : " ותג \"חוקר השבוע\""}.`);
           if (!(me.badges || []).includes("explorer")) me.badges = (me.badges || []).concat(["explorer"]);
@@ -577,23 +588,27 @@ export default async (req) => {
       await st.setJSON("u/" + me.uid, me);
       await bump([["dl", tool], ["country", country || "?"], ...perkB].filter((x) => x[1]));
       if (S.notifyDownload) await notify(`⬇️ הורדה חדשה\n${me.name} (${me.email})\nכלי: ${tool}${country ? " · " + country : ""}`);
-      return J({ ok: true, id, remaining: q.limit > 0 ? Math.max(0, q.limit - q.used - 1) + (me.credits || 0) : null, credits: me.credits || 0, gifts });
+      return J({ ok: true, id, remaining: q.limit > 0 ? Math.max(0, q.limit - q.used - 1) + (me.credits || 0) : null, credits: me.credits || 0, gifts, note: withheld ? "אמתו את כתובת המייל כדי לקבל מתנות והטבות (נשלח אליכם קישור)" : "" });
     }
 
     // ---------- מתנת הורדה לחבר ----------
     if (R === "POST me/gift") {
       if (!me) return E(401, "נדרשת התחברות");
       if (me.blocked) return E(403, "החשבון חסום");
+      if (!canPerk(me, S)) return E(403, "כדי לשלוח מתנות צריך לאמת את כתובת המייל", { code: "verify" });
       if (await rateHit("gf:" + me.uid, 5, 864e5)) return E(429, "אפשר לנסות לשלוח מתנה עד 5 פעמים ביום");
       const b = await body(req, 500), email = clean(b.email, 120).toLowerCase();
       const tid = emailOk(email) && (await st.get("e/" + email)), to = tid && tid !== me.uid && (await st.get("u/" + tid));
       if (!to || to.blocked) return E(404, "לא נמצא משתמש רשום עם המייל הזה (החבר צריך קודם להירשם לאתר)");
+      if (!canPerk(to, S)) return E(400, "החבר צריך קודם לאמת את כתובת המייל שלו");
+      { const back = to.giftedTo && to.giftedTo[me.uid]; if (back && Date.now() - back < 7 * 864e5) { await secEvent("gift_ring", `${me.email} ↔ ${to.email}`, S); return E(400, "אי אפשר להחזיר מתנה לחבר שנתן לך מתנה השבוע"); } }
       const wk = dayKey(Date.now() - ((new Date().getUTCDay() + 6) % 7) * 864e5), gi = to.giftIn && to.giftIn.w === wk ? to.giftIn : { w: wk, n: 0 };
       if (gi.n >= 5) return E(429, "החבר כבר קיבל השבוע את מספר המתנות המקסימלי");
       const q = await quotaOf(me, S);
       if (q.credits > 0) me.credits = q.credits - 1;
       else if (q.limit > 0 && q.used < q.limit) me.dlDay = { d: dayKey(), n: q.used + 1 };
       else return E(400, "אין לכם הורדה פנויה לתת במתנה");
+      me.giftedTo = Object.fromEntries(Object.entries({ ...(me.giftedTo || {}), [to.uid]: Date.now() }).sort((x, y) => y[1] - x[1]).slice(0, 20));
       gi.n++; to.giftIn = gi; to.credits = (to.credits || 0) + 1;
       await st.setJSON("u/" + me.uid, me); await st.setJSON("u/" + to.uid, to);
       await addInbox(st, to.uid, "קיבלת מתנה 🎁", `${me.name} שלח/ה לך הורדה אחת במתנה!`); await bump([["perk", "gift"]]);
@@ -681,10 +696,10 @@ export default async (req) => {
 
     // ---------- גלריית קהילה (ציבורית, באישור מנהל) ----------
     if (route === "gallery" && m === "GET") {
-      const cf = clean(url.searchParams.get("country"), 40).toLowerCase(), srt = url.searchParams.get("sort");
-      if (cf || srt === "likes") {
+      const cf = clean(url.searchParams.get("country"), 40).toLowerCase(), srt = url.searchParams.get("sort"), af = clean(url.searchParams.get("aid"), 12);
+      if (cf || af || srt === "likes") {
         const off = Math.max(0, +url.searchParams.get("off") || 0), ids = await st.getMany((await st.list("ga/")).reverse().slice(0, 300));
-        const docs = (await st.getMany(ids.map((id) => "gl/" + id))).filter((g) => g && g.status === "approved" && (!cf || String(g.country || "").split("+").some((c) => c.trim().toLowerCase() === cf)));
+        const docs = (await st.getMany(ids.map((id) => "gl/" + id))).filter((g) => g && g.status === "approved" && (!af || (g.author && g.uid && aidOf(g.uid) === af)) && (!cf || String(g.country || "").split("+").some((c) => c.trim().toLowerCase() === cf)));
         if (srt === "likes") docs.sort((a, b) => (b.likes || 0) - (a.likes || 0) || b.ts - a.ts);
         return J({ items: await withBadges(docs.slice(off, off + 36)), more: docs.length > off + 36 }, 200, { "cache-control": "public, max-age=60" });
       }
@@ -714,6 +729,57 @@ export default async (req) => {
         e.l = Math.max(0, (e.l || 0) + (had ? -1 : 1)); if (g.author) e.n = g.author; doc[g.uid] = e; await st.setJSON("lb/" + mk, doc);
       }
       return J({ liked: !had, likes: g.likes });
+    }
+    if (route === "gallery/comments" && m === "GET") {
+      const id = clean(url.searchParams.get("id"), 40);
+      return J({ items: (await st.scan(`gc/${id}/`, { desc: true, limit: 30 })).reverse().map((x) => ({ key: x.k, name: x.v.name, text: x.v.text, ts: x.v.ts, mine: !!(me && x.v.uid === me.uid) })) });
+    }
+    if (route === "gallery/comment" && m === "POST") {
+      if (!me) return E(401, "כדי להגיב צריך להתחבר");
+      if (!canPerk(me, S)) return E(403, "כדי להגיב צריך לאמת את כתובת המייל", { code: "verify" });
+      if (await rateHit("cm:" + me.uid, 10, 3600e3)) return E(429, "אפשר לכתוב עד 10 תגובות בשעה");
+      const b = await body(req, 600), id = clean(b.id, 40), text = clean(b.text, 140), g = id && (await st.get("gl/" + id));
+      if (!g || g.status !== "approved") return E(404, "לא נמצא");
+      if (text.length < 2) return E(400, "כתבו תגובה קצרה");
+      if (/https?:|www\.|\.(com|net|org|co|il|io|me|ly)\b|@/i.test(text)) return E(400, "אי אפשר לשים קישורים או כתובות בתגובה");
+      const key = `gc/${id}/${Date.now()}-${rid(2)}`;
+      await st.setJSON(key, { uid: me.uid, name: me.name, text, ts: Date.now() });
+      return J({ ok: true, item: { key, name: me.name, text, ts: Date.now(), mine: true } });
+    }
+    if (route === "gallery/comment" && m === "DELETE") {
+      if (!me) return E(401, "נדרשת התחברות");
+      const k = clean(url.searchParams.get("key"), 80), v = k.startsWith("gc/") && (await st.get(k));
+      if (!v || (v.uid !== me.uid && !isStaff(me))) return E(404, "לא נמצא");
+      await st.delete(k); return J({ ok: true });
+    }
+    if (route === "gallery/follow" && m === "POST") {
+      if (!me) return E(401, "כדי לעקוב צריך להתחבר");
+      if (await rateHit("fo:" + me.uid, 40, 3600e3)) return E(429, "יותר מדי פעולות, נסו שוב מאוחר יותר");
+      const aid = clean((await body(req, 200)).aid, 12).replace(/[^a-f0-9]/g, ""), key = `fo/${me.uid}/${aid}`;
+      if (!aid) return E(400, "יוצר לא תקין");
+      if (await st.get(key)) { await st.delete(key); return J({ following: false }); }
+      if ((await st.list(`fo/${me.uid}/`)).length >= 50) return E(400, "אפשר לעקוב אחרי עד 50 יוצרים");
+      await st.setJSON(key, 1); return J({ following: true });
+    }
+    if (route === "gallery/following" && m === "GET") {
+      if (!me) return J({ aids: [] });
+      return J({ aids: (await st.list(`fo/${me.uid}/`)).map((k) => k.split("/")[2]) });
+    }
+    if (route === "gallery/feed" && m === "GET") {
+      if (!me) return J({ items: [] });
+      const fol = new Set((await st.list(`fo/${me.uid}/`)).map((k) => k.split("/")[2]));
+      if (!fol.size) return J({ items: [] });
+      const ids = await st.getMany((await st.list("ga/")).reverse().slice(0, 300));
+      const docs = (await st.getMany(ids.map((i) => "gl/" + i))).filter((g) => g && g.status === "approved" && g.author && g.uid && fol.has(aidOf(g.uid)));
+      return J({ items: await withBadges(docs.slice(0, 36)) });
+    }
+    if (route === "gallery/creator" && m === "GET") {
+      const af = clean(url.searchParams.get("aid"), 12), ids = await st.getMany((await st.list("ga/")).reverse().slice(0, 300));
+      const docs = (await st.getMany(ids.map((i) => "gl/" + i))).filter((g) => g && g.status === "approved" && g.author && g.uid && aidOf(g.uid) === af);
+      if (!docs.length) return E(404, "לא נמצא");
+      const w = (await withBadges(docs.slice(0, 1)))[0], cs = new Set();
+      for (const g of docs) for (const c of String(g.country || "").split("+")) if (c.trim()) cs.add(c.trim());
+      return J({ aid: af, name: docs[0].author, bd: w.bd || [], works: docs.length, likes: docs.reduce((a, g) => a + (g.likes || 0), 0), countries: [...cs].slice(0, 30) });
     }
     if (route === "gallery/likes" && m === "GET") {
       if (!me) return J({ ids: [] });
@@ -1063,8 +1129,8 @@ export default async (req) => {
         if (["he", "en"].includes(b.lang)) next.lang = b.lang;
         if ("errThreshold" in b) next.errThreshold = Math.max(1, Math.min(500, Math.floor(+b.errThreshold) || 5));
         for (const [k, mx] of [["abuseDl", 1000], ["refBonus", 10], ["refMax", 50]]) if (k in b) next[k] = Math.max(0, Math.min(mx, Math.floor(+b[k]) || 0));
-        for (const [k, mx] of [["challengeN", 8], ["challengeReward", 20], ["annivGift", 20], ["welcomeGift", 20], ["thanksReward", 20], ["cowBonus", 10], ["weekendBonus", 20]]) if (k in b) next[k] = Math.max(0, Math.min(mx, Math.floor(+b[k]) || 0));
-        for (const k of ["hofAuto", "challengeOn", "refPrizeOn"]) if (k in b) next[k] = !!b[k];
+        for (const [k, mx] of [["goalTarget", 1000000], ["goalBonus", 20], ["challengeN", 8], ["challengeReward", 20], ["annivGift", 20], ["welcomeGift", 20], ["thanksReward", 20], ["cowBonus", 10], ["weekendBonus", 20]]) if (k in b) next[k] = Math.max(0, Math.min(mx, Math.floor(+b[k]) || 0));
+        for (const k of ["hofAuto", "challengeOn", "refPrizeOn", "perkVerify"]) if (k in b) next[k] = !!b[k];
         if (next.challengeN < 2) next.challengeN = 2;
         if ("bonusWin" in b) {
           const w = b.bonusWin, n = w && Math.max(0, Math.min(20, Math.floor(+w.n) || 0)), hrs = w && Math.max(0, Math.min(24 * 14, +w.hours || 0));
@@ -1086,6 +1152,21 @@ export default async (req) => {
         const [w7, m30] = [await topCountries(7), await topCountries(30)], [cow, hof] = await st.getMany(["cow/current", "hof/current"]);
         const past = (await st.scan("hof/2", { desc: true, limit: 8 })).map((x) => x.v).filter(Boolean);
         return J({ week: w7, month: m30, cow: liveDoc(cow), hof: liveDoc(hof), past, bonus: bonusNow(S), refs: (await refBoard(monthKey())).slice(0, 5) });
+      }
+      if (R === "POST admin/trust") {
+        const b = await body(req, 300), u = await st.get("u/" + clean(b.uid, 20)); if (!u) return E(404, "משתמש לא נמצא");
+        if (b.trust === false) { u.trusted = false; } else { u.trusted = true; u.sus = false; }
+        await st.setJSON("u/" + u.uid, u); await audit(me, b.trust === false ? "user:untrust" : "user:trust", u.email); return J({ ok: true });
+      }
+      if (R === "GET admin/suspects") return J({ items: (await st.scan("u/", { limit: 600 })).map((x) => x.v).filter((u) => u && u.sus && !u.trusted).map((u) => ({ uid: u.uid, name: u.name, email: u.email, created: u.created, dl: u.dlTotal || 0, credits: u.credits || 0 })) });
+      if (R === "GET admin/comments") return J({ items: (await st.scan("gc/", { desc: true, limit: 40 })).map((x) => ({ key: x.k, ...x.v })) });
+      if (R === "DELETE admin/comment") { const k = clean(url.searchParams.get("key"), 80); if (k.startsWith("gc/")) { await st.delete(k); await audit(me, "comment:delete", k); } return J({ ok: true }); }
+      if (R === "GET admin/backupstatus") { const e = process.env, bk = await st.list("bk/"); return J({ ext: extTargets(), telegram: !!(e.TELEGRAM_BOT_TOKEN && e.TELEGRAM_CHAT_ID), email: !!(e.RESEND_API_KEY && e.NOTIFY_EMAIL), discord: !!e.DISCORD_WEBHOOK_URL, last: bk.length ? bk[bk.length - 1].slice(3) : "" }); }
+      if (R === "POST admin/backup-send") {
+        const { key, enc } = await saveAutoBackup(), e = process.env;
+        if (!((e.TELEGRAM_BOT_TOKEN && e.TELEGRAM_CHAT_ID) || (e.RESEND_API_KEY && e.NOTIFY_EMAIL))) return E(400, "לא מוגדרת שליחה לטלגרם או למייל (README)");
+        await notify("💾 גיבוי מוצפן נשלח לפי בקשה (" + key + "). לשחזור: לוח בקרה ← גיבויים.", { name: "backup-" + key.slice(3) + ".enc.json", content: JSON.stringify(enc), mime: "application/json" });
+        await audit(me, "backup:send", key); return J({ ok: true });
       }
       if (R === "GET admin/weekreport") return J(await weekReport());
       if (R === "POST admin/hof") { const r = await publishHof(true); if (!r.done) return E(400, "אין עדיין נתוני שימוש לפי מדינות"); await audit(me, "hof:publish", "", r.doc.top.map((x) => x.country).join(",")); return J({ ok: true, hof: r.doc }); }

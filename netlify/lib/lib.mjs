@@ -6,7 +6,7 @@ export const DEFAULTS = {
   tools: {}, banner: "", bannerOn: false, maint: false, lang: "he",
   inviteOnly: false, dlLimit: 5, notifyDownload: true, notifyReport: true, errAlert: true, errThreshold: 5, blocks: [], abuseDl: 20, refBonus: 1, refMax: 5, extBackup: true, aiOn: false, aiLimit: 10, aiGlobal: 300, early: [], vip: [], galReward: 1, streakOn: true, lbOn: true,
   requireVerify: false, notifySecurity: true, autoBackup: true,
-  welcomeGift: 2, challengeOn: true, challengeN: 3, challengeReward: 3, annivGift: 3, refPrizeOn: true, thanksReward: 2, cowBonus: 1, weekendBonus: 0, bonusWin: null, hofAuto: true,
+  welcomeGift: 2, challengeOn: true, challengeN: 3, challengeReward: 3, annivGift: 3, refPrizeOn: true, goalTarget: 1000, goalBonus: 2, perkVerify: true, thanksReward: 2, cowBonus: 1, weekendBonus: 0, bonusWin: null, hofAuto: true,
 };
 
 export const isProd = () => !process.env.CONTEXT || process.env.CONTEXT === "production";
@@ -353,7 +353,7 @@ export async function externalBackup(enc, key) {
 export const PERK_TYPES = ["daily", "credits", "unlimited", "ai", "early", "projects", "gallery", "badge"];
 export const VIP_OPTS = ["rim:2", "shape:hex", "shape:oct", "shape:oval", "ps:star", "ps:heart"];
 export const TIMED_PERKS = ["daily", "unlimited", "ai", "early", "projects", "gallery"];
-export const BADGES = { founder: ["🌱", "מייסד", "Founder"], top: ["⭐", "מטייל מוביל", "Top traveler"], maker: ["🎨", "יוצר החודש", "Maker of the month"], inviter: ["🤝", "מזמין", "Inviter"], streak: ["🔥", "רצף יצירה", "Creation streak"], publisher: ["🖼️", "מפרסם בגלריה", "Gallery publisher"], helper: ["💡", "תורם רעיונות", "Helper"], explorer: ["🧭", "חוקר השבוע", "Weekly explorer"], challenger: ["🎯", "מנצח האתגר", "Challenge winner"], countries5: ["🗺️", "חוקר עולם", "World explorer"], dl10: ["🏅", "10 הורדות", "10 downloads"], alltools: ["🛠️", "כל הכלים", "All tools"], refstar: ["👑", "מלך ההזמנות", "Invite champion"] };
+export const BADGES = { founder: ["🌱", "מייסד", "Founder"], top: ["⭐", "מטייל מוביל", "Top traveler"], maker: ["🎨", "יוצר החודש", "Maker of the month"], inviter: ["🤝", "מזמין", "Inviter"], streak: ["🔥", "רצף יצירה", "Creation streak"], publisher: ["🖼️", "מפרסם בגלריה", "Gallery publisher"], helper: ["💡", "תורם רעיונות", "Helper"], explorer: ["🧭", "חוקר השבוע", "Weekly explorer"], challenger: ["🎯", "מנצח האתגר", "Challenge winner"], countries5: ["🗺️", "חוקר עולם", "World explorer"], dl10: ["🏅", "10 הורדות", "10 downloads"], alltools: ["🛠️", "כל הכלים", "All tools"], refstar: ["👑", "מלך ההזמנות", "Invite champion"], pick: ["🌟", "יצירת השבוע", "Creation of the week"] };
 export const activePerks = (u, type) => (u.perks || []).filter((p) => (!p.until || p.until > Date.now()) && (!type || p.type === type));
 export const perkSum = (u, type) => activePerks(u, type).reduce((a, p) => a + (+p.n || 0), 0);
 export const hasEarly = (u) => !!u && (u.role === "admin" || u.role === "editor" || activePerks(u, "early").length > 0);
@@ -442,8 +442,45 @@ export async function topCountries(days = 7) {
 }
 export const liveDoc = (d) => (d && d.until > Date.now() ? d : null);
 export async function perkInfo(S) {
-  const st = await store(), [cow, hof] = await st.getMany(["cow/current", "hof/current"]);
-  return { bonus: bonusNow(S), cow: liveDoc(cow) ? { country: cow.country, until: cow.until, bonus: S.cowBonus } : null, hof: liveDoc(hof) ? { from: hof.from, until: hof.until, top: hof.top } : null };
+  const st = await store(), [cow, hof, pick, goal] = await st.getMany(["cow/current", "hof/current", "cwk/current", "sys/goal"]);
+  return { bonus: bonusNow(S), cow: liveDoc(cow) ? { country: cow.country, until: cow.until, bonus: S.cowBonus } : null, hof: liveDoc(hof) ? { from: hof.from, until: hof.until, top: hof.top } : null,
+    pick: liveDoc(pick) ? { id: pick.id, name: pick.name, author: pick.author, country: pick.country, likes: pick.likes } : null, goal: await goalState(S, goal) };
+}
+// יעד קהילתי חודשי: הורדות של כל האתר; כשמגיעים אליו מופעל בונוס ל-24 שעות
+export async function goalState(S, g) {
+  if (!(S.goalTarget > 0)) return null;
+  const mk = monthKey(), fresh = g && g.m === mk && Date.now() - g.ts < 5 * 60e3;
+  if (!fresh) {
+    const st = await store(), n = (await rangeStats(31)).filter((x) => x.d.startsWith(mk)).reduce((a, x) => a + Object.values(x.dl || {}).reduce((p, q) => p + q, 0), 0);
+    g = { m: mk, n, ts: Date.now(), done: !!(g && g.m === mk && g.done) };
+    if (n >= S.goalTarget && !g.done) {
+      g.done = true;
+      const raw = (await st.get("settings")) || {}, id = Date.now() + "-" + rid(2);
+      raw.bonusWin = { n: S.goalBonus || 2, from: Date.now(), until: Date.now() + 864e5, label: "יעד קהילתי הושג! 🎉" };
+      await st.setJSON("settings", raw);
+      await st.setJSON("bc/" + id, { id, ts: Date.now(), subject: "🎉 הגענו ליעד הקהילתי!", body: `ביחד הגענו ל-${S.goalTarget} הורדות החודש. ב-24 השעות הקרובות: +${raw.bonusWin.n} הורדות ליום לכולם!`, by: "system" });
+    }
+    await st.setJSON("sys/goal", g);
+  }
+  return { n: g.n, target: S.goalTarget, done: !!g.done };
+}
+export const aidOf = (uid) => crypto.createHash("sha256").update((process.env.SESSION_SECRET || "") + "aid" + uid).digest("hex").slice(0, 10);
+// האם מותר לחשבון לקבל הטבות: מנהל/מהימן תמיד; חשוד – לא; כשמיילים מוגדרים – רק מייל מאומת
+export function canPerk(u, S) {
+  if (!u) return false;
+  if (u.role === "admin" || u.trusted) return true;
+  if (u.sus) return false;
+  return !(S.perkVerify !== false && mailEnabled() && !u.verified);
+}
+export async function pickCreation() {
+  const st = await store(), now = Date.now(), ids = await st.getMany((await st.list("ga/")).reverse().slice(0, 300));
+  const docs = (await st.getMany(ids.map((i) => "gl/" + i))).filter((g) => g && g.status === "approved" && (g.likes || 0) > 0 && g.ts > now - 30 * 864e5).sort((a, b) => (b.likes || 0) - (a.likes || 0) || b.ts - a.ts);
+  if (!docs.length) return null;
+  const g = docs[0], doc = { id: g.id, name: g.name, author: g.author || "", country: g.country || "", likes: g.likes, from: now, until: now + 7 * 864e5 };
+  await st.setJSON("cwk/current", doc);
+  const u = g.uid && (await st.get("u/" + g.uid));
+  if (u && !u.blocked) { u.credits = (u.credits || 0) + 2; await st.setJSON("u/" + u.uid, u); await addInbox(st, u.uid, "🌟 היצירה שלך נבחרה ליצירת השבוע!", `"${g.name}" קיבלה הכי הרבה לייקים ומוצגת בדף הבית שבוע שלם. קיבלת 2 הורדות נוספות במתנה.`); await awardBadge(st, u, "pick", true); }
+  return doc;
 }
 export async function publishHof(manual) {
   const st = await store(), top = (await topCountries(7)).slice(0, 3);
@@ -468,6 +505,7 @@ export async function weeklyPerks() {
   const st = await store(), S = await getSettings(), out = {};
   if (S.hofAuto !== false) out.hof = await publishHof(false);
   out.cow = await autoCow();
+  try { out.pick = await pickCreation(); } catch (e) { out.pick = String(e); }
   return out;
 }
 

@@ -115,6 +115,19 @@ const _vO=vOverview;vOverview=async function(){await _vO();let hl=null;try{hl=aw
 const _vS=vSettings;vSettings=async function(){await _vS();let pr=[];try{pr=(await api("GET","/admin/promos")).items}catch(e){}
  const c=h("div",{cls:"card"},h("h2",{text:"🎟️ קודי קופון"}),pr.length?h("table",{},h("tr",{},["קוד","הטבה","מימושים","בתוקף עד"].map(x=>h("th",{text:x}))),...pr.map(x=>h("tr",{},h("td",{},h("b",{text:x.code,style:"font-size:1.1em;letter-spacing:1px"})),h("td",{text:x.n+" "+(x.type=="credits"?"הורדות":x.type)}),h("td",{text:x.uses+(x.max?" / "+x.max:"")}),h("td",{text:x.expires?new Date(x.expires).toLocaleDateString("he-IL"):"ללא הגבלה"})))):h("p",{cls:"muted",text:"אין קודים"}),h("p",{cls:"muted",text:"יצירה ומחיקה של קודים: לשונית 'הטבות'. משתמשים מממשים ב'החשבון שלי'."}));
  const m=$("main");m.insertBefore(c,m.firstChild)};
+
+// תגובות אחרונות בלשונית הגלריה
+const _vG=vGallery;vGallery=async function(){await _vG();let d={items:[]};try{d=await api("GET","/admin/comments")}catch(e){}
+ const c=h("div",{cls:"card"},h("h2",{text:"💬 תגובות אחרונות ("+d.items.length+")"}),d.items.length?d.items.map(x=>h("div",{cls:"row"},h("b",{text:x.name}),h("span",{text:x.text,style:"flex:1;min-width:160px"}),h("span",{cls:"muted",text:fmt(x.ts)}),h("button",{cls:"bad",text:"מחיקה",disabled:RO,on:{click:async()=>{await api("DELETE","/admin/comment?key="+encodeURIComponent(x.key));render()}}}))):h("p",{cls:"muted",text:"אין תגובות"}),h("p",{cls:"muted",text:"תגובות עם קישורים נחסמות אוטומטית. מי שחסום או לא מאומת לא יכול להגיב."}));
+ $("main").append(c)};
+// מצב גיבוי חיצוני
+const _vB=vBackups;vBackups=async function(){await _vB();let b=null;try{b=await api("GET","/admin/backupstatus")}catch(e){}if(!b)return;
+ const any=b.telegram||b.email||b.ext.dropbox||b.ext.webhook,msg=h("span",{cls:"muted"});
+ const c=h("div",{cls:"card"},h("h2",{text:"📤 גיבוי מחוץ לאתר"}),h("p",{},h("b",{text:any?"🟢 יש יעד חיצוני":"🔴 אין עדיין יעד חיצוני: הגיבויים נשמרים רק בתוך Cloudflare"})),
+  h("p",{cls:"muted",text:"טלגרם "+(b.telegram?"✔":"✘")+" · מייל "+(b.email?"✔":"✘")+" · Dropbox "+(b.ext.dropbox?"✔":"✘")+" · Webhook "+(b.ext.webhook?"✔":"✘")+(b.last?" · גיבוי אחרון: "+b.last:"")}),
+  h("div",{cls:"row"},h("button",{cls:"pri",text:"שלח לי גיבוי עכשיו (טלגרם/מייל)",disabled:RO||!(b.telegram||b.email),on:{click:async()=>{try{await api("POST","/admin/backup-send");msg.textContent="נשלח ✔"}catch(e){msg.textContent=e.message}}}}),msg),
+  h("p",{cls:"muted",text:"הכי פשוט: יצירת בוט טלגרם (חינם) והגדרת TELEGRAM_BOT_TOKEN ו-TELEGRAM_CHAT_ID. אז הגיבוי השבועי מגיע אליכם כקובץ אוטומטית."}));
+ $("main").insertBefore(c,$("main").firstChild)};
 function render(){buildNav();try{localStorage.adm_tab=TAB}catch(e){}$("main").replaceChildren(h("p",{cls:"muted",text:"טוען…"}));({"סקירה":vOverview,"משתמשים":vUsers,"משתמש":vUser,"הודעות":vMessages,"אבטחה":vSecurity,"יומן פעולות":vAudit,"גיבויים":vBackups,"הזמנות":vInvites,"דיווחים":vReports,"גלריה":vGallery,"חסימות":vBlocks,"הטבות":vPerks,"מבצעים":vPromo,"משוב":vFeedback,"הגדרות":vSettings,"גרסאות":vChangelog,"יצוא":vExport})[TAB]().catch(e=>$("main").replaceChildren(h("p",{text:"שגיאה: "+e.message})))}
 // ---------- גרפים ----------
 function lineChart(series,keys,colors,names){const W=720,H=220,P=34,n=series.length,mx=Math.max(1,...series.flatMap(s=>keys.map(k=>s[k]||0))),X=i=>P+(n<2?0:i*(W-P-10)/(n-1)),Y=v=>H-24-(v/mx)*(H-44);
@@ -239,11 +252,12 @@ async function vPromo(){const [hub,sr]=await Promise.all([api("GET","/admin/perk
   h("div",{cls:"row"},"תוספת ליום:",bn,"למשך (שעות):",bh,bl,an=h("input",{type:"checkbox",checked:true}),h("label",{},an," שלח הודעה לכולם"),h("button",{cls:"pri",text:"הפעל",disabled:RO,on:{click:()=>save({bonusWin:{n:+bn.value,hours:+bh.value,label:bl.value},announce:an.checked})}}),h("button",{cls:"bad",text:"בטל",disabled:RO,on:{click:()=>save({bonusWin:null})}})),
   h("div",{cls:"row"},"בונוס סוף שבוע אוטומטי (שישי–שבת), תוספת ליום (0 = כבוי):",wk,h("button",{text:"שמירה",disabled:RO,on:{click:()=>save({weekendBonus:+wk.value})}})));
  // מתנות אוטומטיות
- const wg=num(S.welcomeGift,20),tr=num(S.thanksReward,20),cb=num(S.cowBonus,10),chN=num(S.challengeN,8),chR=num(S.challengeReward,20),chOn=h("input",{type:"checkbox",checked:S.challengeOn!==false}),an2=num(S.annivGift,20),rpz=h("input",{type:"checkbox",checked:S.refPrizeOn!==false});
+ const wg=num(S.welcomeGift,20),tr=num(S.thanksReward,20),cb=num(S.cowBonus,10),chN=num(S.challengeN,8),chR=num(S.challengeReward,20),chOn=h("input",{type:"checkbox",checked:S.challengeOn!==false}),an2=num(S.annivGift,20),rpz=h("input",{type:"checkbox",checked:S.refPrizeOn!==false}),gt=num(S.goalTarget,1000000),gb=num(S.goalBonus,20),pv=h("input",{type:"checkbox",checked:S.perkVerify!==false});
  const c2=h("div",{cls:"card"},h("h2",{text:"🎁 מתנות אוטומטיות"}),
   h("div",{cls:"row"},"מתנת פתיחה (על ההורדה הראשונה):",wg),h("div",{cls:"row"},"תודה על משוב (כפתור 'תודה' בדיווחים):",tr),h("div",{cls:"row"},"בונוס מדינת השבוע (הורדה / אישור יצירה בגלריה):",cb),
   h("div",{cls:"row"},h("label",{},chOn," אתגר שבועי: יצירה מ-"),chN," מדינות שונות בשבוע, פרס:",chR," הורדות + תג 🎯"),h("div",{cls:"row"},"מתנת יום שנה להצטרפות (כל שנה):",an2),h("div",{cls:"row"},h("label",{},rpz," פרסים חודשיים למזמינים המובילים (5/3/2 הורדות, בתחילת כל חודש) + תג 👑")),
-  h("div",{cls:"row"},h("button",{cls:"pri",text:"שמירה",disabled:RO,on:{click:()=>save({welcomeGift:+wg.value,thanksReward:+tr.value,cowBonus:+cb.value,challengeOn:chOn.checked,challengeN:+chN.value,challengeReward:+chR.value,annivGift:+an2.value,refPrizeOn:rpz.checked})}})),
+  h("div",{cls:"row"},"יעד קהילתי חודשי (הורדות של כל האתר, 0 = כבוי):",gt," בהגעה ליעד: בונוס ליום לכולם ל-24 שעות:",gb),h("div",{cls:"row"},h("label",{},pv," לדרוש מייל מאומת לקבלת הטבות, מתנות ותגובות (פעיל רק כששליחת מיילים מוגדרת)")),
+  h("div",{cls:"row"},h("button",{cls:"pri",text:"שמירה",disabled:RO,on:{click:()=>save({goalTarget:+gt.value,goalBonus:+gb.value,perkVerify:pv.checked,welcomeGift:+wg.value,thanksReward:+tr.value,cowBonus:+cb.value,challengeOn:chOn.checked,challengeN:+chN.value,challengeReward:+chR.value,annivGift:+an2.value,refPrizeOn:rpz.checked})}})),
   h("p",{cls:"muted",text:"קופונים: בלשונית 'הטבות'. הקוד TRIP5 (5 הורדות, עד 300 משתמשים, 90 יום) נוצר אוטומטית ואפשר למחוק או לשנות אותו. מתנת הורדה לחבר: מתוך 'החשבון שלי' באתר."}));
  // מדינת השבוע
  const ci=h("input",{placeholder:"שם מדינה בדיוק כפי שמופיע באתר",maxlength:40,list:"cl",style:"flex:1;min-width:180px"}),dl=h("datalist",{id:"cl"},hub.month.map(x=>h("option",{value:x.country})));
@@ -262,7 +276,9 @@ async function vPromo(){const [hub,sr]=await Promise.all([api("GET","/admin/perk
  const c5=h("div",{cls:"card scroll"},h("h2",{text:"🌍 מדינות לפי שימוש"}),h("div",{cls:"row",style:"align-items:flex-start"},h("div",{style:"flex:1;min-width:240px"},h("h3",{text:"7 ימים אחרונים"}),tbl(hub.week)),h("div",{style:"flex:1;min-width:240px"},h("h3",{text:"30 ימים אחרונים"}),tbl(hub.month))));
  const c6=h("div",{cls:"card"},h("h2",{text:"👑 מזמינים מובילים החודש"}),hub.refs&&hub.refs.length?h("p",{},hub.refs.map((x,i)=>medal[i]+" "+x.name+" ("+x.n+")").join("   ")):h("p",{cls:"muted",text:"אין עדיין הזמנות שהושלמו החודש"}));
  const c7=h("div",{cls:"card"},h("h2",{text:"📈 סיכום שבועי והשוואה"}),h("p",{cls:"muted",text:"טוען…"}));
- $("main").replaceChildren(c1,c2,c3,c4,c6,c5,c7);
+ const c8=h("div",{cls:"card"},h("h2",{text:"🛡️ חשבונות לבדיקה"}),h("p",{cls:"muted",text:"חשבונות שנפתחו בכמות חריגה מאותה כתובת (6+ ב-24 שעות) לא מקבלים הטבות עד שתאשרו אותם. בבית ספר או משרד עם כתובת משותפת אפשר לאשר בלחיצה."}),h("p",{cls:"muted",text:"טוען…"}));
+ api("GET","/admin/suspects").then(d=>c8.replaceChildren(h("h2",{text:"🛡️ חשבונות לבדיקה ("+d.items.length+")"}),d.items.length?h("table",{},h("tr",{},["שם","מייל","נרשם","הורדות",""].map(x=>h("th",{text:x}))),...d.items.map(u=>h("tr",{},h("td",{text:u.name}),h("td",{text:u.email}),h("td",{text:fmt(u.created)}),h("td",{text:u.dl}),h("td",{},h("button",{cls:"pri",text:"אשר (מהימן)",disabled:RO,on:{click:async()=>{await api("POST","/admin/trust",{uid:u.uid,trust:true});render()}}}))))):h("p",{cls:"muted",text:"אין חשבונות חשודים 🎉"}))).catch(()=>{});
+ $("main").replaceChildren(c1,c2,c3,c4,c6,c8,c5,c7);
  api("GET","/admin/weekreport").then(w=>{const d=(a,b)=>b?(a>=b?"▲ ":"▼ ")+Math.round(Math.abs(a-b)/b*100)+"%":"",row=(l,a,b)=>h("tr",{},h("td",{text:l}),h("td",{text:a}),h("td",{text:b}),h("td",{text:d(a,b)})),P=w.cur.perks,Q=w.prev.perks,r=w.retention;
   const pk={welcome:"מתנות פתיחה",coupon:"קופונים",cow:"מדינת השבוע",challenge:"אתגר שבועי",gift:"מתנות לחברים",thanks:"תודות",anniv:"ימי שנה"};
   c7.replaceChildren(h("h2",{text:"📈 סיכום שבועי והשוואה"}),h("table",{},h("tr",{},["","7 ימים אחרונים","השבוע שלפניו",""].map(x=>h("th",{text:x}))),row("הרשמות",w.cur.reg,w.prev.reg),row("הורדות",w.cur.dl,w.prev.dl),row("משוב: הצליחו",w.cur.fbok,w.prev.fbok),row("משוב: נכשלו",w.cur.fbbad,w.prev.fbbad),...Object.entries(pk).map(([k,l])=>row("🎁 "+l,P[k]||0,Q[k]||0))),
