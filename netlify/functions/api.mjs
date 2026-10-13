@@ -720,7 +720,7 @@ const inner = async (req) => {
       const em = me ? me.email : (() => { const e = clean(b.email, 120).toLowerCase(); return emailOk(e) ? e : ""; })();
       const id = Date.now() + "-" + rid(3), name = me ? me.name : "אורח";
       await st.setJSON("r/" + id, { id, uid: me ? me.uid : "", name, email: em, ts: Date.now(), message: msg, tool: "", type: "suggest", page: clean(b.page, 40), status: "open" });
-      await feed("💡 " + (msg.startsWith("[שאלה מהעוזר]") ? "שאלה מהבוט" : "הצעה חדשה") + ": " + msg.slice(0, 60));
+      await feed("💡 " + (msg.startsWith("[שאלה מהעוזר]") ? "שאלה מהבוט" : msg.startsWith("[בקשת שפה]") ? "בקשת שפה" : "הצעה חדשה") + ": " + msg.slice(0, 60));
       if (S.notifyReport) await notify(`💡 הצעה לשיפור\n${name}${em ? " (" + em + ")" : ""}\n${msg.slice(0, 300)}`);
       return J({ ok: true });
     }
