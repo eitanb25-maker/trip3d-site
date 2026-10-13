@@ -409,7 +409,7 @@ export async function awardMonthly(month, force) {
 
 // ---------- ניקוי נתונים ישנים (רץ מדי יום) ----------
 export async function cleanupOld() {
-  const st = await store(), now = Date.now(), r = { rl: 0, tokens: 0, history: 0, ai: 0, feed: 0, botmiss: 0 }, CAP = 360;
+  const st = await store(), now = Date.now(), r = { rl: 0, tokens: 0, history: 0, ai: 0, feed: 0, botmiss: 0, trash: 0 }, CAP = 360;
   const take = (arr, key) => { const part = arr.slice(0, Math.max(0, CAP - Object.values(r).reduce((a, b) => a + b, 0))); r[key] = part.length; return part; };
   const rl = (await st.scan("rl/")).filter((x) => x.v && now - (x.v.ts || 0) > 3 * 864e5).map((x) => x.k);
   const tk = (await st.scan("t/")).filter((x) => x.v && x.v.exp && x.v.exp < now - 864e5).map((x) => x.k);
@@ -418,7 +418,8 @@ export async function cleanupOld() {
   const aiCut = dayKey(cut), ai = (await st.list("ai/")).filter((k) => k.slice(3) < aiCut);
   const fe = (await st.list("fe/")).filter((k) => +k.slice(3).split("-")[0] < now - 7 * 864e5);
   const bm = (await st.scan("bm/")).filter((x) => x.v && (x.v.last || 0) < now - 60 * 864e5).map((x) => x.k);
-  const del = [...take(rl, "rl"), ...take(tk, "tokens"), ...take(hs, "history"), ...take(ai, "ai"), ...take(fe, "feed"), ...take(bm, "botmiss")];
+  const tr = (await st.scan("tr/")).filter((x) => x.v && (x.v.ts || 0) < now - 7 * 864e5).map((x) => x.k);
+  const del = [...take(tr, "trash"), ...take(rl, "rl"), ...take(tk, "tokens"), ...take(hs, "history"), ...take(ai, "ai"), ...take(fe, "feed"), ...take(bm, "botmiss")];
   if (del.length) await st.deleteMany(del);
   return r;
 }

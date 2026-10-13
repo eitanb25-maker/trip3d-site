@@ -170,6 +170,12 @@ async function withBadges(gs) {
   return out;
 }
 
+async function trashPut(st, label, keys) {
+  const items = [];
+  for (const k of keys) { const v = await st.get(k); if (v !== null && v !== undefined) items.push({ k, v }); }
+  if (!items.length) return;
+  await st.setJSON("tr/" + Date.now() + "-" + rid(2), { label, items, ts: Date.now() });
+}
 async function listAll(prefix, limit = 300, desc = true) {
   const st = await store();
   const out = [];
@@ -935,7 +941,7 @@ const inner = async (req) => {
         else if (act === "feature") { g.featured = Date.now() + Math.max(1, Math.min(60, Math.floor(+b.days) || 7)) * 864e5; await st.setJSON("gl/" + id, g); }
         else if (act === "unfeature") { g.featured = 0; await st.setJSON("gl/" + id, g); }
         else if (act === "reject") { g.status = "rejected"; g.reason = clean(b.reason, 200); g.by = me.email; await st.setJSON("gl/" + id, g); await st.delete("ga/" + id); }
-        else if (act === "delete") { await st.delete("gl/" + id); await st.delete("gt/" + id); await st.delete("gp/" + id); await st.delete("ga/" + id); }
+        else if (act === "delete") { await trashPut(st, "יצירה: " + (g.name || id), ["gl/" + id, "gt/" + id, "gp/" + id, "ga/" + id]); await st.delete("gl/" + id); await st.delete("gt/" + id); await st.delete("gp/" + id); await st.delete("ga/" + id); }
         else return E(400, "פעולה לא מוכרת");
         if ((act === "approve" || act === "reject") && g.uid) {
           const mid = Date.now() + "-" + rid(2);
@@ -1000,7 +1006,7 @@ const inner = async (req) => {
         await st.setJSON("pc/" + code, pc); await audit(me, "promo:create", code, perkText({ ...pc, until: TIMED_PERKS.includes(type) ? Date.now() + days * 864e5 : 0 }));
         return J({ ok: true, code });
       }
-      if (R === "DELETE admin/promo") { const c = clean(url.searchParams.get("code"), 24).toUpperCase(); await st.delete("pc/" + c); await audit(me, "promo:delete", c); return J({ ok: true }); }
+      if (R === "DELETE admin/promo") { const c = clean(url.searchParams.get("code"), 24).toUpperCase(); await trashPut(st, "קופון " + c, ["pc/" + c]); await st.delete("pc/" + c); await audit(me, "promo:delete", c); return J({ ok: true }); }
       if (R === "POST admin/badge") {
         const b = await body(req, 500), uid0 = b.uid ? clean(b.uid, 20) : b.lookup ? await st.get("e/" + clean(b.lookup, 120).toLowerCase()) : null, u = uid0 && (await st.get("u/" + uid0));
         if (!u) return E(404, "משתמש לא נמצא");
@@ -1198,6 +1204,42 @@ const inner = async (req) => {
         globalThis.__att = { t: now, v }; return J(v);
       }
       if (R === "GET admin/feed") return J({ items: (await st.scan("fe/", { desc: true, limit: 60 })).map((x) => x.v).filter(Boolean) });
+      if (R === "GET admin/trash") {
+        const items = (await st.scan("tr/", { limit: 100 })).map((x) => x.v && { id: x.k.slice(3), label: x.v.label, ts: x.v.ts }).filter(Boolean).sort((a, b) => b.ts - a.ts);
+        return J({ items });
+      }
+      if (R === "POST admin/trash-restore") {
+        const id = clean((await body(req, 500)).id, 40), t = await st.get("tr/" + id);
+        if (!t) return E(404, "לא נמצא (אולי כבר שוחזר או שעבר שבוע)");
+        const allow = /^(gl|gt|gp|ga|kb|pc|gc)\//;
+        for (const it of t.items) if (allow.test(it.k)) await st.setJSON(it.k, it.v);
+        await st.delete("tr/" + id); await audit(me, "trash:restore", t.label); globalThis.__att = null;
+        return J({ ok: true, label: t.label });
+      }
+      if (R === "GET admin/search") {
+        const q = clean(url.searchParams.get("q"), 60).toLowerCase();
+        if (q.length < 2) return J({ users: [], promos: [], reports: [], gallery: [] });
+        const has = (...a) => a.some((x) => String(x || "").toLowerCase().includes(q));
+        const users = (await listAll("u/", 500, false)).filter((u) => has(u.email, u.name, u.uid, u.note)).slice(0, 15).map((u) => ({ uid: u.uid, name: u.name, email: u.email }));
+        const promos = (await listAll("pc/", 200, false)).filter((c) => has(c.code, c.note)).slice(0, 10).map((c) => ({ code: c.code, note: c.note || "" }));
+        const reports = (await listAll("r/", 200)).filter((r) => has(r.message, r.name, r.email)).slice(0, 10).map((r) => ({ id: r.id, status: r.status, text: String(r.message || "").slice(0, 100) }));
+        const gallery = (await listAll("gl/", 200)).filter((g) => has(g.name, g.country, g.desc)).slice(0, 10).map((g) => ({ id: g.id, name: g.name, status: g.status }));
+        return J({ users, promos, reports, gallery });
+      }
+      if (R === "GET admin/setup-check") {
+        const e = process.env, ok = (v) => !!v;
+        const items = [
+          ["secret", "מפתח אבטחה (SESSION_SECRET)", ok(e.SESSION_SECRET && e.SESSION_SECRET.length >= 16), "חובה. בלעדיו אי אפשר להתחבר בבטחה."],
+          ["mail", "שליחת מיילים (Resend)", mailEnabled(), "פותחים חשבון חינמי ב-Resend ומכניסים RESEND_API_KEY ו-FROM_EMAIL. נותן אימות מייל ואיפוס סיסמה אוטומטי."],
+          ["notify", "התראות אליך (Discord / טלגרם / מייל)", ok((e.TELEGRAM_BOT_TOKEN && e.TELEGRAM_CHAT_ID) || e.DISCORD_WEBHOOK_URL || (e.RESEND_API_KEY && e.NOTIFY_EMAIL)), "הכי קל: Webhook בערוץ Discord (DISCORD_WEBHOOK_URL). מקבלים הודעה על דיווחים, יצירות ושאלות לבוט."],
+          ["ai", "העוזר החכם (AI)", ok(e.ANTHROPIC_API_KEY || e.GEMINI_API_KEY), "מפתח ANTHROPIC_API_KEY או GEMINI_API_KEY. הבוט הרגיל עובד גם בלעדיו."],
+          ["site", "כתובת האתר (SITE_URL)", ok(e.SITE_URL), "משמשת לקישורים במיילים ובשיתוף."],
+          ["turnstile", "הגנה מבוטים (Turnstile)", ok(e.TURNSTILE_SECRET && e.TURNSTILE_SITE_KEY), "לא חובה. עוזר נגד הרשמות אוטומטיות."],
+        ].map(([k, label, on, hint]) => ({ k, label, on, hint }));
+        const bk = await st.list("bk/");
+        items.push({ k: "backup", label: "גיבוי אחרון", on: bk.length > 0, hint: bk.length ? "אחרון: " + bk[bk.length - 1].slice(3) : "עוד לא נוצר גיבוי. לשונית 'גיבויים' ← גבה עכשיו." });
+        return J({ items });
+      }
       if (R === "GET admin/bot") {
         const misses = (await st.scan("bm/", { limit: 300 })).filter((x) => x.v).map((x) => ({ key: x.k, ...x.v })).sort((a, b) => b.n - a.n || b.last - a.last).slice(0, 100);
         const kb = (await st.scan("kb/", { desc: true, limit: 300 })).map((x) => x.v).filter(Boolean);
@@ -1226,7 +1268,7 @@ const inner = async (req) => {
         cur.q = clean(b.q, 200) || cur.q; cur.k = clean(b.k, 120) || cur.k; cur.a = clean(b.a, 800) || cur.a; cur.e = clean(b.e, 800);
         await st.setJSON("kb/" + id, cur); await audit(me, "bot:edit", cur.q.slice(0, 60)); return J({ ok: true });
       }
-      if (R === "DELETE admin/bot-kb") { const id = clean(url.searchParams.get("id"), 40); await st.delete("kb/" + id); await audit(me, "bot:delete", id); return J({ ok: true }); }
+      if (R === "DELETE admin/bot-kb") { const id = clean(url.searchParams.get("id"), 40); await trashPut(st, "תשובת בוט", ["kb/" + id]); await st.delete("kb/" + id); await audit(me, "bot:delete", id); return J({ ok: true }); }
       if (R === "DELETE admin/bot-miss") { const k = clean(url.searchParams.get("key"), 40); if (k.startsWith("bm/")) await st.delete(k); globalThis.__att = null; return J({ ok: true }); }
       if (R === "POST admin/trust") {
         const b = await body(req, 300), u = await st.get("u/" + clean(b.uid, 20)); if (!u) return E(404, "משתמש לא נמצא");
@@ -1235,7 +1277,7 @@ const inner = async (req) => {
       }
       if (R === "GET admin/suspects") return J({ items: (await st.scan("u/", { limit: 600 })).map((x) => x.v).filter((u) => u && u.sus && !u.trusted).map((u) => ({ uid: u.uid, name: u.name, email: u.email, created: u.created, dl: u.dlTotal || 0, credits: u.credits || 0 })) });
       if (R === "GET admin/comments") return J({ items: (await st.scan("gc/", { desc: true, limit: 40 })).map((x) => ({ key: x.k, ...x.v })) });
-      if (R === "DELETE admin/comment") { const k = clean(url.searchParams.get("key"), 80); if (k.startsWith("gc/")) { await st.delete(k); await audit(me, "comment:delete", k); } return J({ ok: true }); }
+      if (R === "DELETE admin/comment") { const k = clean(url.searchParams.get("key"), 80); if (k.startsWith("gc/")) { await trashPut(st, "תגובה בגלריה", [k]); await st.delete(k); await audit(me, "comment:delete", k); } return J({ ok: true }); }
       if (R === "GET admin/backupstatus") { const e = process.env, bk = await st.list("bk/"); return J({ ext: extTargets(), telegram: !!(e.TELEGRAM_BOT_TOKEN && e.TELEGRAM_CHAT_ID), email: !!(e.RESEND_API_KEY && e.NOTIFY_EMAIL), discord: !!e.DISCORD_WEBHOOK_URL, last: bk.length ? bk[bk.length - 1].slice(3) : "" }); }
       if (R === "POST admin/backup-send") {
         const { key, enc } = await saveAutoBackup(), e = process.env;
