@@ -92,19 +92,21 @@ async function authUser(req) {
   if (!p) return null;
   const st = await store();
   const u = await st.get("u/" + p.uid);
+  if (u && (p.sv || 0) !== (u.sv || 0)) return null;
   return u || null;
 }
 const isAdmin = (u) => u && !u.blocked && u.role === "admin";
 const isStaff = (u) => u && !u.blocked && (u.role === "admin" || u.role === "editor");
 
-const sessionCookie = (req, u) => setCookie(req, sign({ uid: u.uid, exp: Date.now() + 30 * 864e5 }));
+const mkTok = (u) => sign({ uid: u.uid, exp: Date.now() + 30 * 864e5, sv: u.sv || 0 });
+const sessionCookie = (req, u) => setCookie(req, mkTok(u));
 const totpPassed = new WeakSet();
 async function startSession(req, u) {
   if (u.totp && !totpPassed.has(u)) return E(403, "בחשבון הזה מופעל אימות דו-שלבי: היכנסו עם מייל, סיסמה וקוד מהאפליקציה");
   const st = await store();
   u.last = Date.now();
   await st.setJSON("u/" + u.uid, u);
-  return J({ user: pub(u) }, 200, { "set-cookie": setCookie(req, sign({ uid: u.uid, exp: Date.now() + 30 * 864e5 })) });
+  return J({ user: pub(u) }, 200, { "set-cookie": setCookie(req, mkTok(u)) });
 }
 
 async function quotaOf(u, S) {
@@ -504,7 +506,7 @@ const inner = async (req) => {
       const u = await st.get("u/" + t.uid);
       if (!u) return E(400, "הקישור לא תקף");
       const { salt, hash } = await hashPw(pw);
-      u.salt = salt; u.hash = hash; u.verified = true;
+      u.salt = salt; u.hash = hash; u.verified = true; u.sv = (u.sv || 0) + 1;
       await st.setJSON("u/" + u.uid, u);
       await lockCheck(u.email, true);
       return J({ ok: true });
@@ -521,9 +523,15 @@ const inner = async (req) => {
         if (String(b.current) === pw) return E(400, "הסיסמה החדשה זהה לנוכחית");
       }
       const { salt, hash } = await hashPw(pw);
-      me.salt = salt; me.hash = hash; await st.setJSON("u/" + me.uid, me);
+      me.salt = salt; me.hash = hash; me.sv = (me.sv || 0) + 1; await st.setJSON("u/" + me.uid, me);
       await audit(me, "user:change-password", me.email);
-      return J({ ok: true });
+      return J({ ok: true }, 200, { "set-cookie": sessionCookie(req, me) });
+    }
+    if (R === "POST auth/logout-all") {
+      if (!me) return E(401, "נדרשת התחברות");
+      me.sv = (me.sv || 0) + 1; await st.setJSON("u/" + me.uid, me);
+      await audit(me, "user:logout-all", me.email);
+      return J({ ok: true }, 200, { "set-cookie": setCookie(req, "", true) });
     }
     if (R === "POST auth/change-email") {
       if (!me) return E(401, "נדרשת התחברות");

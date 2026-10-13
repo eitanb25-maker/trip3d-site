@@ -1097,7 +1097,7 @@
   for (const k of Object.keys(ML5)) ML[k] = ML5[k];
   // ===== v40.3: עוד נושאי חשבון ושימוש =====
   KB.push(
-  ["איך מתנתקים,להתנתק,יציאה מהחשבון,לצאת מהחשבון,log out,sign out,logout,how do i log out,how to sign out","'החשבון שלי' (הכפתור עם השם שלכם בפינה) ← 'התנתקות'.","My account (the button with your name in the corner) → 'Sign out'.","",""],
+  ["איך מתנתקים,להתנתק,יציאה מהחשבון,לצאת מהחשבון,log out,sign out,logout,how do i log out,how to sign out","'החשבון שלי' (הכפתור עם השם שלכם בפינה) ← 'התנתקות'. אפשר גם להתנתק מכל המכשירים בבת אחת: 'אבטחה' ← 'התנתקות מכל המכשירים'. שינוי סיסמה מנתק את שאר המכשירים אוטומטית.","My account (the button with your name in the corner) → 'Sign out'. You can also sign out of all devices at once: 'Security' → 'Sign out of all devices'. Changing your password signs out your other devices automatically.","",""],
   ["לבטל מיילים,להפסיק לקבל מיילים,לא רוצה מיילים,הודעות במייל,unsubscribe,stop emails,turn off notifications,turn off emails,email preferences","ב'החשבון שלי' יש תיבת סימון 'לקבל הודעות במייל מהאתר' – מסירים אותה כדי להפסיק לקבל מיילים מהאתר. הודעות בתוך האתר (חלון 'חדש' ותיבת ההודעות) מופיעות כשנכנסים.","In My account there is a checkbox 'Receive emails from the site' – untick it to stop site emails. In-site notices (the 'New' popup and the messages window) appear when you sign in.","",""],
   ["מי עומד מאחורי האתר,מי הבעלים,מי מנהל את האתר,מי יצר את האתר,who runs this site,who owns the site,who made this site,who is behind","האתר מופעל על ידי הבעלים שלו, שקורא כל הודעה. אפשר לפנות אליו דרך 'דיווח על בעיה' או (למחוברים) דרך הצ'אט הפרטי ב'החשבון שלי'.","The site is run by its owner, who reads every message. You can reach him via 'Report a problem' or (when signed in) the private chat in My account.","",""],
   ["לשנות מייל,לשנות את המייל,להחליף את המייל,שינוי מייל,להחליף מייל,כתובת מייל שגויה,טעיתי במייל,change email,change my email,wrong email,new email address","'החשבון שלי' ← 'אבטחה: סיסמה ומייל' ← כתובת מייל חדשה + הסיסמה שלכם ← 'החלפת מייל'. נשלח קישור אימות לכתובת החדשה, והודעה על השינוי לכתובת הישנה. בחשבון שנכנסים אליו רק עם Google קודם קובעים סיסמה באותו אזור.","My account → 'Security: password and email' → new email address + your password → 'Change email'. A verification link goes to the new address and a notice to the old one. If you only sign in with Google, first set a password in the same section.","",""],
@@ -1110,9 +1110,9 @@
   SYN.push(["באג","המסך קפוא,קפוא,תקוע,האתר קפוא,frozen,site freezes,screen frozen"],["כלים","כמה ערים,כמה מדינות במזכרת אחת,כמה יעדים,multiple cities,several countries"]);
   const ML6 = {
   "איך מתנתקים":{kw:"تسجيل الخروج,كيف اخرج من الحساب,выйти из аккаунта,как выйти,cerrar sesion,como cierro sesion,salir de la cuenta",
-   ar:"«حسابي» (الزر الذي يحمل اسمك في الزاوية) ← «تسجيل الخروج».",
-   ru:"«Мой аккаунт» (кнопка с вашим именем в углу) → «Выйти».",
-   es:"Mi cuenta (el botón con tu nombre en la esquina) → «Cerrar sesión»."},
+   ar:"«حسابي» (الزر الذي يحمل اسمك في الزاوية) ← «تسجيل الخروج». ويمكنك الخروج من كل الأجهزة معًا: «الأمان» ← «تسجيل الخروج من كل الأجهزة». تغيير كلمة المرور يُخرج الأجهزة الأخرى تلقائيًا.",
+   ru:"«Мой аккаунт» (кнопка с вашим именем в углу) → «Выйти». Можно выйти сразу со всех устройств: «Безопасность» → «Выйти на всех устройствах». Смена пароля автоматически выводит остальные устройства.",
+   es:"Mi cuenta (el botón con tu nombre en la esquina) → «Cerrar sesión». También puedes cerrar sesión en todos los dispositivos: «Seguridad» → «Cerrar sesión en todos los dispositivos». Cambiar la contraseña cierra las demás sesiones automáticamente."},
   "לבטל מיילים":{kw:"ايقاف الرسائل,الغاء الاشتراك في الرسائل,отписаться от писем,отключить уведомления,не хочу письма,dejar de recibir correos,desactivar notificaciones,cancelar correos",
    ar:"في «حسابي» مربع «تلقّي رسائل بريد من الموقع» – ألغِ تحديده لإيقاف رسائل الموقع. إشعارات داخل الموقع (نافذة «جديد» ونافذة الرسائل) تظهر عند تسجيل الدخول.",
    ru:"В «Моём аккаунте» есть флажок «Получать письма от сайта» — снимите его, чтобы не получать письма. Уведомления внутри сайта (окно «Новое» и окно сообщений) появляются при входе.",
