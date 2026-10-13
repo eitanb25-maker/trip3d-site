@@ -387,7 +387,13 @@ const inner = async (req) => {
       if (!pc && code === "TRIP5") pc = await seedTrip5(st);
       if (!pc || (pc.expires && pc.expires < Date.now()) || (pc.max > 0 && pc.uses >= pc.max)) return E(400, "הקוד לא תקף או שפג תוקפו");
       if ((pc.users || []).includes(me.uid)) return E(400, "כבר מימשתם את הקוד הזה");
-      pc.uses++; pc.users = (pc.users || []).concat([me.uid]); await st.setJSON("pc/" + code, pc);
+      // תפיסה אטומית: פעם אחת לכל משתמש, ובלי לעבור את מספר השימושים המרבי, גם כשיש כמה בקשות במקביל
+      const uKey = "pcu/" + code + "/" + me.uid;
+      if (!(await st.incr(uKey, 1))) return E(400, "כבר מימשתם את הקוד הזה");
+      if (pc.uses > 0 && (await st.get("pcn/" + code)) == null) await st.setJSON("pcn/" + code, pc.uses);
+      const used = await st.incr("pcn/" + code, pc.max > 0 ? pc.max : 0);
+      if (!used) { await st.delete(uKey); return E(400, "הקוד לא תקף או שפג תוקפו"); }
+      pc.uses = used; pc.users = (pc.users || []).concat([me.uid]); await st.setJSON("pc/" + code, pc);
       const perk = { type: pc.type, n: pc.n, key: pc.key || "", until: !TIMED_PERKS.includes(pc.type) || !pc.days ? 0 : Date.now() + pc.days * 864e5, note: pc.note || "" };
       await givePerk(st, me, perk, "הטבה מקוד " + code + " 🎁"); await bump([["perk", "coupon"]]);
       return J({ ok: true, text: perkText(perk) });
@@ -1273,6 +1279,7 @@ const inner = async (req) => {
         if (await st.get("pc/" + code)) return E(409, "הקוד כבר קיים");
         const exp = Math.max(0, Math.min(365, Math.floor(+b.expireDays) || 0));
         const pc = { code, type, n: ["unlimited", "early", "badge"].includes(type) ? 1 : Math.max(1, Math.min(1000, Math.floor(+b.n) || 1)), key: type === "badge" ? b.key : "", days, note: clean(b.note, 200), max: Math.max(0, Math.min(100000, Math.floor(+b.max) || 0)), uses: 0, users: [], expires: exp ? Date.now() + exp * 864e5 : 0, by: me.email, ts: Date.now() };
+        for (const k of await st.list("pcu/" + code + "/")) await st.delete(k); await st.delete("pcn/" + code);
         await st.setJSON("pc/" + code, pc); await audit(me, "promo:create", code, perkText({ ...pc, until: TIMED_PERKS.includes(type) ? Date.now() + days * 864e5 : 0 }));
         return J({ ok: true, code });
       }

@@ -28,6 +28,7 @@ export async function store() {
       scan: async (p, o = {}) => { let ks = [...m.keys()].filter((k) => k.startsWith(p)).sort(); if (o.desc) ks.reverse(); if (o.limit) ks = ks.slice(0, o.limit); return ks.map((k) => ({ k, v: JSON.parse(m.get(k)) })); },
       getMany: async (ks) => ks.map((k) => (m.has(k) ? JSON.parse(m.get(k)) : null)),
       deleteMany: async (ks) => { ks.forEach((k) => m.delete(k)); },
+      incr: async (k, max) => { const n = m.has(k) ? +JSON.parse(m.get(k)) || 0 : 0; if (max > 0 && n >= max) return 0; m.set(k, JSON.stringify(n + 1)); return n + 1; },
     };
     return _mem;
   }
@@ -50,6 +51,7 @@ export async function store() {
     },
     getMany: (ks) => Promise.all(ks.map((k) => s.get(k, { type: "json" }))),
     deleteMany: async (ks) => { await Promise.all(ks.map((k) => s.delete(k))); },
+    incr: async (k, max) => { const n = +(await s.get(k, { type: "json" })) || 0; if (max > 0 && n >= max) return 0; await s.setJSON(k, n + 1); return n + 1; },
   };
 }
 
@@ -109,6 +111,14 @@ function d1store(db) {
         for (const x of r.results || []) out.set(x.k, x.v);
       }
       return Promise.all(ks.map(async (k) => (out.has(k) ? parseV(k, out.get(k)) : null)));
+    },
+    // מונה אטומי עם תקרה (max<=0 = בלי תקרה): מחזיר את הערך החדש, או 0 אם התקרה כבר הושגה
+    incr: async (k, max) => {
+      await init();
+      await db.prepare("INSERT OR IGNORE INTO kv (k, v) VALUES (?1, '0')").bind(k).run();
+      const r = await db.prepare("UPDATE kv SET v = CAST(CAST(v AS INTEGER) + 1 AS TEXT) WHERE k = ?1 AND (?2 <= 0 OR CAST(v AS INTEGER) < ?2)").bind(k, +max || 0).run();
+      if (!(r.meta && r.meta.changes > 0)) return 0;
+      return +(await rawGet(k)) || 1;
     },
   };
 }
