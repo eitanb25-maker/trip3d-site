@@ -364,7 +364,11 @@ const inner = async (req) => {
         if (u && !u.blocked) {
           const tok = await makeToken(u.uid, "reset", 3600e3), link = siteUrl(req) + "/#reset=" + tok;
           const sent = await sendMail(u.email, "איפוס סיסמה", `שלום ${u.name},\n\nקיבלנו בקשה לאיפוס הסיסמה. הקישור תקף לשעה:\n${link}\n\nאם לא ביקשתם, אפשר להתעלם מהמייל הזה.`);
-          if (!sent) await notify(`🔑 בקשת איפוס סיסמה (מייל לא מוגדר – העבירו ידנית)\n${u.email}\n${link}`);
+          if (!sent) {
+            await notify(`🔑 בקשת איפוס סיסמה (מייל לא מוגדר – העבירו ידנית)\n${u.email}\n${link}`);
+            // נשמר גם בלוח הבקרה (דיווחים), כדי שהבקשה לא תאבד כשאין ערוץ התראות
+            await st.setJSON("r/reset-" + u.uid, { id: "reset-" + u.uid, uid: u.uid, name: u.name, email: u.email, ts: Date.now(), message: "בקשת איפוס סיסמה. אפשר ליצור קישור ולשלוח למשתמש.", tool: "", type: "reset", status: "open" });
+          }
         }
       }
       return J({ ok: true, mail: mailEnabled() });
