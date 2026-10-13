@@ -236,7 +236,7 @@ const inner = async (req) => {
       const rl = (globalThis.__rl ||= new Map()), now = Date.now(), kk = ipHash(req) + (m === "GET" ? "r" : "w"), cur = rl.get(kk);
       if (rl.size > 5000) rl.clear();
       if (!cur || now - cur.t > 60e3) rl.set(kk, { t: now, n: 1 });
-      else if (++cur.n > (m === "GET" ? 600 : 150)) return E(429, "יותר מדי בקשות. נסו שוב בעוד דקה", { "retry-after": 60 });
+      else if (++cur.n > (m === "GET" ? 3000 : 900)) return E(429, "יותר מדי בקשות. נסו שוב בעוד דקה", { "retry-after": 60 });
     }
     const st = await store();
     const S = await getSettings();
@@ -352,8 +352,9 @@ const inner = async (req) => {
       if (u.blocked) return E(403, "החשבון חסום");
       if (u.totp) {
         if (!String(b.code || "").trim()) return J({ error: "נדרש קוד אימות דו-שלבי", need2fa: true }, 401);
-        if (!totpOk(u.totp, b.code)) { await lockCheck(email, false); await secEvent("bad_2fa", email, S); return E(401, "קוד האימות שגוי"); }
-        totpPassed.add(u);
+        const stp = totpOk(u.totp, b.code);
+        if (!stp || stp <= (u.totpLast || 0)) { await lockCheck(email, false); await secEvent("bad_2fa", email, S); return E(401, stp ? "הקוד הזה כבר נוצל. המתינו לקוד הבא" : "קוד האימות שגוי"); }
+        u.totpLast = stp; totpPassed.add(u);
       }
       await lockCheck(email, true);
       return startSession(req, u);
@@ -465,8 +466,9 @@ const inner = async (req) => {
         return J({ secret: me.totpPending, uri: `otpauth://totp/${lbl}?secret=${me.totpPending}&issuer=Trip3D` });
       }
       if (act === "enable") {
-        if (!me.totpPending || !totpOk(me.totpPending, b.code)) return E(400, "הקוד שגוי. נסו שוב עם הקוד העדכני");
-        me.totp = me.totpPending; delete me.totpPending; await st.setJSON("u/" + me.uid, me); await audit(me, "2fa:on", me.email); return J({ ok: true });
+        const stp = me.totpPending ? totpOk(me.totpPending, b.code) : 0;
+        if (!stp) return E(400, "הקוד שגוי. נסו שוב עם הקוד העדכני");
+        me.totp = me.totpPending; me.totpLast = stp; delete me.totpPending; await st.setJSON("u/" + me.uid, me); await audit(me, "2fa:on", me.email); return J({ ok: true });
       }
       if (act === "disable") {
         if (!me.totp || !totpOk(me.totp, b.code) || !(await checkPw(String(b.password || ""), me))) return E(400, "צריך סיסמה וקוד נוכחי כדי לכבות");
@@ -572,6 +574,7 @@ const inner = async (req) => {
         await bump([["reg", "all"]]); await feed("👤 נרשם: " + u.name);
       } else u.verified = true;
       if (u.blocked) return back(3);
+      if (u.totp) return back(4);
       u.last = Date.now(); await st.setJSON("u/" + u.uid, u);
       return back(1, sessionCookie(req, u));
     }
@@ -1284,7 +1287,7 @@ const inner = async (req) => {
           const ids = await segmentUsers(String(b.to).slice(4));
           if (!ids) return E(400, "קבוצה לא מוכרת");
           for (const u of ids) {
-            await st.setJSON("m/" + u.uid + "/" + id + "-" + u.uid.slice(0, 3), { id: id + "-" + u.uid.slice(0, 3), ts: Date.now(), subject, body: text, read: false, by: me.email });
+            await st.setJSON("m/" + u.uid + "/" + id, { id, ts: Date.now(), subject, body: text, read: false, by: me.email });
             if (withMail && u.mailOk !== false && (await sendMail(u.email, subject, text + foot))) sent++;
             try { await pushUser(u.uid); } catch {}
           }

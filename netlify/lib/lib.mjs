@@ -652,7 +652,7 @@ export async function pushUser(uid) {
   for (const s of u.push) {
     try {
       const aud = new URL(s.endpoint).origin;
-      const r = await fetch(s.endpoint, { method: "POST", headers: { authorization: `vapid t=${await vapidJwt(aud)}, k=${process.env.VAPID_PUBLIC}`, ttl: "86400", "content-length": "0" } });
+      const r = await fetch(s.endpoint, { signal: AbortSignal.timeout(4000), method: "POST", headers: { authorization: `vapid t=${await vapidJwt(aud)}, k=${process.env.VAPID_PUBLIC}`, ttl: "86400", "content-length": "0" } });
       if (r.status === 404 || r.status === 410) continue;
       if (r.ok) ok++;
       keep.push(s);
@@ -680,7 +680,8 @@ export function totpAt(secret, t = Date.now()) {
   const h = crypto.createHmac("sha1", b32dec(secret)).update(ctr).digest(), o = h[19] & 15;
   return String(((h[o] & 127) << 24 | h[o + 1] << 16 | h[o + 2] << 8 | h[o + 3]) % 1e6).padStart(6, "0");
 }
-export const totpOk = (secret, code) => { const c = String(code || "").replace(/\s/g, ""); return /^\d{6}$/.test(c) && [-1, 0, 1].some((d) => totpAt(secret, Date.now() + d * 30000) === c); };
+// מחזיר את מספר "חלון הזמן" שהתאים (או 0), כדי שאפשר יהיה למנוע שימוש חוזר באותו קוד
+export const totpOk = (secret, code) => { const c = String(code || "").replace(/\s/g, ""); if (!/^\d{6}$/.test(c)) return 0; for (const d of [-1, 0, 1]) { const t = Date.now() + d * 30000; if (totpAt(secret, t) === c) return Math.floor(t / 30000); } return 0; };
 
 // ---------- תזכורת עדינה לפרויקט שנשמר ולא נפתח ----------
 export async function projectNudges(max = 40) {
