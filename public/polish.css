@@ -1,0 +1,25 @@
+/* v26: שכבת עיצוב משותפת לעמודים הסטטיים */
+::selection{background:color-mix(in srgb,#c2410c 28%,transparent)}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{background-image:radial-gradient(900px 420px at 90% -80px,color-mix(in srgb,#ea580c 14%,transparent),transparent),radial-gradient(700px 420px at 0% -60px,color-mix(in srgb,#7c3aed 10%,transparent),transparent);background-repeat:no-repeat;text-rendering:optimizeLegibility}
+h1{letter-spacing:-.01em;text-wrap:balance}
+h1::after{content:"";display:block;width:56px;height:4px;border-radius:99px;margin-top:10px;background:linear-gradient(90deg,#c2410c,#e11d48,#7c3aed)}
+h2{position:relative;padding-inline-start:12px;text-wrap:balance}
+h2::before{content:"";position:absolute;inset-inline-start:0;top:.25em;bottom:.25em;width:4px;border-radius:99px;background:#c2410c}
+a{text-underline-offset:3px}
+a:hover{text-decoration-thickness:2px}
+.top{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-bottom:6px}
+.top a{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:40px;padding:0 14px;border:1px solid color-mix(in srgb,currentColor 18%,transparent);border-radius:99px;text-decoration:none;font-weight:700;transition:transform .15s,box-shadow .15s}
+.top a:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,0,0,.12)}
+table{border-collapse:separate!important;border-spacing:0;border-radius:12px;overflow:hidden;border:1px solid color-mix(in srgb,currentColor 15%,transparent)}
+th,td{border-width:0 0 1px 0!important;border-style:solid!important;border-color:color-mix(in srgb,currentColor 12%,transparent)!important}
+tr:last-child td{border-bottom:0!important}
+tr:nth-child(even) td{background:color-mix(in srgb,currentColor 4%,transparent)}
+code{border-radius:6px}
+button,.pill,a.go{transition:transform .12s,box-shadow .15s,background-color .15s}
+button:active{transform:scale(.97)}
+:focus-visible{outline:3px solid #ffb703;outline-offset:2px}
+.card,.it,.tile{transition:transform .18s,box-shadow .18s}
+.card:hover,.it:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(0,0,0,.12)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@media (max-width:600px){body{overflow-wrap:break-word}td,th{overflow-wrap:normal;hyphens:manual}table{display:block;overflow-x:auto}}
