@@ -329,6 +329,7 @@ const inner = async (req) => {
     if (R === "GET kb") { const cfg = botCfgOf(await st.get("botcfg")); return J({ items: (await st.scan("kb/", { limit: 300 })).map((x) => x.v).filter(Boolean).map((e) => ({ k: e.k, a: e.a, e: e.e || "" })), syn: cfg.syn, greet: cfg.greet }, 200, { "cache-control": "public, max-age=60" }); }
     if (R === "POST bot/log") {
       if (await rateHit("bl:" + ipHash(req), 80, 3600e3)) return J({ ok: true });
+      if (await rateHit("bl:all", 4000, 864e5)) return J({ ok: true });
       const cfg = botCfgOf(await st.get("botcfg")); if (!cfg.log) return J({ ok: true });
       const b = await body(req, 2500), q = clean(b.q, 300); if (q.length < 2) return J({ ok: true });
       const src = ["kb", "custom", "ai", "miss", "small"].includes(b.src) ? b.src : "miss", ts = Date.now();

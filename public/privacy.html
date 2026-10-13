@@ -35,4 +35,4 @@
 <script>let L="he";try{L=localStorage.getItem("trip3d_l")||"he"}catch(e){}
 function setL(l){L=l;try{localStorage.setItem("trip3d_l",l)}catch(e){}document.documentElement.lang=l;document.documentElement.dir=l=="en"?"ltr":"rtl";document.querySelectorAll("[data-l]").forEach(e=>e.style.display=e.dataset.l==l?"":"none");document.title=document.querySelector("[data-l='"+l+"'] h1").textContent;const b=document.getElementById("lb");b.textContent=l=="en"?"עברית":"English"}
 document.getElementById("lb").onclick=()=>setL(L=="en"?"he":"en");setL(L);
-const c=document.getElementById("cx");if(c)fetch("/api/config").then(r=>r.json()).then(j=>{if(j.contactEmail){const a=document.createElement("a");a.href="mailto:"+j.contactEmail.replace(/[^\w@.+-]/g,"");a.textContent=j.contactEmail;c.replaceChildren(a)}}).catch(()=>{})</script></body></html>
+const cs=document.querySelectorAll("#cx");if(cs.length)fetch("/api/config").then(r=>r.json()).then(j=>{if(j.contactEmail){cs.forEach(c=>{const a=document.createElement("a");a.href="mailto:"+j.contactEmail.replace(/[^\w@.+-]/g,"");a.textContent=j.contactEmail;c.replaceChildren(a)})}}).catch(()=>{})</script></body></html>

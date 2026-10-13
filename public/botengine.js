@@ -141,7 +141,7 @@
   ["כרטיס שיתוף,תמונה לשיתוף,לשתף בוואטסאפ,תמונה של המזכרת,share card,share picture,share image", "בעורך יש כפתור '🖼️ כרטיס שיתוף': נוצרת תמונה יפה עם שם הטיול והתצוגה של המזכרת. בנייד היא נפתחת לשיתוף ישיר (למשל לוואטסאפ), ובמחשב היא יורדת כקובץ.", "The editor has a '🖼️ Share card' button: it creates a nice image with the trip name and a preview. On mobile it opens the share sheet (e.g. WhatsApp); on desktop it downloads as a file.", "", ""],
   ["לא ראיתי הטבה,לא קיבלתי הטבה,איפה ההטבה ששלחו לי,הטבה מהמנהל,where is my perk,perk from admin,gift from admin", "הטבה שהמנהל שולח מופיעה כהודעה 'קיבלת הטבה 🎁' בפעם הבאה שנכנסים לאתר, וגם ב'החשבון שלי' (הורדות במתנה, הטבות פעילות). אם לא רואים, רעננו את הדף או כתבו למנהל בצ'אט.", "A perk from the owner shows as a 'You got a perk 🎁' notice next time you open the site, and in My account (bonus downloads, active perks). If you don't see it, refresh or message the owner in the chat.", "", ""],
   ["תזכורת מנוי,המנוי שלי נגמר,מתי המנוי נגמר,subscription reminder,when does my subscription end", "5 ימים לפני סיום המנוי תקבלו הודעה באתר, ובסיום הודעה נוספת. ב'החשבון שלי' ← מועדון המטיילים רואים כמה ימים נשארו, ואפשר לשלוח בקשת חידוש.", "5 days before your subscription ends you get a site notice, and another when it ends. My account → Travelers Club shows days left, and you can send a renewal request.", "", ""],
-  ["שלום,היי,הי,hello,hey,hi ","היי! אפשר לשאול על הורדה, הדפסה, הטבות, הרשמה או תקלות.","Hi! Ask about downloading, printing, perks, signing up or problems.","",""]];
+  ["=שלום,=היי,=הי,=hello,=hey,=hi,=שלום שלום,=הלו,","היי! אפשר לשאול על הורדה, הדפסה, הטבות, הרשמה או תקלות.","Hi! Ask about downloading, printing, perks, signing up or problems.","",""]];
   // ===== תוספת v39: שיחה חופשית, תקלות הדפסה, מושגים ושאלות מתחילים =====
   // מילת מפתח שמתחילה ב-= חייבת להתאים למילה שלמה (לשיחת חולין קצרה)
   const EXTRA=[
@@ -260,7 +260,7 @@
       for (const k of e[0].split(",")) {
         const { w, nk } = kwOf(k);
         if (!nk) continue;
-        if (w ? t.includes(" " + nk + " ") : t.includes(nk)) sc += (k.length >= 4 ? 2 : 1) + (nk.includes(" ") ? 2 : 0);
+        if (w ? t.includes(" " + nk + " ") : t.includes(nk)) sc += (k.length >= 4 ? 2 : 1) + (nk.includes(" ") ? 2 : 0) + (w ? 1 : 0);
       }
       if (sc > 0) list.push({ src: "kb", sc, e });
       if (sc > bs) { bs = sc; best = e; }
