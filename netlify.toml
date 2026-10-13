@@ -17,6 +17,11 @@
     Cache-Control = "no-store"
 
 [[headers]]
+  for = "/changelog.json"
+  [headers.values]
+    Cache-Control = "no-store"
+
+[[headers]]
   for = "/maint.js"
   [headers.values]
     Cache-Control = "no-cache"

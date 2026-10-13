@@ -2,6 +2,9 @@
   Cache-Control: no-store
 /news.json
   Cache-Control: no-store
+
+/changelog.json
+  Cache-Control: no-store
 /maint.js
   Cache-Control: no-cache
 /*
