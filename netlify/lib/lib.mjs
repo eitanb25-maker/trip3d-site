@@ -259,7 +259,7 @@ export async function audit(me, action, target, detail) {
   const st = await store();
   await st.setJSON("a/" + Date.now() + "-" + rid(2), { ts: Date.now(), by: me ? me.email : "?", action, target: String(target || "").slice(0, 80), detail: String(detail || "").slice(0, 200) });
 }
-const BK_PREFIXES = ["u/", "e/", "i/", "h/", "r/", "d/", "m/", "bc/", "a/", "s/", "z/", "p/", "gl/", "ga/", "gt/", "gp/", "pc/", "lb/", "lbaw/"];
+const BK_PREFIXES = ["u/", "e/", "i/", "h/", "r/", "d/", "m/", "bc/", "a/", "s/", "z/", "p/", "gl/", "ga/", "gt/", "gp/", "pc/", "lb/", "lbaw/", "ch/", "pg/"];
 const bkKey = () => crypto.scryptSync(process.env.BACKUP_KEY || process.env.SESSION_SECRET || "", "trip3d-backup", 32);
 export function encryptBackup(obj) {
   const iv = crypto.randomBytes(12), c = crypto.createCipheriv("aes-256-gcm", bkKey(), iv);
@@ -288,6 +288,38 @@ export async function restoreBackup(b) {
   let n = 0;
   if (b.settings) await st.setJSON("settings", b.settings);
   for (const [k, v] of Object.entries(b.items || {})) { if (!BK_PREFIXES.some((p) => k.startsWith(p))) continue; await st.setJSON(k, v); n++; }
+  return n;
+}
+// גיל הגיבוי האחרון בימים (null = אין גיבוי)
+export async function lastBackupAge() {
+  const st = await store(), keys = await st.list("bk/");
+  if (!keys.length) return null;
+  const last = keys[keys.length - 1].slice(3), t = Date.parse(last + "T12:00:00Z");
+  return isNaN(t) ? null : Math.floor((Date.now() - t) / 864e5);
+}
+// בדיקת בריאות יומית: מחזיר רשימת בעיות (ריק = הכול תקין)
+export async function dailyHealth() {
+  const bad = [], e = process.env;
+  try { const st = await store(), k = "health/d" + rid(3); await st.setJSON(k, { t: Date.now() }); const v = await st.get(k); await st.delete(k); if (!(v && v.t)) bad.push("האחסון לא החזיר את מה שנכתב"); } catch (x) { bad.push("שגיאת אחסון: " + String((x && x.message) || x).slice(0, 100)); }
+  if (!(e.SESSION_SECRET && e.SESSION_SECRET.length >= 16)) bad.push("SESSION_SECRET חסר או קצר");
+  if (!mailEnabled()) bad.push("שליחת מיילים לא מוגדרת (אימות ואיפוס סיסמה לא יישלחו)");
+  try { const a = await lastBackupAge(); if (a === null) bad.push("אין גיבוי פנימי בכלל"); else if (a > 7) bad.push("הגיבוי האחרון בן " + a + " ימים"); } catch {}
+  return bad;
+}
+// תזכורות מנוי: 5 ימים לפני הסיום, ובסיום
+export async function subReminders() {
+  const st = await store(), now = Date.now(); let n = 0;
+  for (const { v: u } of await st.scan("u/", { limit: 1000 })) {
+    if (!u || !u.sub || !u.sub.until || u.blocked) continue;
+    const left = Math.ceil((u.sub.until - now) / 864e5);
+    if (left <= 5 && left > 0 && !u.sub.rem) {
+      await addInbox(st, u.uid, "המנוי שלך מסתיים בקרוב ⏰", `מסלול ${u.sub.name} מסתיים בעוד ${left} ימים. כדי להמשיך, שלחו בקשה חדשה ב'החשבון שלי' ← מועדון המטיילים. אפשר גם לכתוב למנהל בצ'אט.`);
+      u.sub.rem = true; await st.setJSON("u/" + u.uid, u); n++;
+    } else if (u.sub.until <= now && !u.sub.exp) {
+      await addInbox(st, u.uid, "המנוי שלך הסתיים", `מסלול ${u.sub.name} הסתיים. תודה שהייתם חלק מהמועדון! אפשר לחדש בכל רגע ב'החשבון שלי'.`);
+      u.sub.exp = true; await st.setJSON("u/" + u.uid, u); n++;
+    }
+  }
   return n;
 }
 export async function saveAutoBackup() {
@@ -394,13 +426,14 @@ export function perkText(p) {
 export async function addInbox(st, uid, subject, body, by = "system") {
   const mid = Date.now() + "-" + rid(2);
   await st.setJSON("m/" + uid + "/" + mid, { id: mid, ts: Date.now(), read: false, by, subject, body });
+  return mid;
 }
 export async function givePerk(st, u, perk, subject, extra) {
   if (perk.type === "credits") u.credits = (u.credits || 0) + perk.n;
   else if (perk.type === "badge") { u.badges = Array.from(new Set([...(u.badges || []), perk.key])); }
   else u.perks = activePerks(u).concat([{ id: rid(3), type: perk.type, n: perk.n, key: perk.key || "", until: perk.until || 0, note: perk.note || "", ts: Date.now() }]).slice(-30);
   await st.setJSON("u/" + u.uid, u);
-  await addInbox(st, u.uid, subject || "קיבלת הטבה 🎁", `${perkText(perk)}${perk.note ? "\n" + perk.note : ""}${extra ? "\n" + extra : ""}`);
+  return addInbox(st, u.uid, subject || "קיבלת הטבה 🎁", `${perkText(perk)}${perk.note ? "\n" + perk.note : ""}${extra ? "\n" + extra : ""}`);
 }
 // מעניק תג; מחזיר true אם התג חדש
 export async function awardBadge(st, u, id, silent) {
@@ -435,7 +468,7 @@ export async function awardMonthly(month, force) {
 
 // ---------- ניקוי נתונים ישנים (רץ מדי יום) ----------
 export async function cleanupOld() {
-  const st = await store(), now = Date.now(), r = { rl: 0, tokens: 0, history: 0, ai: 0, feed: 0, botmiss: 0, trash: 0 }, CAP = 360;
+  const st = await store(), now = Date.now(), r = { rl: 0, tokens: 0, history: 0, ai: 0, feed: 0, botmiss: 0, trash: 0, perklog: 0 }, CAP = 360;
   const take = (arr, key) => { const part = arr.slice(0, Math.max(0, CAP - Object.values(r).reduce((a, b) => a + b, 0))); r[key] = part.length; return part; };
   const rl = (await st.scan("rl/")).filter((x) => x.v && now - (x.v.ts || 0) > 3 * 864e5).map((x) => x.k);
   const tk = (await st.scan("t/")).filter((x) => x.v && x.v.exp && x.v.exp < now - 864e5).map((x) => x.k);
@@ -445,7 +478,8 @@ export async function cleanupOld() {
   const fe = (await st.list("fe/")).filter((k) => +k.slice(3).split("-")[0] < now - 7 * 864e5);
   const bm = (await st.scan("bm/")).filter((x) => x.v && (x.v.last || 0) < now - 60 * 864e5).map((x) => x.k);
   const tr = (await st.scan("tr/")).filter((x) => x.v && (x.v.ts || 0) < now - 7 * 864e5).map((x) => x.k);
-  const del = [...take(tr, "trash"), ...take(rl, "rl"), ...take(tk, "tokens"), ...take(hs, "history"), ...take(ai, "ai"), ...take(fe, "feed"), ...take(bm, "botmiss")];
+  const pg = (await st.scan("pg/")).filter((x) => x.v && (x.v.ts || 0) < now - 120 * 864e5).map((x) => x.k);
+  const del = [...take(pg, "perklog"), ...take(tr, "trash"), ...take(rl, "rl"), ...take(tk, "tokens"), ...take(hs, "history"), ...take(ai, "ai"), ...take(fe, "feed"), ...take(bm, "botmiss")];
   if (del.length) await st.deleteMany(del);
   return r;
 }

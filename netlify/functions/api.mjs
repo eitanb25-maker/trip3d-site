@@ -1,7 +1,7 @@
 // שרת האתר: התחברות, הרשאות, מכסות, סטטיסטיקות ולוח בקרה
 import crypto from "node:crypto";
 import { trBody } from "../lib/i18n.mjs";
-import { planItems, VIP_OPTS, PERK_TYPES, TIMED_PERKS, BADGES, activePerks, perkSum, hasEarly, perkText, givePerk, awardBadge, addInbox, leaderboard, awardMonthly, monthKey, alertMail, externalBackup, extTargets, activeBlocks, findBlock, BLOCK_FEATURES, errorSpike, funnelOf, store, getSettings, bump, notify, dayKey, rid, rangeStats, sumGroup, TOOLS, DEFAULTS, mailEnabled, sendMail, sendMailDetail, rateHit, secEvent, isProd, audit, weeklyCsv, makeBackup, restoreBackup, encryptBackup, decryptBackup, saveAutoBackup, bonusNow, perkInfo, weekKey, refBoard, awardRefMonthly, weekReport, lbScore, canPerk, aidOf, pickCreation, qHash, normQ, extractKeywords, feed, topCountries, publishHof, setCow, liveDoc } from "../lib/lib.mjs";
+import { planItems, VIP_OPTS, PERK_TYPES, TIMED_PERKS, BADGES, activePerks, perkSum, hasEarly, perkText, givePerk, awardBadge, addInbox, leaderboard, awardMonthly, monthKey, alertMail, externalBackup, extTargets, activeBlocks, findBlock, BLOCK_FEATURES, errorSpike, funnelOf, store, getSettings, bump, notify, dayKey, rid, rangeStats, sumGroup, TOOLS, DEFAULTS, mailEnabled, sendMail, sendMailDetail, lastBackupAge, rateHit, secEvent, isProd, audit, weeklyCsv, makeBackup, restoreBackup, encryptBackup, decryptBackup, saveAutoBackup, bonusNow, perkInfo, weekKey, refBoard, awardRefMonthly, weekReport, lbScore, canPerk, aidOf, pickCreation, qHash, normQ, extractKeywords, feed, topCountries, publishHof, setCow, liveDoc } from "../lib/lib.mjs";
 
 export const config = { path: "/api/*" };
 
@@ -266,7 +266,8 @@ const inner = async (req) => {
       const msgs = [];
       for (const { v } of (await st.scan("m/" + me.uid + "/", { desc: true, limit: 10 })).reverse()) { if (v && !v.read) msgs.push({ id: v.id, ts: v.ts, subject: v.subject, body: v.body }); }
       for (const { v } of (await st.scan("bc/", { desc: true, limit: 5 })).reverse()) { if (v && v.ts > (me.bcSeen || me.created || 0)) msgs.push({ id: v.id, ts: v.ts, subject: v.subject, body: v.body }); }
-      return J({ user: pub(me), blocked: !!me.blocked, quota: await quotaOf(me, S), countries: me.cset || [], perkOk: canPerk(me, S), challenge: S.challengeOn ? { n: S.challengeN, have: me.ch && me.ch.w === weekKey() ? me.ch.c.length : 0, done: !!(me.ch && me.ch.w === weekKey() && me.ch.done), reward: S.challengeReward } : null, early: hasEarly(me), streak: me.streak && me.streak.d >= dayKey(Date.now() - 864e5) ? me.streak.n : 0, pending, messages: msgs.sort((x, y) => x.ts - y.ts) });
+      const chT = await st.get("ch/" + me.uid);
+      return J({ user: pub(me), blocked: !!me.blocked, chatUnread: (chT && chT.uUnread) || 0, quota: await quotaOf(me, S), countries: me.cset || [], perkOk: canPerk(me, S), challenge: S.challengeOn ? { n: S.challengeN, have: me.ch && me.ch.w === weekKey() ? me.ch.c.length : 0, done: !!(me.ch && me.ch.w === weekKey() && me.ch.done), reward: S.challengeReward } : null, early: hasEarly(me), streak: me.streak && me.streak.d >= dayKey(Date.now() - 864e5) ? me.streak.n : 0, pending, messages: msgs.sort((x, y) => x.ts - y.ts) });
     }
 
     if (R === "POST me/redeem") {
@@ -410,6 +411,7 @@ const inner = async (req) => {
       if (me.role === "admin") { const all = await listAll("u/", 500, false); if (all.filter((x) => x.role === "admin" && !x.blocked).length < 2) return E(400, "אי אפשר למחוק את המנהל האחרון"); }
       for (const k of await st.list("p/" + me.uid + "/")) await st.delete(k);
       for (const k of await st.list("m/" + me.uid + "/")) await st.delete(k);
+      await st.delete("ch/" + me.uid);
       for (const g of await listAll("gl/", 500)) if (g.uid === me.uid) { for (const pre of ["gl/", "gt/", "gp/", "ga/"]) await st.delete(pre + g.id); }
       for (const id of me.dls || []) await st.delete("pp/" + id);
       for (const id of me.dls || []) { const d = await st.get("d/" + id); if (d) { d.uid = null; d.name = "(נמחק)"; await st.setJSON("d/" + id, d); } }
@@ -426,6 +428,28 @@ const inner = async (req) => {
     if (R === "POST me/prefs") {
       if (!me) return E(401, "נדרשת התחברות");
       const b = await body(req, 500); me.mailOk = b.mailOk !== false; await st.setJSON("u/" + me.uid, me);
+      return J({ ok: true });
+    }
+    // ---------- צ'אט פרטי משתמש ↔ מנהל ----------
+    if (R === "GET me/chat") {
+      if (!me) return E(401, "נדרשת התחברות");
+      const t = (await st.get("ch/" + me.uid)) || { msgs: [] };
+      if (url.searchParams.get("open") === "1" && t.uUnread) { t.uUnread = 0; await st.setJSON("ch/" + me.uid, t); }
+      return J({ msgs: (t.msgs || []).slice(-100), unread: t.uUnread || 0 }, 200, { "cache-control": "no-store" });
+    }
+    if (R === "POST me/chat") {
+      if (!me) return E(401, "נדרשת התחברות");
+      if (me.blocked) return E(403, "החשבון חסום");
+      const b = await body(req, 2000), text = String(b.text ?? "").replace(/[\u0000-\u0009\u000b-\u001f]/g, "").trim().slice(0, 600);
+      if (!text) return E(400, "כתבו הודעה");
+      if (await rateHit("chat:" + me.uid, 20, 600e3)) return E(429, "הרבה הודעות בבת אחת. נסו שוב בעוד כמה דקות");
+      const t = (await st.get("ch/" + me.uid)) || { uid: me.uid, msgs: [] };
+      t.uid = me.uid; t.name = me.name; t.email = me.email;
+      t.msgs = (t.msgs || []).concat([{ f: "u", t: text, ts: Date.now() }]).slice(-200);
+      t.aUnread = (t.aUnread || 0) + 1; t.updated = Date.now();
+      const needNotify = !t.lastNotify || Date.now() - t.lastNotify > 5 * 60e3; if (needNotify) t.lastNotify = Date.now();
+      await st.setJSON("ch/" + me.uid, t); globalThis.__att = null;
+      if (needNotify) await notify(`💬 הודעה חדשה בצ'אט\n${me.name} (${me.email})\n${text.slice(0, 200)}`);
       return J({ ok: true });
     }
     if (R === "POST me/read") {
@@ -1038,11 +1062,13 @@ const inner = async (req) => {
         } else return E(400, "בחרו למי לשלוח");
         if (!targets.length) return E(400, "אין משתמשים מתאימים");
         let mailed = 0;
+        let lastMid = "";
         for (const u of targets) {
-          await givePerk(st, u, perk);
+          lastMid = await givePerk(st, u, perk);
           if (b.mail && u.mailOk !== false && mailEnabled()) { if (await sendMail(u.email, "קיבלת הטבה 🎁", `שלום ${u.name},\n\n${perkText(perk)}${note ? "\n" + note : ""}\n\nבהצלחה ונתראה באתר!`)) mailed++; }
         }
         await audit(me, "perk:give", b.target + ":" + targets.length, perkText(perk));
+        { const pid = Date.now() + "-" + rid(2); await st.setJSON("pg/" + pid, { id: pid, ts: Date.now(), by: me.email, target: b.target, count: targets.length, text: perkText(perk), note, mailed, ...(targets.length === 1 ? { uid: targets[0].uid, name: targets[0].name, email: targets[0].email, mid: lastMid } : {}) }); }
         return J({ ok: true, count: targets.length, mailed });
       }
       if (R === "GET admin/promos") { await seedTrip5(st); return J({ items: await listAll("pc/", 200) }); }
@@ -1112,6 +1138,7 @@ const inner = async (req) => {
         try { const us = await listAll("u/", 500, false); add("admins", "יש לפחות מנהל אחד", us.some((u) => u.role === "admin"), us.length + " משתמשים רשומים"); } catch (x) { add("admins", "יש לפחות מנהל אחד", false, "שגיאה בקריאת משתמשים"); }
         add("subs", "מנויים", !S.subsOn || (S.subPlans || []).length > 0, S.subsOn ? (S.subPlans || []).length + " מסלולים פעילים באתר" : "כבויים (תדליק אותם בלשונית מנויים)", true);
         add("maint", "מצב תחזוקה כבוי", !S.maint, S.maint ? "מצב תחזוקה דלוק: הורדות חסומות למשתמשים" : "כבוי");
+        { let age = null; try { age = await lastBackupAge(); } catch {} add("bkfresh", "גיבוי פנימי עדכני", age !== null && age <= 7, age === null ? "אין עדיין גיבוי. לחצו על גיבוי עכשיו בלשונית גיבויים" : age <= 7 ? "הגיבוי האחרון לפני " + age + " ימים" : "הגיבוי האחרון בן " + age + " ימים"); }
         add("backup", "גיבוי חיצוני מוגדר", extTargets().length > 0, extTargets().length ? "יעדים: " + extTargets().join(", ") : "אין יעד חיצוני; יש גיבוי פנימי בלבד", true);
         await audit(me, "selftest", "", out.filter((x) => !x.ok).length + " לא תקין");
         return J({ ok: out.every((x) => x.ok || x.warn), checks: out, at: Date.now() });
@@ -1125,6 +1152,21 @@ const inner = async (req) => {
         if (e.RESEND_API_KEY && e.NOTIFY_EMAIL) await run("מייל התראות", () => fetch("https://api.resend.com/emails", { method: "POST", headers: { "content-type": "application/json", authorization: "Bearer " + e.RESEND_API_KEY }, body: JSON.stringify({ from: e.FROM_EMAIL || "onboarding@resend.dev", to: [e.NOTIFY_EMAIL], subject: "בדיקת התראות", text }) }));
         await audit(me, "notify:test", "", res.map((x) => x.name + ":" + (x.ok ? "ok" : "fail")).join(","));
         return J({ ok: res.length > 0 && res.every((x) => x.ok), results: res, none: res.length === 0 });
+      }
+      if (R === "GET admin/perk-log") {
+        const only = clean(url.searchParams.get("uid") || "", 20);
+        let items = (await st.scan("pg/", { desc: true, limit: 150 })).map((x) => x.v).filter(Boolean);
+        if (only) items = items.filter((x) => x.uid === only);
+        for (const it of items) { if (it.uid && it.mid) { const m = await st.get("m/" + it.uid + "/" + it.mid); it.seen = m ? !!m.read : null; } }
+        return J({ items: items.slice(0, 80) });
+      }
+      if (R === "POST admin/perk-resend") {
+        const it = await st.get("pg/" + clean((await body(req, 200)).id, 40));
+        if (!it || !it.uid) return E(404, "אפשר לשלוח שוב רק הטבה שנשלחה למשתמש אחד");
+        const u = await st.get("u/" + it.uid); if (!u) return E(404, "המשתמש לא קיים");
+        it.mid = await addInbox(st, u.uid, "תזכורת: קיבלת הטבה 🎁", `${it.text}${it.note ? "\\n" + it.note : ""}\\n\\nההטבה כבר פעילה בחשבון שלכם ('החשבון שלי').`);
+        it.resent = (it.resent || 0) + 1; await st.setJSON("pg/" + it.id, it); await audit(me, "perk:resend", u.email, it.text);
+        return J({ ok: true });
       }
       if (R === "POST admin/test-mail") {
         const b = await body(req, 400), to = clean(b.to || me.email, 120).toLowerCase();
@@ -1297,12 +1339,38 @@ const inner = async (req) => {
         const tok = await makeToken(u.uid, "reset", 24 * 3600e3); await audit(me, "user:resetlink", u.email);
         return J({ link: siteUrl(req) + "/#reset=" + tok });
       }
+      if (R === "GET admin/chats") {
+        const th = (await st.scan("ch/", { limit: 300 })).map((x) => x.v).filter(Boolean).sort((a, b) => (b.updated || 0) - (a.updated || 0));
+        return J({ items: th.map((t) => ({ uid: t.uid, name: t.name, email: t.email, updated: t.updated || 0, unread: t.aUnread || 0, last: (t.msgs || []).slice(-1)[0] || null, n: (t.msgs || []).length })) });
+      }
+      if (R === "GET admin/chat") {
+        const uid = clean(url.searchParams.get("uid"), 20), t = await st.get("ch/" + uid);
+        if (!t) return J({ msgs: [], name: "", email: "" });
+        if (t.aUnread) { t.aUnread = 0; await st.setJSON("ch/" + uid, t); globalThis.__att = null; }
+        return J({ msgs: (t.msgs || []).slice(-150), name: t.name, email: t.email, uid });
+      }
+      if (R === "POST admin/chat") {
+        const b = await body(req, 3000), uid = clean(b.uid, 20), u = await st.get("u/" + uid);
+        if (!u) return E(404, "משתמש לא נמצא");
+        if (b.action === "delete") { await st.delete("ch/" + uid); globalThis.__att = null; await audit(me, "chat:delete", u.email); return J({ ok: true }); }
+        const text = String(b.text ?? "").replace(/[\u0000-\u0009\u000b-\u001f]/g, "").trim().slice(0, 1000);
+        if (!text) return E(400, "כתבו הודעה");
+        const t = (await st.get("ch/" + uid)) || { uid, name: u.name, email: u.email, msgs: [] };
+        t.msgs = (t.msgs || []).concat([{ f: "a", t: text, ts: Date.now() }]).slice(-200);
+        t.uUnread = (t.uUnread || 0) + 1; t.updated = Date.now(); t.aUnread = 0;
+        let mailed = false;
+        if (u.mailOk !== false && mailEnabled() && (!t.lastMail || Date.now() - t.lastMail > 3600e3)) { t.lastMail = Date.now(); mailed = await sendMail(u.email, "הודעה חדשה מהמנהל 💬", `שלום ${u.name},\n\nקיבלת הודעה חדשה מהמנהל באתר:\n\n${text.slice(0, 300)}\n\nלהמשך השיחה היכנסו לחשבון ← 'צ׳אט עם המנהל'.`); }
+        await st.setJSON("ch/" + uid, t); globalThis.__att = null;
+        await audit(me, "chat:reply", u.email, text.slice(0, 60));
+        return J({ ok: true, mailed });
+      }
       if (R === "GET admin/attention") {
         const now = Date.now();
         if (globalThis.__att && now - globalThis.__att.t < 30e3) return J(globalThis.__att.v);
         const rs = await listAll("r/", 100), gl = await listAll("gl/", 300), us = (await st.scan("u/", { limit: 600 })).map((x) => x.v).filter(Boolean);
         const misses = (await st.scan("bm/", { limit: 300 })).filter((x) => x.v).length;
-        const v = { gallery: gl.filter((g) => g.status === "pending").length, reports: rs.filter((r) => r.status === "open" && r.type !== "reset" && r.page !== "bot").length, resets: rs.filter((r) => r.status === "open" && r.type === "reset").length, suspects: us.filter((u) => u.sus && !u.trusted).length, misses };
+        const chats = (await st.scan("ch/", { limit: 300 })).filter((x) => x.v && x.v.aUnread > 0).length;
+        const v = { chats, gallery: gl.filter((g) => g.status === "pending").length, reports: rs.filter((r) => r.status === "open" && r.type !== "reset" && r.page !== "bot").length, resets: rs.filter((r) => r.status === "open" && r.type === "reset").length, suspects: us.filter((u) => u.sus && !u.trusted).length, misses };
         globalThis.__att = { t: now, v }; return J(v);
       }
       if (R === "GET admin/feed") return J({ items: (await st.scan("fe/", { desc: true, limit: 60 })).map((x) => x.v).filter(Boolean) });
@@ -1320,13 +1388,15 @@ const inner = async (req) => {
       }
       if (R === "GET admin/search") {
         const q = clean(url.searchParams.get("q"), 60).toLowerCase();
-        if (q.length < 2) return J({ users: [], promos: [], reports: [], gallery: [] });
+        if (q.length < 2) return J({ users: [], promos: [], reports: [], gallery: [], chats: [], perks: [] });
         const has = (...a) => a.some((x) => String(x || "").toLowerCase().includes(q));
         const users = (await listAll("u/", 500, false)).filter((u) => has(u.email, u.name, u.uid, u.note)).slice(0, 15).map((u) => ({ uid: u.uid, name: u.name, email: u.email }));
         const promos = (await listAll("pc/", 200, false)).filter((c) => has(c.code, c.note)).slice(0, 10).map((c) => ({ code: c.code, note: c.note || "" }));
         const reports = (await listAll("r/", 200)).filter((r) => has(r.message, r.name, r.email)).slice(0, 10).map((r) => ({ id: r.id, status: r.status, text: String(r.message || "").slice(0, 100) }));
         const gallery = (await listAll("gl/", 200)).filter((g) => has(g.name, g.country, g.desc)).slice(0, 10).map((g) => ({ id: g.id, name: g.name, status: g.status }));
-        return J({ users, promos, reports, gallery });
+        const chats = (await st.scan("ch/", { limit: 300 })).map((x) => x.v).filter(Boolean).filter((t) => has(t.name, t.email) || (t.msgs || []).some((m) => has(m.t))).slice(0, 10).map((t) => ({ uid: t.uid, name: t.name, email: t.email, text: String(((t.msgs || []).slice(-1)[0] || {}).t || "").slice(0, 80) }));
+        const perks = (await st.scan("pg/", { desc: true, limit: 150 })).map((x) => x.v).filter(Boolean).filter((x) => has(x.text, x.note, x.email, x.name)).slice(0, 8).map((x) => ({ id: x.id, text: x.text, who: x.email || (x.count + " משתמשים"), ts: x.ts }));
+        return J({ users, promos, reports, gallery, chats, perks });
       }
       if (R === "GET admin/setup-check") {
         const e = process.env, ok = (v) => !!v;

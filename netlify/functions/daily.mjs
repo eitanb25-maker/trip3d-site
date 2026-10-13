@@ -1,8 +1,13 @@
 // גיבוי יומי מוצפן: נשמר באחסון האתר, ואם הוגדר – גם ב-Dropbox / Webhook
-import { saveAutoBackup, externalBackup, extTargets, store, alertMail, awardMonthly, awardRefMonthly, cleanupOld, dayKey, monthKey } from "../lib/lib.mjs";
+import { saveAutoBackup, externalBackup, extTargets, store, alertMail, awardMonthly, awardRefMonthly, cleanupOld, dayKey, monthKey, subReminders, dailyHealth, notify } from "../lib/lib.mjs";
 
 export default async () => {
   try { const c = await cleanupOld(); if (Object.values(c).some(Boolean)) console.log("cleanup", JSON.stringify(c)); } catch (e) { console.error("cleanup failed", e); }
+  try { const n = await subReminders(); if (n) console.log("sub reminders", n); } catch (e) { console.error("sub reminders failed", e); }
+  try {
+    const st1 = await store(), set1 = (await st1.get("settings")) || {};
+    if (set1.dailyCheck !== false) { const bad = await dailyHealth(); if (bad.length) await notify("🩺 בדיקת בריאות יומית: נמצאו בעיות\n• " + bad.join("\n• ") + "\n\nפרטים בלוח הבקרה ← בדיקות."); }
+  } catch (e) { console.error("daily health failed", e); }
   try {
     // ביום הראשון בחודש: פרסים אוטומטיים למובילי החודש שהסתיים
     const st0 = await store(), set0 = (await st0.get("settings")) || {};
