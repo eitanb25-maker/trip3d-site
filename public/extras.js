@@ -30,17 +30,24 @@
 
   function init() {
     var css = document.createElement("style");
-    css.textContent = "#exb{position:fixed;bottom:14px;" + (en() ? "left" : "right") + ":14px;z-index:54;display:flex;flex-direction:column;gap:8px;align-items:center}" +
+    css.textContent = "#exb{position:fixed;bottom:64px;right:14px;z-index:54;display:flex;flex-direction:column;gap:8px;align-items:center}" +
       "#exb button{width:40px;height:40px;border-radius:50%;border:1px solid var(--bd,#ddd);background:var(--card,#fff);color:var(--tx,#1d1d1b);font-size:18px;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.18);line-height:1;padding:0}" +
       "#exb button:hover{transform:scale(1.08)}#exb button:focus-visible{outline:3px solid var(--ac,#ea580c);outline-offset:2px}" +
       "#tourbg{position:fixed;inset:0;z-index:2147483100;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px}" +
       "#tourc{background:var(--card,#fff);color:var(--tx,#1d1d1b);border-radius:18px;max-width:380px;width:100%;padding:22px 22px 16px;box-shadow:0 20px 60px rgba(0,0,0,.45);font:15px/1.6 system-ui,'Segoe UI',Arial,sans-serif}" +
-      "#tourc h3{margin:0 0 6px;font-size:19px}#tourc .tn{display:flex;gap:8px;margin-top:14px;align-items:center}#tourc .tn span{flex:1;color:var(--mu,#777);font-size:13px}" +
-      "#tourc button{border:0;border-radius:10px;padding:9px 16px;font:700 14px inherit;cursor:pointer}#tourc .go{background:var(--ac,#ea580c);color:#fff}#tourc .sk{background:transparent;color:var(--mu,#777)}" +
-      "@media(max-width:600px){#exb{bottom:70px}}";
+      "#tourc h3{margin:0 0 6px;font-size:19px}#tourc .tn{display:flex;gap:8px;margin-top:14px;align-items:center}#tourc .tn span{flex:1;color:var(--mu,#777);font-size:13px;text-align:center;white-space:nowrap}" +
+      "#tourc button{border:0;border-radius:10px;padding:9px 16px;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer}#tourc .go{background:var(--ac,#ea580c);color:#fff}#tourc .sk{background:transparent;color:var(--mu,#777)}" +
+      "#exMore{display:none}" +
+      "@media(max-width:600px){#exMore{display:block!important}#exb button{width:36px;height:36px;font-size:16px}#exb button:not(#exMore){display:none}#exb.open button:not(#exMore){display:block}#home h1{margin-top:38px}}";
+    css.textContent += "#gtab{z-index:28!important}#bl{bottom:calc(max(12px,env(safe-area-inset-bottom,0px)) + var(--ckh,0px))!important}#adbtn{bottom:calc(12px + var(--ckh,0px))!important}#exb{bottom:calc(" + (en() ? 14 : 64) + "px + var(--ckh,0px))!important}";
     document.head.appendChild(css);
+    // מרים את הכפתורים הצפים מעל הודעת העוגיות, כדי שלא יסתירו אותה
+    setInterval(function () { var c = document.getElementById("ckn"), v = c ? c.offsetHeight + 8 : 0; if (v !== window.__ckh) { window.__ckh = v; document.documentElement.style.setProperty("--ckh", v + "px"); } }, 700);
     var box = document.createElement("div"); box.id = "exb"; document.body.appendChild(box);
-    function btn(id, ic, label, fn) { var b = document.createElement("button"); b.type = "button"; b.id = id; b.textContent = ic; b.title = label; b.setAttribute("aria-label", label); b.onclick = fn; box.appendChild(b); return b; }
+    var more = document.createElement("button"); more.type = "button"; more.id = "exMore"; more.textContent = "⋯"; more.title = T("עוד", "More"); more.setAttribute("aria-label", T("עוד כפתורים", "More buttons")); more.setAttribute("aria-expanded", "false");
+    more.onclick = function () { var o = box.classList.toggle("open"); more.setAttribute("aria-expanded", o ? "true" : "false"); more.textContent = o ? "✕" : "⋯"; };
+    box.appendChild(more);
+    function btn(id, ic, label, fn) { var b = document.createElement("button"); b.type = "button"; b.id = id; b.textContent = ic; b.title = label; b.setAttribute("aria-label", label); b.onclick = fn; box.insertBefore(b, more); return b; }
 
     try {
       var tb = btn("exTheme", curTheme() === "dark" ? "☀️" : "🌙", T("מצב כהה/בהיר", "Dark / light mode"), function () {
@@ -116,5 +123,20 @@
       }).catch(function () {});
     } catch (e) {}
   }
+  // ----- נגישות: שם נגיש לשדות וכפתורים שאין להם (קוראי מסך) -----
+  var NAMES = { d1: ["תאריך התחלת הטיול", "Trip start date"], d2: ["תאריך סיום הטיול", "Trip end date"], gj: ["בחירת קובץ GeoJSON", "Choose a GeoJSON file"], wf: ["בחירת קובץ GeoJSON", "Choose a GeoJSON file"], wimg: ["בחירת תמונה", "Choose an image"], rimg: ["בחירת תמונה", "Choose an image"], impf: ["בחירת קובץ מקומות לייבוא", "Choose a places file to import"], dci: ["כתיבת תגובה", "Write a comment"] };
+  function a11y() {
+    try {
+      document.querySelectorAll("input,select,textarea,button").forEach(function (e) {
+        if (e.getAttribute("aria-label") || e.getAttribute("aria-labelledby") || (e.labels && e.labels.length) || e.closest("label")) return;
+        if (e.tagName === "BUTTON" && (e.textContent || "").trim()) return;
+        var n = NAMES[e.id] ? T(NAMES[e.id][0], NAMES[e.id][1]) : e.title || e.placeholder || "";
+        if (n) e.setAttribute("aria-label", n);
+      });
+    } catch (er) {}
+  }
+  var at = 0; function soon() { clearTimeout(at); at = setTimeout(a11y, 400); }
+  document.addEventListener("click", soon, true); document.addEventListener("change", soon, true);
+  setTimeout(a11y, 2500);
   if (document.body) init(); else document.addEventListener("DOMContentLoaded", init);
 })();
