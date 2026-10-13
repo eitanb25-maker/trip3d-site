@@ -1653,11 +1653,12 @@ const inner = async (req) => {
       if (R === "DELETE admin/bot-miss") { const k = clean(url.searchParams.get("key"), 40); if (k.startsWith("bm/")) await st.delete(k); globalThis.__att = null; return J({ ok: true }); }
       // ---------- סטודיו הבוט ----------
       if (R === "GET admin/bot-log") {
-        const qs = clean(url.searchParams.get("q"), 60).toLowerCase(), uid = clean(url.searchParams.get("uid"), 24), src = clean(url.searchParams.get("src"), 10), reg = url.searchParams.get("reg") === "1";
+        const qs = clean(url.searchParams.get("q"), 60).toLowerCase(), uid = clean(url.searchParams.get("uid"), 24), src = clean(url.searchParams.get("src"), 10), lg = clean(url.searchParams.get("lang"), 3), reg = url.searchParams.get("reg") === "1";
         let items = (await st.scan("bl/", { desc: true, limit: 800 })).map((x) => x.v && { key: x.k, ...x.v }).filter(Boolean);
         if (uid) items = items.filter((x) => x.uid === uid);
         if (reg) items = items.filter((x) => x.uid);
         if (src) items = items.filter((x) => x.src === src);
+        if (lg) items = items.filter((x) => (x.lang || "he") === lg);
         if (qs) items = items.filter((x) => (x.q + " " + (x.a || "") + " " + (x.name || "")).toLowerCase().includes(qs));
         return J({ items: items.slice(0, 250), total: items.length });
       }
@@ -1675,14 +1676,14 @@ const inner = async (req) => {
       if (R === "GET admin/bot-stats") {
         const logs = (await st.scan("bl/", { desc: true, limit: 2000 })).map((x) => x.v).filter(Boolean), now = Date.now();
         const agg = (from) => {
-          const a = logs.filter((x) => x.ts >= from), bySrc = {}, users = new Set(), qs = new Map(), tp = new Map();
+          const a = logs.filter((x) => x.ts >= from), bySrc = {}, byLang = {}, users = new Set(), qs = new Map(), tp = new Map();
           for (const x of a) {
-            bySrc[x.src] = (bySrc[x.src] || 0) + 1; if (x.uid) users.add(x.uid);
+            bySrc[x.src] = (bySrc[x.src] || 0) + 1; { const l = x.lang || "he"; const o = byLang[l] || (byLang[l] = { n: 0, miss: 0 }); o.n++; if (x.src === "miss") o.miss++; } if (x.uid) users.add(x.uid);
             const n = normQ(x.q); if (n) { const e = qs.get(n) || { q: x.q, n: 0, src: x.src }; e.n++; qs.set(n, e); }
             if (x.t) tp.set(x.t, (tp.get(x.t) || 0) + 1);
           }
           const miss = bySrc.miss || 0;
-          return { total: a.length, miss, answered: a.length - miss, bySrc, users: users.size, top: [...qs.values()].sort((p, q) => q.n - p.n).slice(0, 15), topics: [...tp.entries()].sort((p, q) => q[1] - p[1]).slice(0, 12).map(([t, n]) => ({ t, n })) };
+          return { total: a.length, miss, answered: a.length - miss, bySrc, byLang, users: users.size, top: [...qs.values()].sort((p, q) => q.n - p.n).slice(0, 15), topics: [...tp.entries()].sort((p, q) => q[1] - p[1]).slice(0, 12).map(([t, n]) => ({ t, n })) };
         };
         const perDay = []; for (let i = 13; i >= 0; i--) { const d = dayKey(now - i * 864e5); perDay.push({ d, n: logs.filter((x) => dayKey(x.ts) === d).length }); }
         const kbN = (await st.list("kb/")).length;

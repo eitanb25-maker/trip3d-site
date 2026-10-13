@@ -102,6 +102,7 @@ const BE=window.BotEngine;
 const SRC={kb:["מאגר מובנה",""],custom:["תשובה שלימדת","ok"],ai:["AI",""],miss:["לא ידע","bad"],small:["שיחת חולין",""]};
 const VIA={direct:"התאמה ישירה",syn:"דרך מילים נרדפות",typo:"אחרי תיקון כתיב",context:"לפי השאלה הקודמת",none:"אין התאמה"};
 let ME=null,RO=true,TAB="סקירה",ST={kb:[],misses:[],syn:[]},PREFILL=null,LOGUID="";
+const LANGN={he:"עברית",en:"English",ar:"العربية",ru:"Русский",es:"Español"};
 const TABS=["סקירה","שיחות","ידע","אוצר מילים","AI","מגרש משחקים"];
 const THEMES=[["auto","🌓 אוטומטי"],["light","☀️ בהיר"],["dark","🌙 כהה"]];
 function applyTheme(){let t="auto";try{t=localStorage.adm_theme||"auto"}catch(e){}if(t=="auto")document.documentElement.removeAttribute("data-theme");else document.documentElement.setAttribute("data-theme",t);const b=$("thm");if(b)b.textContent=(THEMES.find(x=>x[0]==t)||THEMES[0])[1]}
@@ -132,6 +133,7 @@ async function vStats(){
  m.replaceChildren(
   h("div",{cls:"kpis"},kp(w.total,"הודעות ב-7 ימים"),kp(pc,"נענו (ללא 'לא ידע')"),kp(w.miss,"לא נענו","שאלות שהבוט לא הצליח לענות עליהן"),kp(w.users,"משתמשים רשומים ששאלו"),kp(s.d30.total,"הודעות ב-30 ימים")),
   h("div",{cls:"card"},h("h2",{text:"הודעות ב-14 הימים האחרונים"}),h("div",{cls:"bars"},s.perDay.map(x=>{const d=h("div",{title:x.d+": "+x.n,cls:x.n?"":"z"});d.style.height=Math.max(2,Math.round(100*x.n/mx))+"%";return d})),h("div",{cls:"bars-l"},s.perDay.map(x=>h("span",{text:x.d.slice(8)}))),s.sampled?h("p",{cls:"muted sm",text:"הנתונים מבוססים על 2000 ההודעות האחרונות."}):""),
+  h("div",{cls:"card"},h("h2",{text:"🌐 שפות (7 ימים)"}),Object.keys(w.byLang||{}).length?h("table",{},h("thead",{},h("tr",{},["שפה","הודעות","לא נענו","אחוז מענה"].map(x=>h("th",{text:x})))),h("tbody",{},Object.entries(w.byLang).sort((a,b)=>b[1].n-a[1].n).map(([l,o])=>h("tr",{},h("td",{text:LANGN[l]||l}),h("td",{text:o.n}),h("td",{text:o.miss}),h("td",{text:Math.round(100*(o.n-o.miss)/o.n)+"%"}))))):h("p",{cls:"muted",text:"אין עדיין שיחות."})),
   h("div",{cls:"grid2"},
    h("div",{cls:"card"},h("h2",{text:"מי ענה (7 ימים)"}),srcRows.length?h("table",{},h("tbody",{},srcRows)):h("p",{cls:"muted",text:"עדיין אין שיחות. הן יתחילו להישמר ברגע שמשתמשים ישאלו את הבוט."})),
    h("div",{cls:"card"},h("h2",{text:"המוח של הבוט"}),h("table",{},h("tbody",{},
@@ -143,19 +145,19 @@ async function vStats(){
 // ================= שיחות =================
 async function vLogs(){
  const m=$("main"),pre=PREFILL;PREFILL=null;
- const q=h("input",{type:"search",placeholder:"חיפוש בשאלות, בתשובות ובשמות…",style:"flex:1;min-width:200px"}),sr=h("select",{},h("option",{value:"",text:"כל המקורות"}),...Object.entries(SRC).map(([k,v])=>h("option",{value:k,text:v[0]}))),rg=h("input",{type:"checkbox"}),list=h("div"),cnt=h("span",{cls:"muted"});
- const load=async()=>{const p=new URLSearchParams();if(q.value)p.set("q",q.value);if(sr.value)p.set("src",sr.value);if(rg.checked)p.set("reg","1");if(LOGUID)p.set("uid",LOGUID);
+ const q=h("input",{type:"search",placeholder:"חיפוש בשאלות, בתשובות ובשמות…",style:"flex:1;min-width:200px"}),sr=h("select",{},h("option",{value:"",text:"כל המקורות"}),...Object.entries(SRC).map(([k,v])=>h("option",{value:k,text:v[0]}))),lgs=h("select",{},h("option",{value:"",text:"כל השפות"}),...Object.entries(LANGN).map(([k,v])=>h("option",{value:k,text:v}))),rg=h("input",{type:"checkbox"}),list=h("div"),cnt=h("span",{cls:"muted"});
+ const load=async()=>{const p=new URLSearchParams();if(q.value)p.set("q",q.value);if(sr.value)p.set("src",sr.value);if(lgs.value)p.set("lang",lgs.value);if(rg.checked)p.set("reg","1");if(LOGUID)p.set("uid",LOGUID);
   const d=await api("GET","/admin/bot-log?"+p);cnt.textContent=d.total+" הודעות"+(d.total>d.items.length?" (מוצגות "+d.items.length+")":"");
   list.replaceChildren(...(d.items.length?d.items.map(row):[h("p",{cls:"muted",text:"אין הודעות שמתאימות. שיחות נשמרות מרגע שהעדכון עלה, ונמחקות אחרי כ-45 יום."})]))};
  const row=x=>{const tf=h("div");const who=x.uid?h("a",{href:"#",style:"color:var(--ac);font-weight:700",title:"כל השיחות של המשתמש",text:x.name||"משתמש",on:{click:e=>{e.preventDefault();LOGUID=x.uid;render()}}}):h("span",{cls:"muted",text:"אורח"});
   return h("div",{cls:"card",style:"background:var(--bg)"},h("div",{cls:"row",style:"margin:0 0 6px"},who,h("span",{cls:"muted sm",text:fmt(x.ts)+" · "+({en:"EN",ar:"AR",ru:"RU",es:"ES"}[x.lang]||"עב")}),tag(x.src),x.t?h("span",{cls:"tag",text:x.t}):"",
    h("span",{style:"margin-inline-start:auto;display:flex;gap:6px"},h("button",{text:"✏️ למד/תקן תשובה",disabled:RO,on:{click:()=>{tf.replaceChildren(tf.firstChild?"":teachForm(x.q,()=>{}))}}}),h("button",{text:"🧪 במגרש",on:{click:()=>go("מגרש משחקים",{q:x.q})}}),h("button",{cls:"bad",text:"מחק",disabled:RO,on:{click:async()=>{await api("DELETE","/admin/bot-log?key="+encodeURIComponent(x.key));load()}}}))),
    h("div",{cls:"bub q",text:x.q}),x.a?h("div",{cls:"bub a",style:"margin-top:6px",text:x.a}):h("div",{cls:"muted sm",style:"margin-top:6px",text:x.src=="miss"?"הבוט לא ידע לענות.":""}),tf)};
- [q,sr,rg].forEach(e=>e.addEventListener(e===q?"input":"change",()=>{clearTimeout(window.__t);window.__t=setTimeout(load,e===q?300:0)}));
+ [q,sr,lgs,rg].forEach(e=>e.addEventListener(e===q?"input":"change",()=>{clearTimeout(window.__t);window.__t=setTimeout(load,e===q?300:0)}));
  const who=LOGUID?h("div",{cls:"row"},h("span",{cls:"tag",text:"מסונן לפי משתמש"}),h("button",{text:"הצג את כולם",on:{click:()=>{LOGUID="";render()}}}),h("button",{cls:"bad",text:"מחק את כל השיחות של המשתמש",disabled:RO,on:{click:async()=>{if(!confirm("למחוק את כל השיחות של המשתמש הזה עם הבוט?"))return;await api("DELETE","/admin/bot-log?uid="+encodeURIComponent(LOGUID));LOGUID="";render()}}})):"";
  const del=h("button",{cls:"bad",text:"🗑 מחק את כל ההיסטוריה",disabled:RO,on:{click:async()=>{if(del.dataset.s!="1"){del.dataset.s="1";del.textContent="לחצו שוב לאישור המחיקה";setTimeout(()=>{del.dataset.s="";del.textContent="🗑 מחק את כל ההיסטוריה"},4000);return}await api("DELETE","/admin/bot-log?all=1");render()}}});
  const pf=pre&&pre.teach?h("div",{cls:"card",style:"border-color:var(--ac)"},h("h2",{text:"לימוד תשובה חדשה"}),teachForm(pre.teach,()=>{})):"";
- m.replaceChildren(pf,h("div",{cls:"card"},h("h2",{text:"💬 שיחות – מי כתב לבוט ומה הוא ענה"}),h("p",{cls:"muted",text:"כל הודעה שנשלחת לבוט נשמרת כאן (עד כ-45 יום) עם שם המשתמש אם הוא מחובר. אפשר ללמד את הבוט תשובה נכונה לכל שאלה, או לבדוק אותה במגרש."}),who,h("div",{cls:"row"},q,sr,h("label",{cls:"row",style:"margin:0"},rg,"רק רשומים"),cnt,del),list));
+ m.replaceChildren(pf,h("div",{cls:"card"},h("h2",{text:"💬 שיחות – מי כתב לבוט ומה הוא ענה"}),h("p",{cls:"muted",text:"כל הודעה שנשלחת לבוט נשמרת כאן (עד כ-45 יום) עם שם המשתמש אם הוא מחובר. אפשר ללמד את הבוט תשובה נכונה לכל שאלה, או לבדוק אותה במגרש."}),who,h("div",{cls:"row"},q,sr,lgs,h("label",{cls:"row",style:"margin:0"},rg,"רק רשומים"),cnt,del),list));
  await load()}
 
 // ================= ידע =================
@@ -176,6 +178,12 @@ async function vKnow(){
   h("div",{cls:"card"},h("h2",{text:"📚 הידע המובנה ("+BE.KB.length+")"}),h("p",{cls:"muted",text:"כל מה שהבוט יודע מראש. אפשר לחפש, ולתקן תשובה בכפתור 'ענה אחרת'."}),bq,h("div",{cls:"row"},bc),bl))}
 
 // ================= אוצר מילים =================
+function covCard(){
+ const tp=e=>String(e[0]).split(",")[0].replace(/^=/,"").trim(),rows=BE.KB.map(e=>({t:tp(e),he:e[1],ml:BE.ML&&BE.ML[tp(e)]||{}})),L=["ar","ru","es"];
+ const have=l=>rows.filter(r=>r.ml[l]).length,miss=rows.filter(r=>!L.every(l=>r.ml[l]));
+ return h("div",{cls:"card"},h("h2",{text:"🌍 כיסוי שפות"}),h("p",{cls:"muted",text:"לכל נושא בבוט יש תשובה בעברית ובאנגלית. כאן רואים כמה מהם מתורגמים גם לערבית, רוסית וספרדית (נושא בלי תרגום נענה באנגלית, ולא נמצא כשכותבים בשפה אחרת)."}),
+  h("div",{cls:"row"},...L.map(l=>h("span",{cls:"tag ok",text:LANGN[l]+": "+have(l)+" / "+rows.length}))),
+  h("details",{},h("summary",{text:"נושאים בלי תרגום מלא ("+miss.length+")",style:"cursor:pointer;font-weight:700;margin-top:8px"}),h("div",{cls:"sm",style:"margin-top:6px"},miss.map(r=>h("div",{style:"padding:3px 0;border-bottom:1px solid var(--bd)"},h("b",{text:r.t+": "}),(r.he||"").slice(0,90))))))}
 async function vVocab(){
  const m=$("main"),pre=PREFILL;PREFILL=null;let rows=ST.syn.map(x=>[x[0],x[1]]);
  const box=h("div"),msg=h("span",{cls:"muted"});
@@ -191,6 +199,7 @@ async function vVocab(){
  const bsyn=BE.SYN.map(([c,v])=>h("div",{cls:"sm",style:"padding:4px 0;border-bottom:1px solid var(--bd)"},h("b",{text:c+": "}),v.split(",").slice(0,12).join(" · ")));
  m.replaceChildren(
   h("div",{cls:"card"},h("h2",{text:"🔤 אוצר המילים שלך"}),h("p",{cls:"muted",text:"כאן מלמדים את הבוט שמילים שונות הן אותו דבר. למשל: המילה העיקרית 'להוריד' ונרדפות 'לשמור, לקבל את הקובץ, דאונלוד'. הבוט כבר מתקן שגיאות כתיב לבד, אז הוסיפו בעיקר סלנג ומילים אחרות באמת."}),box,h("div",{cls:"row"},h("button",{text:"➕ קבוצה חדשה",disabled:RO,on:{click:()=>{rows.push(["",""]);draw()}}}),save,msg)),
+  covCard(),
   h("div",{cls:"card"},h("h2",{text:"🧪 בדיקה מהירה"}),t,to),
   sug.length?h("div",{cls:"card"},h("h2",{text:"💡 מילים שחוזרות בשאלות שהבוט לא הבין"}),h("p",{cls:"muted",text:"אולי כדאי להוסיף אותן כמילה נרדפת למשהו שהבוט כבר מכיר, או ללמד תשובה."}),h("div",{cls:"row"},sug.map(([w,n])=>h("button",{text:w+" · "+n,disabled:RO,on:{click:()=>{rows.unshift(["",w]);draw();window.scrollTo(0,0)}}})))):"",
   h("details",{cls:"card"},h("summary",{text:"📖 אוצר המילים המובנה ("+BE.SYN.length+" קבוצות)",style:"cursor:pointer;font-weight:700"}),h("div",{style:"margin-top:8px"},bsyn)))}
