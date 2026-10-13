@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex">
+<title>בדיקת תקינות המערכת</title>
+<style>body{font:16px/1.6 system-ui,"Segoe UI",Arial,sans-serif;max-width:720px;margin:30px auto;padding:0 18px;color:#1d1d1b}li{margin:8px 0;list-style:none}.ok{color:#166534}.bad{color:#b91c1c}.opt{color:#6b6a64}small{display:block;color:#6b6a64}code{background:#eee;padding:1px 6px;border-radius:5px}@media(prefers-color-scheme:dark){body{background:#171716;color:#eeede8}code{background:#333}}a{color:#c2410c}</style></head><body>
+<p><a href="/">← חזרה לאתר</a></p><h1>בדיקת תקינות המערכת</h1><p id="top">בודק…</p><ul id="l" style="padding:0"></ul>
+<script>
+const rows=[
+ ["api","השרת (Netlify Functions) פעיל","אם זה אדום: האתר כנראה הועלה בגרירה ולא דרך GitHub / Netlify CLI. ראו README."],
+ ["storage","אחסון הנתונים (Netlify Blobs) עובד","בדקו ב-Netlify: Logs ← Functions. ודאו שהאתר נפרס מ-Git עם package.json, ושהפריסה האחרונה הצליחה."],
+ ["secret","SESSION_SECRET מוגדר (לפחות 16 תווים)","Site configuration ← Environment variables, ואז Trigger deploy."],
+ ["adminEmail","ADMIN_EMAIL מוגדר","המייל שיהפוך למנהל."],
+ ["setupCode","ADMIN_SETUP_CODE מוגדר","קוד הקמה סודי. הוא נחוץ ליצירת המנהל הראשון."],
+ ["hasAdmin","קיים חשבון מנהל","הירשמו עם המייל של ADMIN_EMAIL וקוד ההקמה, או היכנסו ולחצו 'יש לי קוד הקמה' בחלון החשבון."],
+ ["siteUrl","SITE_URL מוגדר (מומלץ)","משמש בקישורים שבמיילים.",true],
+ ["mail","שליחת מיילים מוגדרת (RESEND_API_KEY + FROM_EMAIL)","נדרש לאימות מייל ולאיפוס סיסמה אוטומטי.",true],
+ ["google","התחברות עם Google מוגדרת","אופציונלי.",true],
+ ["telegram","התראות בטלגרם","אופציונלי.",true],
+ ["discord","התראות בדיסקורד","אופציונלי.",true]];
+fetch("/api/health").then(async r=>{const ct=r.headers.get("content-type")||"";if(!ct.includes("json"))throw 0;return r.json()}).catch(()=>null).then(h=>{
+ const ul=document.getElementById("l");let bad=0;
+ if(!h){document.getElementById("top").textContent="❌ השרת לא עונה";const li=document.createElement("li");li.className="bad";li.textContent="❌ "+rows[0][1];const s=document.createElement("small");s.textContent=rows[0][2];li.append(s);ul.append(li);return}
+ h.api=true;
+ rows.forEach(([k,t,hint,opt])=>{const good=!!h[k],li=document.createElement("li");li.className=good?"ok":(opt?"opt":"bad");if(!good&&!opt)bad++;li.textContent=(good?"✅ ":(opt?"➖ ":"❌ "))+t;if(!good){const s=document.createElement("small");s.textContent=hint+(k=="storage"&&h.storageError?" (שגיאה: "+h.storageError+")":"");li.append(s)}ul.append(li)});
+ document.getElementById("top").textContent=bad?"נמצאו "+bad+" דברים לתיקון:":"✅ הכול תקין. משתמשים רשומים: "+h.users;
+});
+</script></body></html>

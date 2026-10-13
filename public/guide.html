@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>מדריך הדפסה</title><style>body{font:16px/1.7 system-ui,"Segoe UI",Arial,sans-serif;max-width:780px;margin:30px auto;padding:0 18px;color:#1d1d1b}h1{font-size:26px}h2{font-size:18px;margin-top:26px}a{color:#c2410c}code{background:#eee;padding:1px 6px;border-radius:5px}table{border-collapse:collapse;width:100%;font-size:14px}td,th{border:1px solid #ddd;padding:6px 8px;text-align:start;vertical-align:top}.note{background:#fef3c7;border-radius:10px;padding:10px 14px;font-size:14px}.top{display:flex;justify-content:space-between;align-items:center}button{font:inherit;padding:4px 12px;border-radius:99px;border:1px solid #bbb;background:#fff;cursor:pointer}@media(prefers-color-scheme:dark){body{background:#171716;color:#eeede8}code{background:#333}.note{background:#3b2f0b;color:#fde68a}td,th{border-color:#444}button{background:#232321;color:#eee;border-color:#555}}</style></head><body>
+<div class="top"><a href="/">←</a><button id="lb">English</button></div>
+<div data-l="he"><h1>📖 מדריך הדפסה</h1>
+<h2>איך פותחים את הקבצים</h2>
+<p>ההורדה היא קובץ ZIP. מחלצים אותו ומקבלים: <code>trip3d.3mf</code> (מומלץ: חלקים וצבעים מוגדרים מראש), <code>all_in_one.stl</code> (הכול בצבע אחד), וקבצי STL נפרדים לכל צבע.</p>
+<table><tr><th>סלייסר</th><th>איך מייבאים</th></tr>
+<tr><td>Bambu Studio / OrcaSlicer</td><td>File ← Import ← בחרו את ה-3MF. כל חלק מופיע כאובייקט נפרד, וצבעו מוצג. הקצו לכל צבע חומר (Filament) מה-AMS.</td></tr>
+<tr><td>PrusaSlicer</td><td>File ← Import ← 3MF/STL. להדפסה מרובת צבעים: בחרו אובייקט ← Extruder בחלון ההגדרות.</td></tr>
+<tr><td>Cura</td><td>File ← Open File(s) ← all_in_one.stl (או הקבצים הנפרדים). Cura לא קורא צבעים מ-3MF.</td></tr></table>
+<h2>הגדרות כלליות מומלצות</h2>
+<p>דיזה 0.4 מ״מ, גובה שכבה 0.2 מ״מ, 3 קירות, מילוי 15%–20%, בלי תמיכות (המודלים נבנו כך שלא נדרשות), ו-Brim לחלקים קטנים. הדפיסו את המודל כפי שהוא, ללא סיבוב.</p>
+<h2>טיפים לפי כלי</h2>
+<ul>
+<li><b>מזכרת עם מעמד:</b> הכיתוב והדגל בולטים כ-1 מ״מ. להדפסה נקייה של טקסט קטן הורידו מהירות ל-40–60 מ״מ/ש׳. עם עמודים מתחת למדינה יש גישור קצר: מהירות גישור נמוכה עוזרת.</li>
+<li><b>קוד QR:</b> הלוחית נפרדת. הדפיסו בניגודיות גבוהה (צבע בהיר ורקע כהה או להפך), ובדקו בסריקה לפני שמדביקים.</li>
+<li><b>מחזיק מפתחות / קישוט:</b> 4 קירות או מילוי 100% בטבעת, כדי שלא תישבר.</li>
+<li><b>מגנט למקרר:</b> בגב יש כיס למגנט עגול. אפשר להכניס את המגנט בהשהיה (Pause at layer) מיד אחרי שהכיס נסגר, או להדביק בדבק מאחור. בדקו שגודל המגנט תואם למה שבחרתם.</li>
+<li><b>פאזל:</b> מדפיסים את החלקים שטוחים. הרווח בין חלקים הוא כ-0.3 מ״מ. אם הם הדוקים מדי, שייפו קצת או הקטינו ל-99% ב-X/Y. המגש (אם בחרתם) נפרד ומיועד להחזיק את החלקים.</li>
+<li><b>מעמד לטלפון:</b> מדפיסים כמו שהוא. מתאים לטלפון בעובי של עד כ-14 מ״מ כולל מגן.</li>
+<li><b>הרבה צבעים:</b> אם יש לכם מדפסת עם AMS, השתמשו ב-3MF והקצו חומר לכל חלק. אחרת, הדפיסו בצבע אחד או החליפו חומר ידנית בשכבה מסוימת (Color change).</li>
+</ul>
+<h2>בעיות נפוצות</h2>
+<ul><li><b>טקסט או פרטים לא יוצאים:</b> הגדילו את המודל (בחרו משטח גדול יותר), קצרו את שם הטיול, או עברו לדיזה 0.2.</li><li><b>הדפסה עקומה בפינות:</b> הוסיפו Brim, נקו את המשטח, והעלו טמפרטורת מצע.</li><li><b>המודל הוקטן:</b> האתר מקטין כדי להתאים למשטח שהגדרתם. בחרו משטח גדול יותר אם אפשר.</li></ul>
+<p class="note">בחלון ההורדה מופיעה בדיקת שלמות אוטומטית. אם היא מציגה אזהרה, הסלייסר בדרך כלל מתקן זאת, אבל כדאי לעבור על תצוגת השכבות.</p></div><div data-l="en" style="display:none"><h1>📖 Print guide</h1>
+<h2>Opening the files</h2>
+<p>The download is a ZIP. Extract it to get <code>trip3d.3mf</code> (recommended: parts and colors are preset), <code>all_in_one.stl</code> (everything in one color) and separate STL files per color.</p>
+<table><tr><th>Slicer</th><th>How to import</th></tr>
+<tr><td>Bambu Studio / OrcaSlicer</td><td>File → Import → pick the 3MF. Each part is a separate object with its color. Assign each color a filament from your AMS.</td></tr>
+<tr><td>PrusaSlicer</td><td>File → Import → 3MF/STL. For multicolor: select an object → choose the Extruder in the settings panel.</td></tr>
+<tr><td>Cura</td><td>File → Open File(s) → all_in_one.stl (or the separate files). Cura doesn't read colors from 3MF.</td></tr></table>
+<h2>Recommended general settings</h2>
+<p>0.4 mm nozzle, 0.2 mm layers, 3 walls, 15–20% infill, no supports (models are built so none are needed), and a brim for small parts. Print the model as is, without rotating it.</p>
+<h2>Tips per tool</h2>
+<ul>
+<li><b>Souvenir with stand:</b> lettering and flag stand about 1 mm tall. For clean small text slow down to 40–60 mm/s. With pillars under the country there is a short bridge: a low bridging speed helps.</li>
+<li><b>QR code:</b> the plate is separate. Print with high contrast (light on dark or the reverse) and test-scan it before gluing.</li>
+<li><b>Keychain / ornament:</b> use 4 walls or 100% infill on the ring so it doesn't snap.</li>
+<li><b>Fridge magnet:</b> the back has a pocket for a round magnet. Insert it with a pause (Pause at layer) right after the pocket closes, or glue it on the back. Check the magnet size matches your choice.</li>
+<li><b>Puzzle:</b> print the pieces flat. The gap between pieces is about 0.3 mm. If they are too tight, sand lightly or scale to 99% in X/Y. The tray (if chosen) is separate and holds the pieces.</li>
+<li><b>Phone stand:</b> print as is. Fits phones up to about 14 mm thick including a case.</li>
+<li><b>Many colors:</b> with an AMS printer use the 3MF and assign a filament per part. Otherwise print in one color or swap filament manually at a layer (Color change).</li>
+</ul>
+<h2>Common problems</h2>
+<ul><li><b>Text or details don't print:</b> make the model bigger (choose a larger bed), shorten the trip name, or use a 0.2 nozzle.</li><li><b>Warping at corners:</b> add a brim, clean the bed and raise the bed temperature.</li><li><b>Model was scaled down:</b> the site scales to fit the bed you chose. Choose a larger bed if possible.</li></ul>
+<p class="note">The download window shows an automatic integrity check. If it shows a warning, slicers usually repair it, but review the layer preview.</p></div>
+<script>let L="he";try{L=localStorage.getItem("trip3d_l")||"he"}catch(e){}
+function setL(l){L=l;try{localStorage.setItem("trip3d_l",l)}catch(e){}document.documentElement.lang=l;document.documentElement.dir=l=="en"?"ltr":"rtl";document.querySelectorAll("[data-l]").forEach(e=>e.style.display=e.dataset.l==l?"":"none");document.title=document.querySelector("[data-l='"+l+"'] h1").textContent;const b=document.getElementById("lb");b.textContent=l=="en"?"עברית":"English"}
+document.getElementById("lb").onclick=()=>setL(L=="en"?"he":"en");setL(L);
+const c=document.getElementById("cx");if(c)fetch("/api/config").then(r=>r.json()).then(j=>{if(j.contactEmail){const a=document.createElement("a");a.href="mailto:"+j.contactEmail.replace(/[^\w@.+-]/g,"");a.textContent=j.contactEmail;c.replaceChildren(a)}}).catch(()=>{})</script></body></html>

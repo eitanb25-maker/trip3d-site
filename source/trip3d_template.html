@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>מחולל מזכרת תלת-ממד לטיול</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/1.6.19/topojson.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/datamaps/0.5.9/datamaps.world.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700&family=Heebo:wght@700&family=Frank+Ruhl+Libre:wght@700&family=Secular+One&display=swap">
+<style>
+:root{--bg:#f6f5f1;--card:#fff;--tx:#1d1d1b;--mu:#6b6a64;--ac:#c2410c;--bd:#dcdad2;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#171716;--card:#232321;--tx:#eeede8;--mu:#a09f98;--ac:#fb923c;--bd:#3a3a36}}
+:root[data-theme="dark"]{--bg:#171716;--card:#232321;--tx:#eeede8;--mu:#a09f98;--ac:#fb923c;--bd:#3a3a36}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,"Segoe UI",Arial,sans-serif}
+header{padding:18px 20px 4px}h1{margin:0;font-size:22px}header p{margin:2px 0 0;color:var(--mu)}
+main{display:grid;grid-template-columns:320px 1fr 1fr;gap:14px;padding:14px 20px 24px;max-width:1350px;margin:auto}
+@media(max-width:1000px){main{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px;min-width:0}
+label{display:block;font-weight:600;margin:12px 0 4px;font-size:13px}
+input,select,button{font:inherit;color:inherit;background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:7px 9px;width:100%}
+input[type=color]{padding:2px;height:34px}input[type=checkbox]{width:auto}
+button{cursor:pointer}button.go{background:var(--ac);color:#fff;border:0;font-weight:700;padding:10px;margin-top:14px}
+.row{display:flex;gap:6px;margin-bottom:6px;align-items:center}.row button{width:auto;flex:none;padding:7px 12px}
+.cols{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}.cols span{font-size:11px;color:var(--mu);display:block}
+.hint{color:var(--mu);font-size:12px;margin:6px 0 0}
+canvas{display:block;width:100%;max-width:100%;border-radius:8px;background:var(--bg);touch-action:none}
+#map{cursor:crosshair;aspect-ratio:1}#view{aspect-ratio:1;cursor:grab}
+#intro{position:fixed;inset:0;z-index:10;background:var(--bg);overflow:auto;display:flex;justify-content:center;padding:max(20px,env(safe-area-inset-top,0px)) 16px 24px}
+#intro .box{max-width:680px;width:100%;margin:auto}#intro h1{font-size:28px;margin:0 0 4px}
+#intro .sub{color:var(--mu);margin:0 0 16px}#intro .it{display:flex;gap:12px;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px 14px;margin-bottom:8px}
+#intro .it b{display:block}#intro .it span{color:var(--mu);font-size:13px}#intro .em{font-size:22px;line-height:1.3}#intro .tag{font-size:11px;font-weight:700;border-radius:99px;padding:1px 8px;margin-inline-start:6px;background:var(--ac);color:#fff}#intro .tag.o{background:var(--bd);color:var(--tx)}
+#intro .go{max-width:260px;display:block;margin:18px auto 0;font-size:17px}
+#again{width:auto;margin-top:8px;padding:4px 12px;font-size:13px}
+h2{margin:0 0 8px;font-size:15px}hr{border:0;border-top:1px solid var(--bd);margin:14px 0 0}
+
+body{font-family:"Rubik",system-ui,"Segoe UI",Arial,sans-serif;background:radial-gradient(900px 520px at 90% -10%,color-mix(in srgb,var(--ac) 22%,transparent),transparent),radial-gradient(800px 520px at 0% 105%,color-mix(in srgb,#3b82f6 20%,transparent),transparent),var(--bg);background-attachment:fixed}
+header h1{background:linear-gradient(90deg,var(--ac),#e11d48,#7c3aed);-webkit-background-clip:text;background-clip:text;color:transparent;font-size:30px;font-weight:700}
+.card{backdrop-filter:blur(8px);background:color-mix(in srgb,var(--card) 88%,transparent);box-shadow:0 6px 24px rgba(0,0,0,.06);transition:box-shadow .2s}.card:hover{box-shadow:0 12px 34px rgba(0,0,0,.11)}
+button.go{background:linear-gradient(135deg,var(--ac),#e11d48);box-shadow:0 6px 16px rgba(225,29,72,.3);transition:transform .15s,box-shadow .15s;border-radius:12px}button.go:hover{transform:translateY(-2px);box-shadow:0 10px 22px rgba(225,29,72,.38)}
+button:not(.go):not(.cd):hover{border-color:var(--ac)}
+#view{background:radial-gradient(circle at 50% 38%,#46557a,#11141f 78%)}
+h2::before{content:"";display:inline-block;width:9px;height:9px;border-radius:50%;background:linear-gradient(135deg,var(--ac),#e11d48);margin-inline-end:8px}
+input:focus,select:focus{outline:2px solid color-mix(in srgb,var(--ac) 55%,transparent);outline-offset:1px}
+.skip{position:fixed;top:-60px;inset-inline-start:8px;z-index:100;background:#fff;color:#000;padding:8px 14px;border-radius:8px;font-weight:700;text-decoration:none}.skip:focus{top:8px}
+:focus-visible{outline:3px solid #f59e0b!important;outline-offset:2px}.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+#intro{background:radial-gradient(800px 500px at 85% 0%,color-mix(in srgb,var(--ac) 25%,transparent),transparent),radial-gradient(700px 500px at 0% 100%,color-mix(in srgb,#6366f1 24%,transparent),transparent),var(--bg)}
+#intro h1{background:linear-gradient(90deg,var(--ac),#e11d48,#7c3aed);-webkit-background-clip:text;background-clip:text;color:transparent}
+#intro .it{transition:transform .15s,border-color .15s;animation:slide .45s both}#intro .it:hover{transform:translateX(-4px);border-color:var(--ac)}
+#intro .gl{display:inline-block;animation:fl 3s ease-in-out infinite}@keyframes fl{50%{transform:translateY(-8px) rotate(8deg)}}
+.prog{height:7px;background:var(--bd);border-radius:9px;overflow:hidden;margin-bottom:20px}.prog i{display:block;height:100%;background:linear-gradient(90deg,var(--ac),#e11d48);transition:width .4s}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:10px;margin:12px 0}
+.cd{display:flex;flex-direction:column;align-items:center;gap:7px;text-align:center;padding:16px 8px;background:var(--card);border:2px solid var(--bd);border-radius:16px;transition:.15s;font-weight:400}
+.cd:hover{transform:translateY(-3px);border-color:var(--ac)}.cd.on{border-color:var(--ac);box-shadow:0 0 0 4px color-mix(in srgb,var(--ac) 22%,transparent)}
+.cd b{font-size:14px;font-weight:500}.cd .em{font-size:30px;line-height:1}
+.sw{display:flex}.sw i{width:20px;height:20px;border-radius:50%;margin-inline-start:-6px;border:2px solid var(--card)}
+.ic{width:46px;height:46px;background:linear-gradient(135deg,var(--ac),#e11d48)}.ic.circle{border-radius:50%}.ic.round{border-radius:14px}.ic.oval{border-radius:50%;width:58px;height:38px}
+.ic.hex{clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%)}.ic.oct{clip-path:polygon(30% 0,70% 0,100% 30%,100% 70%,70% 100%,30% 100%,0 70%,0 30%)}
+.step{animation:slide .35s ease}@keyframes slide{from{opacity:0;transform:translateX(-18px)}to{opacity:1;transform:none}}
+.nav{display:flex;gap:10px;margin-top:14px}.nav button{flex:1;margin-top:0}.nav .back{flex:0 0 100px}
+#s2 h1{font-size:26px;margin:0 0 4px}.rc{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed var(--bd)}.rc span{color:var(--mu)}
+
+textarea{font:inherit;color:inherit;background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:8px;width:100%;resize:vertical}
+.cd{position:relative}.cd.on::after{content:"✓";position:absolute;top:6px;inset-inline-end:8px;width:20px;height:20px;border-radius:50%;background:var(--ac);color:#fff;font-size:12px;line-height:20px}
+.blob{position:fixed;width:340px;height:340px;border-radius:50%;filter:blur(70px);opacity:.3;z-index:-1;pointer-events:none;animation:drift 14s ease-in-out infinite alternate}
+.b1{background:var(--ac);top:-90px;inset-inline-start:-90px}.b2{background:#6366f1;bottom:-110px;inset-inline-end:-70px;animation-delay:-6s}@keyframes drift{to{transform:translate(60px,40px) scale(1.15)}}
+.cf{position:fixed;z-index:20;pointer-events:none;font-size:26px;top:-40px;animation:fall 2s ease-in forwards}@keyframes fall{to{transform:translateY(115vh) rotate(540deg);opacity:.2}}
+.hb{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}.hb button,#again{width:auto;padding:5px 12px;font-size:13px;margin:0}#warn{line-height:1.7}
+
+body::before{content:"";position:fixed;inset:0;background-image:radial-gradient(color-mix(in srgb,var(--tx) 9%,transparent) 1px,transparent 1.3px);background-size:24px 24px;z-index:-1;pointer-events:none}
+.card{border:1px solid transparent;background:linear-gradient(color-mix(in srgb,var(--card) 90%,transparent),color-mix(in srgb,var(--card) 90%,transparent)) padding-box,linear-gradient(135deg,color-mix(in srgb,var(--ac) 55%,transparent),color-mix(in srgb,#6366f1 50%,transparent),var(--bd)) border-box}
+header{padding:18px 20px 6px;max-width:1350px;margin:auto}
+header h1,#intro h1{background-size:220% 100%;animation:shine 7s linear infinite}@keyframes shine{to{background-position:-220% 0}}
+button.go{background-size:200% 100%;background-image:linear-gradient(90deg,var(--ac),#e11d48,#7c3aed,var(--ac));animation:shine 6s linear infinite}
+.cd:hover{transform:translateY(-5px) rotate(-1.2deg) scale(1.03)}.cd.on{animation:pop .35s}@keyframes pop{50%{transform:scale(1.07)}}
+.cd.on .em,.cd.on .sw,.cd.on .ic{filter:drop-shadow(0 4px 10px color-mix(in srgb,var(--ac) 55%,transparent))}
+#s2 .stp{color:var(--mu);font-size:12px;margin:-12px 0 10px;letter-spacing:.5px}
+.bgc{width:54px;height:54px;border-radius:50%;border:3px solid var(--card);box-shadow:0 0 0 1px var(--bd)}
+#pl .row button{width:34px;padding:7px 0;flex:none}
+#view{box-shadow:inset 0 0 60px rgba(0,0,0,.35)}
+
+#home{position:fixed;inset:0;z-index:11;overflow:auto;display:flex;justify-content:center;padding:max(24px,env(safe-area-inset-top,0px)) 16px 28px;background:radial-gradient(800px 500px at 85% 0%,color-mix(in srgb,var(--ac) 25%,transparent),transparent),radial-gradient(700px 500px at 0% 100%,color-mix(in srgb,#6366f1 24%,transparent),transparent),var(--bg)}
+#home .box{max-width:860px;width:100%;margin:auto}#home h1{font-size:36px;margin:0;background:linear-gradient(90deg,var(--ac),#e11d48,#7c3aed);background-size:220% 100%;animation:shine 7s linear infinite;-webkit-background-clip:text;background-clip:text;color:transparent}
+#home .gl{display:inline-block;animation:fl 3s ease-in-out infinite}#home .sub{color:var(--mu);margin:4px 0 0;font-size:16px}
+.tools{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;margin-top:26px}
+.tool{display:flex;flex-direction:column;gap:8px;text-align:start;padding:22px;border-radius:20px;border:1px solid transparent;cursor:pointer;animation:slide .5s both;transition:transform .2s,box-shadow .2s;
+ background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(135deg,var(--ac),#6366f1) border-box;box-shadow:0 8px 28px rgba(0,0,0,.08)}
+.tool:hover{transform:translateY(-6px) rotate(-.6deg);box-shadow:0 18px 40px rgba(0,0,0,.16)}
+.tool .ti{font-size:46px;line-height:1}.tool b{font-size:18px;font-weight:700}.tool span{color:var(--mu);font-size:13px;font-weight:400}.tool i{font-style:normal;color:var(--ac);font-weight:700;margin-top:6px}
+.tool.soon{background:none;border:2px dashed var(--bd);cursor:default;opacity:.7;align-items:center;justify-content:center;text-align:center;box-shadow:none}.tool.soon:hover{transform:none;box-shadow:none}
+#hcont{display:none;width:auto;margin-top:18px;padding:8px 16px}
+.chip{display:inline-flex;gap:8px;align-items:center;background:var(--card);border:1px solid var(--ac);border-radius:99px;padding:3px 12px;margin:3px}.chip b{cursor:pointer;color:var(--ac)}
+.gi{padding:12px;gap:6px;cursor:default}.gi img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:12px;background:#222}.gi .gb{display:flex;gap:6px}.gi button{width:auto;padding:5px 12px;font-size:13px;flex:1}.gi b{font-size:15px}.gi span{font-size:12px}
+#dlg{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:16px}.dbox{background:var(--card);color:var(--tx);border-radius:18px;max-width:580px;width:100%;max-height:86vh;overflow:auto;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.4)}.fi{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:9px 0;border-bottom:1px dashed var(--bd)}.fi b{font-size:13px;word-break:break-all}.fi i{font-style:normal;color:var(--mu);font-size:12px}.fi span{grid-column:1/-1;color:var(--mu);font-size:13px}
+body{padding-top:calc(54px + env(safe-area-inset-top,0px))}#lg{position:fixed;top:max(10px,env(safe-area-inset-top,0px));inset-inline-end:12px;z-index:9999;width:auto!important;padding:6px 12px!important;font-size:13px;margin:0!important;box-shadow:0 4px 14px rgba(0,0,0,.18);border-radius:99px;background:var(--card)}
+.row input,.row select{min-width:0}.row input[type=date]{flex:1;font-size:13px;padding:7px 4px}
+header h1,#intro h1,#home h1{background:none!important;-webkit-text-fill-color:initial!important;color:var(--tx)!important}
+header h1 .tx,#intro h1 .tx,#home h1 .tx{background:linear-gradient(90deg,var(--ac),#e11d48,#7c3aed);background-size:220% 100%;animation:shine 7s linear infinite;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+#s2 h1{-webkit-text-fill-color:initial!important}
+#adbtn{position:fixed;bottom:12px;inset-inline-start:12px;z-index:40;width:auto!important;padding:6px 10px!important;margin:0!important;border-radius:99px;opacity:.5;background:var(--card);box-shadow:0 4px 14px rgba(0,0,0,.18)}#adbtn.on{opacity:1;outline:2px solid #16a34a}
+#shd{position:fixed;inset:0;z-index:45;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:16px}#shd .dbox{max-width:560px}#shd textarea,#dtxt{font-size:12px;direction:ltr}
+#adm{position:fixed;inset:0;z-index:45;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:16px}#adm .dbox{max-width:540px}
+.banner{background:linear-gradient(90deg,var(--ac),#e11d48);color:#fff;border-radius:12px;padding:10px 14px;margin:14px 0 0;font-weight:500}
+.gate{background:#fef3c7;color:#92400e;border-radius:10px;padding:10px 12px;margin:10px 0;font-size:13px}
+.tool.off{opacity:.45;cursor:not-allowed}label.chk{display:flex;gap:8px;align-items:center;font-weight:400;margin:6px 0}
+#busy{position:fixed;top:max(10px,env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:42;background:var(--card);border:1px solid var(--bd);border-radius:99px;padding:6px 16px;font-size:13px;box-shadow:0 6px 20px rgba(0,0,0,.2);display:none;pointer-events:none}#busy.on{display:block}#busy i{display:inline-block;width:12px;height:12px;border:2px solid var(--ac);border-top-color:transparent;border-radius:50%;margin-inline-end:8px;vertical-align:-2px;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+</style></head><body>
+<script id="cfg" type="application/json">%%CFG%%</script><script id="tpl" type="text/plain">%%TPL%%</script>
+<button id="adbtn" title="ניהול">🔐</button>
+<div id="adm"><div class="dbox" id="abox"></div></div>
+<div id="shd"><div class="dbox" id="shbox"></div></div>
+<div id="home"><div class="box"><h1><span class="gl">✨</span> <span class="tx">סטודיו המזכרות</span></h1><p class="sub">בחרו מה תרצו ליצור היום</p><div id="banner" class="banner" style="display:none"></div><p class="hint" style="margin:10px 0 0">🔒 הורדת הקבצים מחייבת התחברות לחשבון Claude (כדי שבעל האתר יוכל לעקוב אחרי השימוש).</p><div class="tools" id="tools"></div>
+<h2 style="margin:34px 0 4px">הפרויקטים שלי</h2><label style="margin:0 0 6px"><input type="checkbox" id="cloud"> ☁️ שמירה בחשבון (זמין בכל מכשיר)</label><p class="hint" id="galnote">הגלריה שומרת את ההגדרות והסיכות, בלי התמונות שהעליתם.</p><div class="tools" id="gal"></div><button id="hopen" style="display:inline-block;width:auto;margin-top:18px;padding:8px 16px">📥 פתיחה מקוד שיתוף</button> <button id="hcont">↩ המשך מהפרויקט האחרון</button></div></div>
+<div class="blob b1"></div><div class="blob b2"></div>
+<div id="intro"><div class="box"><div id="s1">
+<h1><span class="gl" id="s1e">🌍</span> <span id="s1t" class="tx">מזכרת תלת-ממד מהטיול</span></h1>
+<p class="sub">לפני שמתחילים, כדאי להכין את הדברים הבאים. כך התהליך יהיה מהיר וקל.</p>
+<div id="s1items"></div>
+<button class="go" id="cont" style="display:none;margin-bottom:10px">↩ המשך מהפרויקט האחרון</button>
+<button class="go" id="start">מתחילים ←</button>
+</div>
+<div id="s2" style="display:none"></div>
+</div></div>
+<div id="busy"><i></i><span id="busyt"></span></div>
+<div id="dlg"><div class="dbox" id="dbox"></div></div>
+<header><h1><span class="em1">🌍</span> <span class="tx">מחולל מזכרת תלת-ממד לטיול</span></h1><div class="hb"><button id="lg">🌐 English</button><button id="hm">🏠 דף הבית</button><button id="qbtn" aria-pressed="false"></button><button id="again">ℹ️ מה צריך להכין</button><button id="sv">💾 שמירת פרויקט</button><button id="gs">⭐ שמירה בגלריה</button><button id="shr">🔗 שיתוף פרויקט</button><button id="ld">📂 טעינה</button><button id="shot">📸 תמונה לשיתוף</button><input type="file" id="ldf" accept=".json" hidden></div><p>בוחרים מדינה, מסמנים או מחפשים מקומות, ומקבלים קבצים להדפסה תלת-ממדית עם מעמד, כיתוב ודגל.</p></header>
+<main>
+<section class="card">
+<label>גודל משטח המדפסת</label><select id="bed"></select><label>מספר צבעים במדפסת</label><select id="ncol"></select>
+<label>מדינה (בעברית או באנגלית)</label><input id="cin" list="cl" placeholder="ישראל, Italy, Japan…"><datalist id="cl"></datalist>
+<label><input type="checkbox" id="far"> כולל איים רחוקים</label>
+<div class="row"><button id="rg">✂️ התמקדות באזור</button><button id="rgx">בטל חיתוך</button></div>
+<label>או קובץ GeoJSON משלכם</label><input type="file" id="gj" accept=".geojson,.json">
+<label>שם הטיול</label><input id="trip" value="הטיול שלנו 2026"><label>תאריכי הטיול (יודפסו על המעמד)</label><div class="row"><input type="date" id="d1"><input type="date" id="d2"></div><label>שורה נוספת (למשל שמות המטיילים)</label><input id="tsub" placeholder="משפחת כהן"><label>גופן הכיתוב</label><select id="font"><option value="Rubik">רגיל</option><option value="Frank Ruhl Libre">קלאסי</option><option value="Secular One">עגול ועבה</option><option value="Heebo">חלק</option></select><label><input type="checkbox" id="shownames" checked> הצג שמות מקומות על המעמד</label><label><input type="checkbox" id="numpins"> מספר את המקומות ברשימה</label>
+<hr><label>עובי המעמד</label><select id="bh"><option value="2">דק</option><option value="3" selected>רגיל</option><option value="5">עבה</option></select>
+<label>גימור קצה המעמד</label><select id="rim"><option value="0">חלק</option><option value="1">מסגרת דקה</option><option value="2">מסגרת עבה</option></select>
+<label>הגבהת המדינה על עמודים</label><select id="gap"><option value="0">צמוד למעמד</option><option value="3" selected>מוגבה טיפה (3 מ״מ)</option><option value="6">מוגבה יותר (6 מ״מ)</option></select>
+<label>מספר חלקי הפאזל</label><select id="pcs"><option value="4">4</option><option value="6" selected>6</option><option value="9">9</option><option value="12">12</option></select><label><input type="checkbox" id="pfr"> הוסף מסגרת בצורת המדינה</label>
+<label>גודל המגנט (קוטר)</label><select id="mgs"><option value="8">8 מ״מ</option><option value="10" selected>10 מ״מ</option><option value="12">12 מ״מ</option></select>
+<label>גובה המדינה</label><select id="lh"><option value="1.5">שטוח</option><option value="2.5" selected>רגיל</option><option value="4">מוגבה</option></select>
+<label>רקע התצוגה והתמונה</label><select id="bg"><option value="night">לילה</option><option value="sunset">שקיעה</option><option value="ocean">אוקיינוס</option><option value="forest">יער</option><option value="light">בהיר</option></select>
+<label>צורת המעמד</label><select id="shape">
+<option value="circle">עיגול</option><option value="square">ריבוע</option><option value="round">ריבוע מעוגל</option><option value="hex">משושה</option><option value="oct">מתומן</option><option value="oval">אליפסה</option></select>
+<label>צורת סימון מיקום</label><div class="row"><select id="ps"><option value="ball">כדור על מוט</option><option value="cone">סיכת מפה</option><option value="col">עמוד</option><option value="cube">קובייה על מוט</option><option value="star">כוכב</option><option value="heart">לב</option></select><input type="range" id="psz" min="0.6" max="1.8" step="0.1" value="1" title="גודל" style="width:90px"></div>
+<label>קו מסלול בין המקומות</label><select id="route"><option value="0">ללא</option><option value="1">קו רציף</option><option value="2">קו מקווקו</option></select>
+<label>צבעים</label><div class="cols"><div><span>מעמד</span><input type="color" id="c_base" value="#d8d3c4"></div><div><span>מדינה</span><input type="color" id="c_land" value="#6aa05a"></div><div><span>סיכות</span><input type="color" id="c_pin" value="#dc2626"></div><div><span>כיתוב</span><input type="color" id="c_text" value="#374151"></div><div><span>מים</span><input type="color" id="c_water" value="#2f80ed"></div><div><span>הרים</span><input type="color" id="c_relief" value="#8b6b4a"></div></div>
+<hr><label>דגל (בתחתית המעמד)</label><select id="fm"><option value="none">ללא</option><option value="lib">דגל המדינה (אוטומטי)</option><option value="h2">פסים אופקיים – 2 צבעים</option><option value="h3">פסים אופקיים – 3 צבעים</option><option value="v2">פסים אנכיים – 2 צבעים</option><option value="v3">פסים אנכיים – 3 צבעים</option><option value="img">העלאת תמונת דגל</option></select>
+<div class="cols" style="grid-template-columns:repeat(3,1fr);margin-top:6px"><input type="color" id="f1" value="#009246"><input type="color" id="f2" value="#ffffff"><input type="color" id="f3" value="#ce2b37"></div>
+<input type="file" id="fimg" accept="image/*" style="margin-top:6px;display:none">
+<hr><label>אגמים ונחלים</label><div class="row" style="flex-wrap:wrap"><button id="dr">✏️ צייר נחל</button><button id="dk">✏️ צייר אגם</button><button id="dd">סיום</button><button id="dc">🗑 מים</button></div>
+<button id="wb">🌊 הצעה אוטומטית (קירוב בלבד)</button><input type="file" id="wf" accept=".geojson,.json" style="margin-top:6px"><p class="hint">ציור: לחצו על המפה לאורך הנחל או סביב האגם ואז "סיום" – הקווים מוחלקים אוטומטית. ההצעה האוטומטית לא מדויקת. לדיוק מלא העלו GeoJSON של מים.</p>
+<hr><label><input type="checkbox" id="qron"> תגית QR לאלבום התמונות</label><input id="qrurl" placeholder="https://photos.app.goo.gl/…"><p class="hint">התגית נבנית כלוחית נפרדת, להדבקה על המעמד או לצידו.</p>
+<hr><label>מים מתמונה (מדויק)</label>
+<input type="file" id="wimg" accept="image/*">
+<div class="row" style="margin-top:6px"><input type="color" id="wcol" value="#4a90e2" title="צבע המים בתמונה" style="width:56px"><button id="eye">🎯 טפטפת</button><input type="range" id="wtol" min="20" max="200" value="80" title="סבילות צבע"></div>
+<div id="alw"></div>
+<label>הרים וגבעות מתמונה</label>
+<input type="file" id="rimg" accept="image/*">
+<div class="row" style="margin-top:6px"><select id="rmode"><option value="hypso">מפה פיזית (ירוק נמוך ← חום/לבן גבוה)</option><option value="gray">גווני אפור (בהיר = גבוה)</option><option value="grayinv">גווני אפור (כהה = גבוה)</option></select></div>
+<div class="row"><span style="font-size:12px;white-space:nowrap">גובה מרבי</span><input type="range" id="rh" min="1" max="15" value="5"></div>
+<div id="alr"></div>
+<label><input type="checkbox" id="showimg" checked> הצג את התמונות על המפה</label>
+<p class="hint">התמונה צריכה להיות חתוכה סביב המדינה. השתמשו בשכבת התצוגה וביישור כדי להתאים אותה לקו המתאר. רק מה שבתוך גבולות המדינה נלקח, כך שים ושמות מחוץ למדינה לא משפיעים.</p>
+<hr><label>ייבוא מקומות (KML / KMZ / GPX / GeoJSON / CSV)</label><input type="file" id="impf" accept=".kml,.kmz,.gpx,.json,.geojson,.csv,.txt">
+<textarea id="impt" rows="3" style="margin-top:6px" placeholder="או הדביקו רשימה: שורה לכל מקום, למשל  מגדל פיזה 43.7230, 10.3966"></textarea><button id="impb" style="margin-top:6px">📥 ייבוא</button>
+<p class="hint">ב-Google My Maps בוחרים "ייצוא ל-KML/KMZ". אפשר גם להדביק קישורים מגוגל מפות, שורה לכל מקום.</p>
+<hr><label>חיפוש מקום להוספה</label>
+<div class="row"><input id="q" placeholder="עיר, אתר, כתובת, קואורדינטות או קישור גוגל מפות"><button id="sb">חפש</button></div><div id="cands"></div>
+<label>מקומות (<span id="cnt">0</span>) – אפשר גם ללחוץ על המפה</label><div id="pl"></div>
+<button class="go" id="dl">⬇ הורדת קבצי STL (ZIP)</button>
+<p class="hint" id="msg"></p>
+</section>
+<section class="card"><h2>מפה</h2><canvas id="map" width="520" height="520"></canvas><p class="hint">קווי המתאר מוצגים ללא מפת רקע. החיפוש משתמש ב-Claude כדי למצוא קואורדינטות, ולכן מדויק בערך. לדיוק מלא הדביקו קואורדינטות או קישור מגוגל מפות.</p></section>
+<section class="card"><h2>תצוגה מקדימה</h2><canvas id="view" width="520" height="520"></canvas><p class="hint">גררו לסיבוב. <span id="sz"></span></p><div class="row" style="margin-top:8px"><button id="vtop">🔝 מבט מלמעלה</button><button id="vdef">↺ זווית רגילה</button></div><div class="hint" id="warn"></div></section>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const BEDS=[[120,"קטנה – עד 12 ס״מ (מדפסות מיני)"],[150,"150 מ״מ"],[180,"180 מ״מ"],[220,"220 מ״מ (למשל Ender 3)"],[256,"256 מ״מ (למשל Bambu, Prusa)"],[350,"350 מ״מ ומעלה"]],NCS=[[1,"צבע אחד"],[2,"2 צבעים"],[3,"3 צבעים"],[4,"4 צבעים (למשל AMS)"],[5,"5 צבעים ומעלה"]];
+[["bed",BEDS,220],["ncol",NCS,1]].forEach(([id,L,d])=>{L.forEach(([v,t])=>$(id).add(new Option(t,v)));$(id).value=d});
+const KEEP={holder:["loc","pl","fav","sty","prn","ncol","done"],puzzle:["loc","sty","pcs","pfr","prn","ncol","done"],key:["loc","pl","fav","sty","pin","psz","route","prn","ncol","done"],orn:["loc","pl","fav","sty","pin","psz","route","prn","ncol","done"],magnet:["loc","pl","fav","sty","pin","psz","route","mag","prn","ncol","done"]};
+const openTool=(m,t)=>{statHit("open",m?"multi":(t||"stand"));MULTI=m;TOOL=t||"stand";W.mode="full";ST=TOOL=="stand"?[MODEST,...STALL]:STALL.filter(x=>KEEP[TOOL].includes(x.k));applyTool();renderIntro();$("home").style.display="none";$("s1").style.display="block";$("s2").style.display="none";$("intro").style.display="flex";$("intro").scrollTop=0;$("again").style.display=""};
+const TOOLS=[{icon:"🌍",t:"מזכרת תלת-ממד לטיול",d:"בוחרים מדינה, מסמנים את המקומות שהייתם בהם, ומקבלים קבצי הדפסה עם מעמד וכיתוב.",go:()=>openTool(false)},
+{icon:"🗺️",t:"מזכרת מכמה מדינות",d:"טיול שעבר בשתי מדינות או יותר? בוחרים עד 6 מדינות ומקבלים מפה אחת משותפת עם גבולות בולטים.",go:()=>openTool(true)},
+{icon:"🔑",t:"מחזיק מפתחות",d:"צורת המדינה כמחזיק מפתחות קטן עם טבעת, עם הסימונים של המקומות שהייתם בהם.",go:()=>openTool(false,"key")},
+{icon:"🧲",t:"מגנט למקרר",d:"צורת המדינה כמגנט שטוח, עם כיס מובנה למגנט עגול שמדביקים מאחור.",go:()=>openTool(false,"magnet")},
+{icon:"🎄",t:"קישוט לתליה",d:"צורת המדינה כתליון או קישוט לעץ ולחלון, עם חור לחוט.",go:()=>openTool(false,"orn")},
+{icon:"🧩",t:"פאזל של המדינה",d:"המדינה מחולקת לחלקים שמרכיבים יחד. מתנה נהדרת לילדים.",go:()=>openTool(false,"puzzle")},
+{icon:"📱",t:"מעמד לטלפון",d:"מעמד לטלפון או לטאבלט קטן, עם צורת המדינה והמקומות שהייתם בהם.",go:()=>openTool(false,"holder")}];
+const IDS=["stand","multi","key","magnet","orn","puzzle","holder"],TNE=["3D Trip Souvenir","Multi-Country Souvenir","Keychain","Fridge Magnet","Hanging Ornament","Country Puzzle","Phone Stand"];TOOLS.forEach((x,i)=>x.id=IDS[i]);
+const h=s=>{let a=0xdeadbeef,b=0x41c6ce57;for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);a=Math.imul(a^c,2654435761);b=Math.imul(b^c,1597334677)}a=Math.imul(a^(a>>>16),2246822507)^Math.imul(b^(b>>>13),3266489909);b=Math.imul(b^(b>>>16),2246822507)^Math.imul(a^(a>>>13),3266489909);return(4294967296*(2097151&b)+(a>>>0)).toString(36)};
+const CFG0={tools:{},banner:"",bannerOn:false,maint:false,lang:"he"};let CFG=Object.assign({},CFG0,JSON.parse($("cfg").textContent||"{}"));const ADM={owner:false,ok:false};
+const blocked=()=>CFG.maint&&!ADM.owner&&!ADM.ok;
+function renderTools(){const L=TOOLS.map((x,i)=>({x,i})).filter(o=>CFG.tools[o.x.id]!==false);
+  $("tools").innerHTML=L.map((o,k)=>`<div class="tool${blocked()||(window.toolBlock&&window.toolBlock(o.x.id))?" off":""}" data-i="${o.i}" style="animation-delay:${k*90}ms"><div class="ti">${o.x.icon}</div><b>${o.x.t}</b><span>${o.x.d}</span><i>${window.toolBlock&&window.toolBlock(o.x.id)?window.toolBlock(o.x.id):"התחילו ←"}</i></div>`).join("")+`<div class="tool soon" style="animation-delay:${L.length*90}ms"><div class="ti">➕</div><b>בקרוב…</b><span>עוד כלים בדרך</span></div>`}
+function applyBanner(){const b=$("banner");const t=blocked()?L_("האתר בתחזוקה כרגע – נחזור בקרוב.","The site is under maintenance – back soon."):(CFG.bannerOn&&CFG.banner)?CFG.banner:"";b.style.display=t?"block":"none";b.textContent=t}
+function applyCfg(){renderTools();applyBanner()}
+$("tools").onclick=e=>{const t=e.target.closest(".tool:not(.soon)");if(t&&!blocked()){const o=TOOLS[+t.dataset.i];{const tb=window.toolBlock&&window.toolBlock(o.id);if(tb){if(window.toolMsg)window.toolMsg(tb);return}}o.go()}};
+applyCfg();
+const SHARE_BASE="https://claude.ai/artifact/PKDYZrnTABDUZrjfUtCyMY";
+function b64u(u){let s="";u.forEach(c=>s+=String.fromCharCode(c));return btoa(s).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"")}
+function unb64u(x){x=x.replace(/-/g,"+").replace(/_/g,"/");while(x.length%4)x+="=";return Uint8Array.from(atob(x),c=>c.charCodeAt(0))}
+async function packProject(){let b=new TextEncoder().encode(JSON.stringify(getProj(false))),pre="R";if(typeof CompressionStream!="undefined"){try{b=new Uint8Array(await new Response(new Blob([b]).stream().pipeThrough(new CompressionStream("deflate-raw"))).arrayBuffer());pre="D"}catch(e){}}return pre+b64u(b)}
+async function unpackProject(code){code=code.trim().replace(/^.*[#&?]p=/,"");let b=unb64u(code.slice(1));if(code[0]=="D")b=new Uint8Array(await new Response(new Blob([b]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).arrayBuffer());return JSON.parse(new TextDecoder().decode(b))}
+function copyText(ta,m){ta.select();let ok=false;try{ok=document.execCommand("copy")}catch(e){}if(!ok&&navigator.clipboard){navigator.clipboard.writeText(ta.value).then(()=>m&&(m.textContent=L_("הועתק","Copied")),()=>m&&(m.textContent=L_("סמנו והעתיקו ידנית","Select and copy manually")))}else if(m)m.textContent=ok?L_("הועתק","Copied"):L_("סמנו והעתיקו ידנית","Select and copy manually")}
+async function openShare(){const code=await packProject();$("shbox").innerHTML=`<h2>🔗 ${L_("שיתוף פרויקט","Share project")}</h2><label>${L_("קישור","Link")}</label><textarea id="shl" rows="3" readonly></textarea><div class="row"><button id="shcl">${L_("העתקת קישור","Copy link")}</button></div>
+  <label>${L_("קוד שיתוף (אם הקישור לא פותח את הפרויקט)","Share code (if the link doesn't open the project)")}</label><textarea id="shc" rows="3" readonly></textarea><div class="row"><button id="shcc">${L_("העתקת קוד","Copy code")}</button></div><hr>
+  <label>${L_("פתיחת פרויקט מקוד או מקישור","Open a project from a code or link")}</label><textarea id="shi" rows="2"></textarea><div class="row" style="margin-top:6px"><button class="go" id="sho" style="margin:0">${L_("פתיחה","Open")}</button><button id="shx">${L_("סגירה","Close")}</button></div><p class="hint" id="shm"></p>`;
+  $("shl").value=SHARE_BASE+"#p="+code;$("shc").value=code;$("shd").style.display="flex";const m=$("shm");
+  $("shcl").onclick=()=>copyText($("shl"),m);$("shcc").onclick=()=>copyText($("shc"),m);$("shx").onclick=()=>$("shd").style.display="none";
+  $("sho").onclick=async()=>{try{const o=await unpackProject($("shi").value);putProj(o);$("shd").style.display="none";$("home").style.display="none";$("intro").style.display="none";$("msg").textContent=L_("הפרויקט נפתח","Project opened")}catch(e){m.textContent=L_("הקוד או הקישור לא תקינים","The code or link isn't valid")}}}
+$("shr").onclick=openShare;$("hopen").onclick=openShare;
+try{const hp=new URLSearchParams(location.hash.slice(1)).get("p");if(hp)unpackProject(hp).then(o=>{putProj(o);$("home").style.display="none";$("intro").style.display="none"}).catch(()=>{})}catch(e){}
+async function statHit(kind,tool){try{const d=await claude.use("db"),u=await claude.use("user");if(!d||!u)return false;const id=await u.id();if(!id)return false;const ref=d.doc("stats/"+id),sn=await ref.get(),cur=sn.exists?JSON.parse(JSON.stringify(sn.data())):{};cur.n=cur.n||{};const k=kind+"_"+tool;cur.n[k]=(cur.n[k]||0)+1;cur.ts=Date.now();if(kind=="dl"){cur.log=(cur.log||[]).concat([[tool,cur.ts]]).slice(-30)}await ref.set(cur);return true}catch(e){return false}}
+function admClose(){$("adm").style.display="none"}
+async function admOpen(){let own=false;try{const u=await claude.use("user");own=u?await u.isOwner():false}catch(e){}ADM.owner=own;if(own||ADM.ok)admPanel();else admLogin()}
+function admLogin(){$("abox").innerHTML=`<h2>🔐 ${L_("כניסת מנהל","Admin login")}</h2><p class="hint">${L_("בעל הדף נכנס אוטומטית כשהוא מחובר לחשבון שלו.","The page owner is let in automatically when signed in to their account.")}</p><label>${L_("קוד","Code")}</label><input id="acode" type="password" autocomplete="off"><label>${L_("סיסמה","Password")}</label><input id="apass" type="password" autocomplete="off"><p class="hint" id="aerr" style="color:#dc2626"></p><div class="row"><button class="go" id="alogin" style="margin:0">${L_("כניסה","Sign in")}</button><button id="aclose">${L_("סגירה","Close")}</button></div>`;
+  $("adm").style.display="flex";$("aclose").onclick=admClose;const go=()=>{if(h($("acode").value)==(CFG.ch||h("1"))&&h($("apass").value)==(CFG.ph||h("1"))){ADM.ok=true;$("adbtn").classList.add("on");admPanel()}else $("aerr").textContent=L_("קוד או סיסמה שגויים","Wrong code or password")};$("alogin").onclick=go;$("apass").onkeydown=e=>{if(e.key=="Enter")go()};$("acode").focus()}
+function admCollect(){const o=JSON.parse(JSON.stringify(CFG));document.querySelectorAll("#abox [data-t]").forEach(e=>{if(e.checked)delete o.tools[e.dataset.t];else o.tools[e.dataset.t]=false});o.banner=$("abn").value.trim().slice(0,300);o.bannerOn=$("abon").checked;o.maint=$("amt").checked;o.lang=$("alg").value;if($("anc").value&&$("anp").value){o.ch=h($("anc").value);o.ph=h($("anp").value)}return o}
+function admPanel(){$("abox").innerHTML=`<h2>🛠 ${L_("ניהול האתר","Site admin")}</h2><p class="hint" id="astat"></p>
+  <label>${L_("כלים שמוצגים בדף הבית","Tools shown on the home page")}</label>${TOOLS.map((x,i)=>`<label class="chk"><input type="checkbox" data-t="${x.id}"> ${x.icon} ${L_(x.t,TNE[i])}</label>`).join("")}
+  <label>${L_("הודעה לכל המבקרים","Message for all visitors")}</label><input id="abn"><label class="chk"><input type="checkbox" id="abon"> ${L_("הצג את ההודעה","Show the message")}</label>
+  <label class="chk"><input type="checkbox" id="amt"> ${L_("מצב תחזוקה (הכלים חסומים לכולם חוץ ממני)","Maintenance mode (tools blocked for everyone but me)")}</label>
+  <label>${L_("שפת ברירת מחדל","Default language")}</label><select id="alg"><option value="he">עברית</option><option value="en">English</option></select>
+  <label>${L_("שינוי קוד וסיסמה (אופציונלי)","Change code & password (optional)")}</label><div class="row"><input id="anc" placeholder="${L_("קוד חדש","New code")}"><input id="anp" placeholder="${L_("סיסמה חדשה","New password")}"></div>
+  <label>${L_("סטטיסטיקות שימוש","Usage statistics")}</label><button id="ast">${L_("📊 הצג שימוש (מבקרים מחוברים בלבד)","📊 Show usage (signed-in visitors only)")}</button><div id="astt" class="hint"></div>
+  <div class="row" style="margin-top:12px;flex-wrap:wrap"><button class="go" id="asave" style="margin:0">${L_("💾 שמירה לאתר החי","💾 Save to the live site")}</button><button id="aprev">${L_("👁 תצוגה מקדימה","👁 Preview")}</button><button id="aclose">${L_("סגירה","Close")}</button></div><p class="hint" id="amsg"></p>`;
+  document.querySelectorAll("#abox [data-t]").forEach(e=>e.checked=CFG.tools[e.dataset.t]!==false);$("abn").value=CFG.banner;$("abon").checked=!!CFG.bannerOn;$("amt").checked=!!CFG.maint;$("alg").value=CFG.lang||"he";
+  $("astat").textContent=ADM.owner?L_("✅ מחובר כבעל הדף – שמירה תעדכן את האתר לכל המבקרים.","✅ Signed in as the page owner – saving updates the site for all visitors."):L_("⚠️ ללא חשבון הבעלים אפשר לערוך ולראות תצוגה מקדימה, אבל לא לשמור לאתר החי. כדי לשמור יש להתחבר עם חשבון הבעלים של הדף.","⚠️ Without the owner's account you can edit and preview, but not save to the live site. To save, sign in with the page owner's account.");
+  $("adm").style.display="flex";$("aclose").onclick=admClose;
+  $("ast").onclick=async()=>{const o=$("astt");o.textContent="…";try{const d=await claude.use("db");if(!d){o.textContent=L_("אין גישה לנתונים בתצוגה הזו (נדרשת התחברות).","No data access in this view (sign-in required).");return}
+    const q=await d.collection("stats").get(),rows=[];q.docs.forEach(s=>{const v=s.data()||{},n=v.n||{};let op=0,dl=0;Object.keys(n).forEach(k=>{if(k.startsWith("open_"))op+=+n[k]||0;else if(k.startsWith("dl_"))dl+=+n[k]||0});rows.push({id:s.id,op,dl,ts:+v.ts||0,n})});
+    let ps={};try{const u=await claude.use("user");if(u&&u.profiles)ps=(await u.profiles(rows.map(r=>r.id)))||{}}catch(e){}
+    rows.sort((a,b)=>b.ts-a.ts);o.textContent="";const tot={};rows.forEach(r=>Object.keys(r.n).forEach(k=>tot[k]=(tot[k]||0)+(+r.n[k]||0)));
+    const add=(x,bold)=>{const e=document.createElement("div");e.textContent=x;if(bold)e.style.fontWeight="700";o.append(e)};
+    add(L_("מבקרים מחוברים: ","Signed-in visitors: ")+rows.length+" · "+L_("סה״כ הורדות: ","total downloads: ")+rows.reduce((a,r)=>a+r.dl,0),true);
+    TOOLS.forEach((x,i)=>add(x.icon+" "+L_(x.t,TNE[i])+": "+L_("פתיחות","opens")+" "+(tot["open_"+x.id]||0)+" · "+L_("הורדות","downloads")+" "+(tot["dl_"+x.id]||0)));
+    add(L_("לפי משתמש:","By user:"),true);
+    rows.slice(0,40).forEach(r=>{const nm=(ps[r.id]&&ps[r.id].name)||("#"+String(r.id).slice(0,6));add(nm+" · "+L_("פתיחות","opens")+" "+r.op+" · "+L_("הורדות","downloads")+" "+r.dl+" · "+(r.ts?new Date(r.ts).toLocaleString():""))});
+    add(L_("הנתונים כוללים רק מבקרים מחוברים (הורדה דורשת התחברות).","Data covers signed-in visitors only (downloading requires sign-in)."))}
+  catch(e){o.textContent=L_("אין הרשאה לקרוא את הנתונים.","No permission to read the data.")}};
+  $("aprev").onclick=()=>{CFG=admCollect();applyCfg();$("amsg").textContent=L_("תצוגה מקדימה מקומית בלבד – לא נשמר.","Local preview only – not saved.")};
+  $("asave").onclick=async()=>{const o=admCollect(),m=$("amsg");m.textContent=L_("שומר…","Saving…");try{const a=await claude.use("artifact");if(!a){m.textContent=L_("השמירה לאתר לא זמינה בתצוגה הזו","Saving to the site isn't available in this view");return}await a.publish(buildHtml(o));CFG=o;applyCfg();m.textContent=L_("נשמר! האתר מתעדכן…","Saved! The site is updating…")}
+    catch(e){m.textContent=e&&(e.code=="not_writer"||e.code=="not_granted"||e.code=="not_declared")?L_("אין הרשאה לשמור – יש להתחבר עם חשבון הבעלים של הדף. אפשר להשתמש בתצוגה מקדימה.","No permission to save – sign in with the page owner's account. You can still use Preview."):L_("השמירה נכשלה","Saving failed")}}}
+$("adbtn").onclick=admOpen;
+(async()=>{try{const u=await claude.use("user");if(u&&await u.isOwner()){ADM.owner=true;$("adbtn").classList.add("on");applyCfg()}}catch(e){}})();
+$("hm").onclick=()=>{$("home").style.display="flex";$("home").scrollTop=0};
+try{if(localStorage.getItem("trip3d_p"))$("hcont").style.display="inline-block"}catch(e){}
+$("hcont").onclick=()=>{$("home").style.display="none";$("cont").click()};
+document.querySelectorAll("#s1 .it").forEach((e,i)=>e.style.animationDelay=i*70+"ms");
+$("start").onclick=()=>{$("s1").style.display="none";$("s2").style.display="block";wi=0;wr()};
+$("again").onclick=()=>{$("s1").style.display="block";$("s2").style.display="none";$("intro").style.display="flex";$("intro").scrollTop=0};
+const FB={"Israel":[[34.27,31.22],[34.5,31.6],[34.75,32.07],[34.95,32.83],[35.1,33.08],[35.45,33.09],[35.82,33.28],[35.9,32.7],[35.55,32.4],[35.55,31.75],[35.45,31.5],[35.4,31.1],[35.2,30.5],[34.95,29.55],[34.6,30.4]],
+"Italy":[[7.0,45.9],[8.5,46.4],[10.5,46.8],[12.3,47.0],[13.7,46.5],[13.6,45.7],[12.4,44.9],[12.5,44.1],[13.6,43.6],[14.4,42.3],[16.1,41.9],[16.0,41.4],[18.5,40.1],[17.2,40.4],[16.6,39.7],[17.1,38.9],[16.1,37.9],[15.7,38.0],[16.0,39.5],[15.7,40.0],[14.9,40.2],[13.7,41.2],[12.2,41.9],[11.1,42.4],[10.5,43.0],[10.2,43.9],[8.8,44.4],[7.5,43.8],[6.8,44.1]]};
+const N=140,CS=.5;let LM=null,WM=new Uint8Array(N*N),RH=new Float32Array(N*N),LY={water:{},relief:{},eye:false};
+let draw={mode:null,pts:[]};
+function smooth(P,closed){const n=P.length;if(n<3||n>60)return P;const out=[],g=i=>closed?P[(i+n)%n]:P[Math.max(0,Math.min(n-1,i))];
+  for(let i=0;i<(closed?n:n-1);i++){const p0=g(i-1),p1=g(i),p2=g(i+1),p3=g(i+2);for(let j=0;j<6;j++){const t=j/6,t2=t*t,t3=t2*t;out.push([0,1].map(d=>.5*(2*p1[d]+(p2[d]-p0[d])*t+(2*p0[d]-5*p1[d]+4*p2[d]-p3[d])*t2+(3*p1[d]-p0[d]-3*p2[d]+p3[d])*t3)))}}
+  if(!closed)out.push(P[n-1]);return out}
+let TPLSRC=null,LANG="he",grp=null,multiNames=[],MULTI=false,TOOL="stand",crop=null,rgRect=null;
+const L_=(he,en)=>LANG=="en"?en:he;
+const TARGET={key:55,magnet:62,orn:70,puzzle:130,holder:100};
+let water={lakes:[],rivers:[]},countries={},raw=[],PR={cx:0,cy:0,k:1,s:1},pins=[],flagGrid=null;
+// load countries from datamaps topology
+try{const T=Datamap.prototype.worldTopo,o=Object.values(T.objects)[0],fc=topojson.feature(T,o);
+  fc.features.forEach(f=>{const g=f.geometry;if(!g)return;const rs=g.type=="Polygon"?[g.coordinates[0]]:g.type=="MultiPolygon"?g.coordinates.map(p=>p[0]):[];if(rs.length)countries[f.properties.name]=rs})}catch(e){}
+let fromLib=Object.keys(countries).length>0;
+if(!fromLib){for(const k in FB)countries[k]=[FB[k]];$("msg").textContent="לא הצלחתי לטעון את רשימת המדינות המלאה – מוצגות שתי מדינות בלבד. אפשר להעלות GeoJSON."}
+const ALIAS={"United States of America":"United States","Democratic Republic of the Congo":"Congo - Kinshasa","Republic of the Congo":"Congo - Brazzaville","Ivory Coast":"Côte d’Ivoire","Republic of Serbia":"Serbia","United Republic of Tanzania":"Tanzania","Czech Republic":"Czechia","Swaziland":"Eswatini","East Timor":"Timor-Leste","Macedonia":"North Macedonia","Myanmar":"Myanmar (Burma)","The Bahamas":"Bahamas","Guinea Bissau":"Guinea-Bissau","Cape Verde":"Cabo Verde","Palestine":"Palestinian Territories","Falkland Islands":"Falkland Islands","Vatican":"Vatican City","Hong Kong":"Hong Kong SAR China","Macau":"Macao SAR China","Republic of Korea":"South Korea","Bosnia and Herzegovina":"Bosnia & Herzegovina","Trinidad and Tobago":"Trinidad & Tobago","Antigua and Barbuda":"Antigua & Barbuda","Saint Kitts and Nevis":"St. Kitts & Nevis","Saint Vincent and the Grenadines":"St. Vincent & Grenadines","Sao Tome and Principe":"São Tomé & Príncipe","Saint Lucia":"St. Lucia"},HE={};
+try{const en=new Intl.DisplayNames("en",{type:"region"}),he=new Intl.DisplayNames("he",{type:"region"}),A="ABCDEFGHIJKLMNOPQRSTUVWXYZ",by={};
+  for(const a of A)for(const b of A){const c=a+b,n=en.of(c);if(n&&n!=c)by[n.toLowerCase()]=he.of(c)}
+  Object.keys(countries).forEach(k=>{const h=by[(ALIAS[k]||k).toLowerCase()];if(h)HE[k]=h})}catch(e){}
+const norm=x=>(x||"").trim().toLowerCase(),findC=v=>{v=norm(v);const k=Object.keys(countries).find(k=>norm(k)==v||norm(HE[k])==v);return k&&window.cBlocked&&window.cBlocked(k)?undefined:k},cname=k=>LANG=="en"?k:(HE[k]||k);
+Object.keys(countries).sort().forEach(k=>{$("cl").append(new Option(k));if(HE[k])$("cl").append(new Option(HE[k]))});
+const area=r=>{let a=0;for(let i=0;i<r.length;i++){const p=r[i],q=r[(i+1)%r.length];a+=p[0]*q[1]-q[0]*p[1]}return Math.abs(a/2)};
+const bb=r=>{let a=1e9,b=-1e9,c=1e9,d=-1e9;r.forEach(([x,y])=>{a=Math.min(a,x);b=Math.max(b,x);c=Math.min(c,y);d=Math.max(d,y)});return[a,b,c,d]};
+function clipRing(r,[x0,y0,x1,y1]){let o=r;const E=[[p=>p[0]>=x0,(a,b)=>[x0,a[1]+(b[1]-a[1])*(x0-a[0])/(b[0]-a[0])]],[p=>p[0]<=x1,(a,b)=>[x1,a[1]+(b[1]-a[1])*(x1-a[0])/(b[0]-a[0])]],[p=>p[1]>=y0,(a,b)=>[a[0]+(b[0]-a[0])*(y0-a[1])/(b[1]-a[1]),y0]],[p=>p[1]<=y1,(a,b)=>[a[0]+(b[0]-a[0])*(y1-a[1])/(b[1]-a[1]),y1]]];
+  for(const [inn,ix] of E){const i=o;o=[];for(let k=0;k<i.length;k++){const a=i[k],b=i[(k+1)%i.length];if(inn(b)){if(!inn(a))o.push(ix(a,b));o.push(b)}else if(inn(a))o.push(ix(a,b))}if(!o.length)break}return o}
+const clipAll=rs=>rs.map(r=>clipRing(r,crop)).filter(r=>r.length>=3);
+function pick(rs){const b=grp?grp.flatMap(pickOne):pickOne(rs);return crop?clipAll(b):b}
+function pickOne(rs){if($("far").checked||rs.length<2)return rs;const A=rs.map(area),m=A.indexOf(Math.max(...A)),[a,b,c,d]=bb(rs[m]),mx=(a+b)/2,my=(c+d)/2,lim=.6*Math.max(b-a,d-c)+2;
+  return rs.filter((r,i)=>{if(i==m)return true;if(A[i]<A[m]*5e-4)return false;const [p,q,s,t]=bb(r);return Math.hypot((p+q)/2-mx,(s+t)/2-my)<=lim})}
+function setCountry(rs,keep,g){grp=g||null;crop=null;curRaw=rs;raw=rs;fit();if(!keep){pins=[];water={lakes:[],rivers:[]}}renderPins();update()}
+function fit(){const rs=pick(raw);let a=1e9,b=-1e9,c=1e9,d=-1e9;rs.forEach(r=>{const x=bb(r);a=Math.min(a,x[0]);b=Math.max(b,x[1]);c=Math.min(c,x[2]);d=Math.max(d,x[3])});
+  const cy=(c+d)/2,k=Math.cos(cy*Math.PI/180);PR={cx:(a+b)/2,cy,k,s:70/Math.max((b-a)*k,d-c)};PR.rings=rs.map(r=>r.map(([x,y])=>toMM(x,y)));PR.gr=grp?grp.map(g=>(crop?clipAll(pickOne(g)):pickOne(g)).map(r=>r.map(([x,y])=>toMM(x,y)))):null;PR.w=(b-a)*k*PR.s;PR.h=(d-c)*PR.s;
+  {const eps=LOWQ?.35:.1,simp=r=>{if(r.length<12)return r;const o=[r[0]];for(let i=1;i<r.length-1;i++){const q=o[o.length-1];if(Math.hypot(r[i][0]-q[0],r[i][1]-q[1])>=eps)o.push(r[i])}o.push(r[r.length-1]);return o.length>=6?o:r};PR.rings=PR.rings.map(simp);if(PR.gr)PR.gr=PR.gr.map(g=>g.map(simp))}
+  LM=new Uint8Array(N*N);for(let j=0;j<N;j++)for(let i=0;i<N;i++){const x=-35+(i+.5)*CS,y=-35+(j+.5)*CS;LM[j*N+i]=PR.rings.some(r=>{let c=false;for(let p=0,q=r.length-1;p<r.length;q=p++){const u=r[p],v=r[q];if((u[1]>y)!=(v[1]>y)&&x<(v[0]-u[0])*(y-u[1])/(v[1]-u[1])+u[0])c=!c}return c})?1:0}}
+const toMM=(lo,la)=>[(lo-PR.cx)*PR.k*PR.s,(la-PR.cy)*PR.s],fromMM=(x,y)=>[x/(PR.k*PR.s)+PR.cx,y/PR.s+PR.cy];
+$("rg").onclick=()=>{draw={mode:"region",pts:[]};$("rg").style.outline="2px solid var(--ac)";$("msg").textContent="גררו מלבן על המפה כדי לבחור את האזור"};
+$("rgx").onclick=()=>{crop=null;fit();update()};
+$("cin").onchange=()=>{const n=findC($("cin").value);if(n)setCountry(countries[n])};
+$("far").onchange=()=>{fit();update()};
+$("gj").onchange=async e=>{try{const j=JSON.parse(await e.target.files[0].text()),out=[];
+  const f=g=>{if(!g)return;if(g.type=="Polygon")out.push(g.coordinates[0]);else if(g.type=="MultiPolygon")g.coordinates.forEach(p=>out.push(p[0]));else if(g.type=="GeometryCollection")g.geometries.forEach(f)};
+  (j.features||[j]).forEach(x=>f(x.geometry||x));if(!out.length)throw 0;setCountry(out)}catch(_){$("msg").textContent="לא הצלחתי לקרוא את הקובץ"}};
+const okPts=a=>Array.isArray(a)?a.filter(p=>Array.isArray(p)&&isFinite(p[0])&&isFinite(p[1])).map(p=>[+p[0],+p[1]]):[];
+const inB=(p,B,sw)=>{const lo=sw?p[1]:p[0],la=sw?p[0]:p[1];return B.some(b=>lo>=b[0]-3&&lo<=b[1]+3&&la>=b[2]-3&&la<=b[3]+3)};
+const fixPts=(pts,B)=>pts.filter(p=>inB(p,B,1)).length>pts.filter(p=>inB(p,B,0)).length?pts.map(p=>[p[1],p[0]]):pts;
+$("wb").onclick=async()=>{const m=$("msg");const sm=await claude.use("sample");if(!sm){m.textContent="לא זמין בתצוגה הזו – אפשר להעלות GeoJSON";return}
+  const c=$("cin").value;if(!raw.length)return;const B=pick(raw).map(bb),bx=`lon ${Math.min(...B.map(x=>x[0])).toFixed(1)}..${Math.max(...B.map(x=>x[1])).toFixed(1)}, lat ${Math.min(...B.map(x=>x[2])).toFixed(1)}..${Math.max(...B.map(x=>x[3])).toFixed(1)}`;
+  m.textContent="מחפש אגמים ונחלים… (עד חצי דקה)";
+  const ask=t=>sm.json(t+` Coordinates are [lon,lat] with 2 decimals. JSON only: {"items":[{"name":"","points":[[lon,lat]]}]}`,{modelTier:"complex",cache:false});
+  const [L,Rv]=await Promise.allSettled([ask(`The main lakes of ${c} (bbox ${bx}): up to 5 well-known ones. Give each outline as 8-16 points forming a closed polygon (do not repeat the first point).`),
+    ask(`The major rivers of ${c} (bbox ${bx}): up to 6, with their course inside the country from source to mouth/border as 8-20 points.`)]);
+  const RR=pick(raw),ins=p=>RR.some(r=>{let c=false;for(let i=0,j=r.length-1;i<r.length;j=i++){const a=r[i],b=r[j];if((a[1]>p[1])!=(b[1]>p[1])&&p[0]<(b[0]-a[0])*(p[1]-a[1])/(b[1]-a[1])+a[0])c=!c}return c});
+  const get=(x,min)=>x.status=="fulfilled"?((x.value&&x.value.items)||[]).map(i=>fixPts(okPts(i.points),B)).map(p=>min==2?p.filter(ins):p).filter(p=>p.length>=min&&(min==2||p.filter(ins).length>=p.length/2)):[];
+  water.lakes=get(L,3);water.rivers=get(Rv,2);
+  const err=[L,Rv].find(x=>x.status=="rejected");
+  m.textContent=`נוספו ${water.lakes.length} אגמים ו-${water.rivers.length} נחלים (קירוב)`+(err&&!water.lakes.length&&!water.rivers.length?" – נכשל: "+((err.reason&&(err.reason.message||err.reason.code))||""):"");update()};
+const setMode=m=>{draw={mode:m,pts:[]};$("dr").style.outline=m=="river"?"2px solid var(--ac)":"";$("dk").style.outline=m=="lake"?"2px solid var(--ac)":"";$("msg").textContent=m?"לחצו על המפה לסימון נקודות, ואז 'סיום'":"";drawMap()};
+$("dr").onclick=()=>setMode(draw.mode=="river"?null:"river");$("dk").onclick=()=>setMode(draw.mode=="lake"?null:"lake");
+$("dd").onclick=()=>{if(draw.mode=="river"&&draw.pts.length>1)water.rivers.push(draw.pts);else if(draw.mode=="lake"&&draw.pts.length>2)water.lakes.push(draw.pts);setMode(null);update()};
+$("dc").onclick=()=>{water={lakes:[],rivers:[]};setMode(null);update()};
+$("wf").onchange=async e=>{try{const j=JSON.parse(await e.target.files[0].text());const f=g=>{if(!g)return;const t=g.type,C=g.coordinates;
+  if(t=="Polygon")water.lakes.push(okPts(C[0]));else if(t=="MultiPolygon")C.forEach(p=>water.lakes.push(okPts(p[0])));else if(t=="LineString")water.rivers.push(okPts(C));else if(t=="MultiLineString")C.forEach(l=>water.rivers.push(okPts(l)));else if(t=="GeometryCollection")g.geometries.forEach(f)};
+  (j.features||[j]).forEach(x=>f(x.geometry||x));$("msg").textContent=`מים נטענו: ${water.lakes.length} אגמים, ${water.rivers.length} נחלים`;update()}catch(_){$("msg").textContent="לא הצלחתי לקרוא את קובץ המים"}};
+const alignHTML=p=>`<details><summary style="cursor:pointer;font-size:12px;color:var(--mu)">יישור התמונה</summary>${[["sx","רוחב",.5,2,.01,1],["sy","גובה",.5,2,.01,1],["ox","הזזה אופקית",-50,50,1,0],["oy","הזזה אנכית",-50,50,1,0]].map(a=>`<div class="row"><span style="font-size:12px;width:80px">${a[1]}</span><input type="range" id="${p+a[0]}" min="${a[2]}" max="${a[3]}" step="${a[4]}" value="${a[5]}"></div>`).join("")}</details>`;
+$("alw").innerHTML=alignHTML("w");$("alr").innerHTML=alignHTML("r");
+function tf(key){const p=key[0],g=id=>+$(p+id).value;const w=PR.w*g("sx"),h=PR.h*g("sy");return{w,h,cx:g("ox")/100*PR.w,cy:g("oy")/100*PR.h}}
+function samp(key,x,y){const L=LY[key];if(!L||!L.d||!PR.w)return null;const t=tf(key),u=(x-t.cx)/t.w+.5,v=.5-(y-t.cy)/t.h;if(u<0||u>=1||v<0||v>=1)return null;
+  const o=((v*L.c.height|0)*L.c.width+(u*L.c.width|0))*4,d=L.d.data;return d[o+3]<128?null:[d[o],d[o+1],d[o+2]]}
+function hv(p,m){const [r,g,b]=p;if(m=="gray")return(r+g+b)/765;if(m=="grayinv")return 1-(r+g+b)/765;
+  const mx=Math.max(r,g,b),mn=Math.min(r,g,b),v=mx/255,s=mx?(mx-mn)/mx:0;let h=0;if(mx!=mn){h=mx==r?60*(((g-b)/(mx-mn))%6):mx==g?60*((b-r)/(mx-mn)+2):60*((r-g)/(mx-mn)+4);if(h<0)h+=360}
+  if(s>.25&&h>170&&h<260)return 0;if(s<.2)return v>.85?1:.5*v+.2;return Math.max(0,Math.min(1,(130-h)/110))*.95}
+function computeMasks(){WM=new Uint8Array(N*N);RH=new Float32Array(N*N);if(!LM||TOOL=="puzzle")return;const X=i=>-35+(i+.5)*CS;
+  if(LY.water.d){const c=$("wcol").value,t=[1,3,5].map(i=>parseInt(c.substr(i,2),16)),tol=+$("wtol").value;
+    for(let j=0;j<N;j++)for(let i=0;i<N;i++)if(LM[j*N+i]){const p=samp("water",X(i),X(j));if(p&&Math.hypot(p[0]-t[0],p[1]-t[1],p[2]-t[2])<tol)WM[j*N+i]=1}
+    const W2=WM.slice();for(let j=1;j<N-1;j++)for(let i=1;i<N-1;i++)if(W2[j*N+i]){let n=0;for(let a=-1;a<2;a++)for(let b=-1;b<2;b++)if(a||b)n+=W2[(j+a)*N+i+b];if(n<2)WM[j*N+i]=0}}
+  if(LY.relief.d){let H=new Float32Array(N*N);const m=$("rmode").value,rh=+$("rh").value;
+    for(let j=0;j<N;j++)for(let i=0;i<N;i++)if(LM[j*N+i]&&!WM[j*N+i]){const p=samp("relief",X(i),X(j));H[j*N+i]=p?hv(p,m):0}
+    for(let it=0;it<2;it++){const B=new Float32Array(N*N);for(let j=1;j<N-1;j++)for(let i=1;i<N-1;i++){let s=0;for(let a=-1;a<2;a++)for(let b=-1;b<2;b++)s+=H[(j+a)*N+i+b];B[j*N+i]=s/9}H=B}
+    for(let k=0;k<N*N;k++){const q=Math.round(H[k]*8);RH[k]=LM[k]&&!WM[k]&&q>=1?q/8*rh:0}}}
+const relAt=(x,y)=>{const i=Math.floor((x+35)/CS),j=Math.floor((y+35)/CS);return i>=0&&j>=0&&i<N&&j<N?RH[j*N+i]:0};
+function loadLayer(key,f){if(f)loadLayerURL(key,URL.createObjectURL(f))}
+function loadLayerURL(key,u){const im=new Image();im.onload=()=>{const c=document.createElement("canvas"),sc=Math.min(1,700/Math.max(im.width,im.height));c.width=Math.max(1,Math.round(im.width*sc));c.height=Math.max(1,Math.round(im.height*sc));
+  const g=c.getContext("2d");g.drawImage(im,0,0,c.width,c.height);LY[key]={c,d:g.getImageData(0,0,c.width,c.height)};update()};im.src=u}
+$("wimg").onchange=e=>loadLayer("water",e.target.files[0]);$("rimg").onchange=e=>loadLayer("relief",e.target.files[0]);
+$("eye").onclick=()=>{LY.eye=!LY.eye;$("eye").style.outline=LY.eye?"2px solid var(--ac)":"";$("msg").textContent=LY.eye?"לחצו על המפה על נקודה של מים בתמונה":""};
+// 2D map
+const mc=$("map"),mx=mc.getContext("2d"),S=6.5;
+function drawMap(){mx.clearRect(0,0,520,520);
+  if($("showimg").checked&&PR.w)["relief","water"].forEach(k=>{const L=LY[k];if(!L||!L.c)return;const t=tf(k);mx.globalAlpha=.5;mx.drawImage(L.c,260+(t.cx-t.w/2)*S,260-(t.cy+t.h/2)*S,t.w*S,t.h*S);mx.globalAlpha=1});mx.fillStyle=$("c_land").value;mx.strokeStyle="rgba(0,0,0,.45)";mx.lineWidth=1.2;
+  (PR.rings||[]).forEach(r=>{mx.beginPath();r.forEach(([x,y],i)=>mx[i?"lineTo":"moveTo"](260+x*S,260-y*S));mx.closePath();mx.fill();mx.stroke()});
+  for(let j=0;j<N;j++)for(let i=0;i<N;i++){const k=j*N+i;if(RH[k]>0){mx.fillStyle=$("c_relief").value;mx.globalAlpha=.25+.5*Math.min(1,RH[k]/(+$("rh").value));mx.fillRect(260+(-35+i*CS)*S,260-(-35+(j+1)*CS)*S,CS*S+.5,CS*S+.5);mx.globalAlpha=1}}
+  mx.fillStyle=$("c_water").value;for(let j=0;j<N;j++)for(let i=0;i<N;i++)if(WM[j*N+i])mx.fillRect(260+(-35+i*CS)*S,260-(-35+(j+1)*CS)*S,CS*S+.5,CS*S+.5);
+  const wc=$("c_water").value;mx.fillStyle=wc;mx.strokeStyle=wc;mx.lineJoin=mx.lineCap="round";const mp=([lo,la])=>{const [x,y]=toMM(lo,la);return[260+x*S,260-y*S]};
+  water.lakes.forEach(r=>{mx.beginPath();smooth(r,true).forEach((p,i)=>mx[i?"lineTo":"moveTo"](...mp(p)));mx.closePath();mx.fill()});
+  mx.lineWidth=1.2*S;water.rivers.forEach(r=>{mx.beginPath();smooth(r,false).forEach((p,i)=>mx[i?"lineTo":"moveTo"](...mp(p)));mx.stroke()});
+  if(draw.pts.length){mx.lineWidth=2;mx.setLineDash([6,4]);mx.beginPath();draw.pts.forEach((p,i)=>mx[i?"lineTo":"moveTo"](...mp(p)));mx.stroke();mx.setLineDash([]);draw.pts.forEach(p=>{const [X,Y]=mp(p);mx.beginPath();mx.arc(X,Y,3,0,7);mx.fill()})}
+  if($("route").value!="0"&&pins.length>1){mx.strokeStyle=$("c_pin").value;mx.lineWidth=2.5;mx.setLineDash($("route").value=="2"?[7,5]:[]);mx.beginPath();pins.forEach((p,i)=>mx[i?"lineTo":"moveTo"](...mp([p.lon,p.lat])));mx.stroke();mx.setLineDash([])}
+  mx.textAlign="center";pins.forEach((p,i)=>{const [x,y]=toMM(p.lon,p.lat),X=260+x*S,Y=260-y*S;mx.fillStyle=$("c_pin").value;mx.beginPath();mx.arc(X,Y,8,0,7);mx.fill();if(p.fav){mx.strokeStyle="#fbbf24";mx.lineWidth=3;mx.stroke()}mx.fillStyle="#fff";mx.font="bold 10px sans-serif";mx.fillText(i+1,X,Y+3.5)});if(rgRect){mx.setLineDash([6,4]);mx.strokeStyle="#e11d48";mx.lineWidth=2;mx.strokeRect(rgRect[0],rgRect[1],rgRect[2]-rgRect[0],rgRect[3]-rgRect[1]);mx.setLineDash([])}}
+mc.onclick=e=>{if(moved||lastHit){moved=false;lastHit=false;return}const r=mc.getBoundingClientRect(),f=520/r.width,X=((e.clientX-r.left)*f-260)/S,Y=-((e.clientY-r.top)*f-260)/S,[lo,la]=fromMM(X,Y);
+  if(LY.eye){const p=samp("water",X,Y);LY.eye=false;$("eye").style.outline="";if(p){$("wcol").value="#"+p.map(v=>v.toString(16).padStart(2,"0")).join("");$("msg").textContent="צבע המים נבחר";update()}else $("msg").textContent="הנקודה מחוץ לתמונה";return}
+  if(draw.mode){draw.pts.push([lo,la]);drawMap();return}addPin(lo,la,"מקום "+(pins.length+1))};
+function addPin(lon,lat,name){pins.push({lon,lat,name});renderPins();update();const ins=$("pl").querySelectorAll("input");ins[ins.length-1]?.select()}
+let pdrag=-1,moved=false,lastHit=false;
+const mpos=e=>{const r=mc.getBoundingClientRect(),f=520/r.width;return[(e.clientX-r.left)*f,(e.clientY-r.top)*f]};
+mc.onpointerdown=e=>{if(draw.mode=="region"){const [X,Y]=mpos(e);rgRect=[X,Y,X,Y];mc.setPointerCapture(e.pointerId);return}if(draw.mode||LY.eye)return;const [X,Y]=mpos(e);pdrag=pins.findIndex(p=>{const [x,y]=toMM(p.lon,p.lat);return Math.hypot(260+x*S-X,260-y*S-Y)<12});lastHit=pdrag>=0;moved=false;if(pdrag>=0)mc.setPointerCapture(e.pointerId)};
+mc.onpointermove=e=>{if(rgRect){const [X,Y]=mpos(e);rgRect[2]=X;rgRect[3]=Y;drawMap();return}if(pdrag<0)return;moved=true;const [X,Y]=mpos(e),[lo,la]=fromMM((X-260)/S,-(Y-260)/S);pins[pdrag].lon=lo;pins[pdrag].lat=la;drawMap()};
+mc.onpointerup=()=>{if(rgRect){const r=rgRect;rgRect=null;moved=true;draw={mode:null,pts:[]};$("rg").style.outline="";
+  if(Math.abs(r[2]-r[0])>12&&Math.abs(r[3]-r[1])>12){const a=fromMM((Math.min(r[0],r[2])-260)/S,-(Math.max(r[1],r[3])-260)/S),b=fromMM((Math.max(r[0],r[2])-260)/S,-(Math.min(r[1],r[3])-260)/S);crop=[a[0],a[1],b[0],b[1]];fit();update()}else drawMap();return}
+  if(pdrag>=0&&moved)update();pdrag=-1};
+function renderPins(){const L=$("pl");L.innerHTML="";$("cnt").textContent=pins.length;
+  pins.forEach((p,i)=>{const r=document.createElement("div");r.className="row";const t=document.createElement("input");t.value=p.name;t.oninput=()=>{p.name=t.value;update()};
+    const x=document.createElement("button");x.textContent="✕";x.onclick=()=>{pins.splice(i,1);renderPins();update()};const st=document.createElement("button");st.textContent=p.fav?"★":"☆";st.title="המקום האהוב";st.onclick=()=>{p.fav=!p.fav;renderPins();update()};const up=document.createElement("button");up.textContent="↑";up.title="הזז למעלה";up.onclick=()=>{if(i>0){[pins[i-1],pins[i]]=[pins[i],pins[i-1]];renderPins();update()}};r.append(t,up,st,x);L.append(r)})}
+$("sb").onclick=async()=>{const q=$("q").value.trim();if(!q)return;const m=$("msg"),box=$("cands");box.innerHTML="";
+  const xy=q.match(/@?(-?\d{1,3}(?:\.\d+)?)\s*[, ]\s*(-?\d{1,3}(?:\.\d+)?)/);
+  if(xy&&Math.abs(+xy[1])<=90&&Math.abs(+xy[2])<=180){addPin(+xy[2],+xy[1],"מקום "+(pins.length+1));$("q").value="";m.textContent="נוסף לפי קואורדינטות";return}
+  try{const sm=await claude.use("sample");if(!sm){m.textContent="החיפוש לא זמין בתצוגה הזו – לחצו על המפה";return}
+    m.textContent="מחפש…";const c=$("cin").value||"";
+    const r=await sm.json(`Geocode this place query: "${q}"${c?` (the trip is in ${c}, prefer matches there, but include others if the query is clearly elsewhere)`:""}. The query may be in any language, may be a city, town, village, landmark, beach, mountain, hotel, restaurant or address. Return up to 5 distinct candidate matches, best first, as JSON only: {"results":[{"name":"short name in the query's language","detail":"region, country","lat":number,"lon":number}]}. Use 4 decimal places and be as precise as you can; omit any candidate whose coordinates you are not reasonably sure of. If nothing is known: {"results":[]}.`,{modelTier:"complex",cache:false});
+    const L=(r&&r.results||[]).filter(x=>typeof x.lat=="number"&&typeof x.lon=="number");
+    if(!L.length){m.textContent="לא נמצא. נסו שם מדויק יותר, הדביקו קואורדינטות (32.08, 34.78) או קישור מגוגל מפות, או לחצו על המפה.";return}
+    const rs=pick(raw),B=rs.length?rs.map(bb):null;
+    m.textContent="בחרו תוצאה:";
+    L.forEach(x=>{const out=B&&c&&!B.some(b=>x.lon>=b[0]-2&&x.lon<=b[1]+2&&x.lat>=b[2]-2&&x.lat<=b[3]+2);
+      const bt=document.createElement("button");bt.style.cssText="display:block;text-align:start;margin-bottom:5px";bt.textContent=x.name+(x.detail?" – "+x.detail:"")+(out?" (מחוץ למדינה שנבחרה)":"");
+      bt.onclick=()=>{addPin(x.lon,x.lat,x.name);box.innerHTML="";$("q").value="";m.textContent="נוסף: "+x.name};box.append(bt)})}
+  catch(e){m.textContent="החיפוש נכשל – אפשר ללחוץ על המפה או להדביק קואורדינטות"}};
+$("q").onkeydown=e=>{if(e.key=="Enter")$("sb").click()};
+// flag raster 50x33
+const FW=50,FH=33;
+function makeFlag(cb){const m=$("fm").value;$("fimg").style.display=m=="img"?"block":"none";if(m=="none"){flagGrid=null;return cb()}
+  if(m=="lib"){const nm=(grp?multiNames.slice(0,3):[findC($("cin").value)]).filter(k=>k&&FLG(k));if(!nm.length){flagGrid=null;$("msg").textContent="אין דגל מובנה למדינה הזו – אפשר להעלות תמונת דגל";return cb()}}
+  const c=document.createElement("canvas");c.width=FW;c.height=FH;const g=c.getContext("2d"),col=[$("f1").value,$("f2").value,$("f3").value];
+  const fin=()=>{if(m=="lib"){const nm=(grp?multiNames.slice(0,3):[findC($("cin").value)]).filter(k=>k&&FLG(k)),n=nm.length,pal=[],bw=n==1?FW:Math.floor((FW-(n-1)*2)/n),bh=Math.round(bw*2/3);
+    nm.forEach((k,i)=>drawFlag(FLG(k),g,i*(bw+2),Math.round((FH-bh)/2),bw,bh,pal));libPal=pal.map(hexRGB)}
+  const d=g.getImageData(0,0,FW,FH).data;let px=[];for(let i=0;i<FW*FH;i++)px.push(d[i*4+3]<128?null:[d[i*4],d[i*4+1],d[i*4+2]]);
+    if(m=="img"){px=px.map(p=>p&&p.map(v=>Math.round(v/127.5)*127.5));const cnt={};px.forEach(p=>p&&(cnt[p]=(cnt[p]||0)+1));
+      const pal=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]).slice(0,6).map(s=>s.split(",").map(Number));
+      px=px.map(p=>p&&pal.reduce((b,q)=>{const e=p.reduce((s,v,i)=>s+(v-q[i])**2,0);return e<b[0]?[e,q]:b},[1e9,0])[1])}
+    if(m=="lib")px=px.map(p=>p&&libPal.reduce((b,q)=>{const e=p.reduce((s,v,i)=>s+(v-q[i])**2,0);return e<b[0]?[e,q]:b},[1e9,0])[1]);
+    flagGrid=px.map(p=>p?"#"+p.map(v=>Math.round(v).toString(16).padStart(2,"0")).join(""):null);cb()};
+  if(m=="lib"){fin();return}
+  if(m=="img"){if(!flagSrc){flagGrid=null;return cb()}const im=new Image();im.onload=()=>{g.fillStyle="#fff";g.fillRect(0,0,FW,FH);g.drawImage(im,0,0,FW,FH);fin()};im.src=flagSrc;return}
+  const n=+m[1],h=m[0]=="h";for(let i=0;i<n;i++){g.fillStyle=col[i];h?g.fillRect(0,i*FH/n,FW,FH/n+1):g.fillRect(i*FW/n,0,FW/n+1,FH)}fin()}
+// 3D model (Z up, mm): returns parts [{name,color,geoms}]
+function outline(t){const pts=[],cy=-6,poly=(n,R,off)=>{for(let i=0;i<n;i++){const a=off+i*2*Math.PI/n;pts.push([R*Math.cos(a),cy+R*Math.sin(a)])}};
+  if(t=="circle")poly(72,68,0);else if(t=="hex")poly(6,80,Math.PI/2);else if(t=="oct")poly(8,74,Math.PI/8);
+  else if(t=="oval")for(let i=0;i<72;i++){const a=i*Math.PI/36;pts.push([62*Math.cos(a),cy+78*Math.sin(a)])}
+  else{const hw=48,hh=62,r=t=="round"?14:0;if(!r)return[[-hw,cy-hh],[hw,cy-hh],[hw,cy+hh],[-hw,cy+hh]];
+    [[hw-r,hh-r,0],[-hw+r,hh-r,1],[-hw+r,-hh+r,2],[hw-r,-hh+r,3]].forEach(([x,y,q])=>{for(let i=0;i<=8;i++){const a=(q+i/8)*Math.PI/2;pts.push([x+r*Math.cos(a),cy+y+r*Math.sin(a)])}})}
+  return pts}
+const BGS={night:["#46557a","#11141f"],sunset:["#ff9966","#3b1d4a"],ocean:["#38bdf8","#0b2a4a"],forest:["#4ade80","#0c2a1b"],light:["#ffffff","#d6d3ca"]};
+function applyBg(){const b=BGS[$("bg").value]||BGS.night;$("view").style.background=`radial-gradient(circle at 50% 38%,${b[0]},${b[1]} 78%)`}
+const shade=(h,i,n)=>{const t=(i-(n-1)/2)/Math.max(1,n-1)*.6,c=[1,3,5].map(k=>parseInt(h.substr(k,2),16));return"#"+c.map(v=>Math.round(t>0?v+(255-v)*t:v*(1+t)).toString(16).padStart(2,"0")).join("")};
+const FL={};
+{const B="#0038b8",UJ=(R,T)=>{R(0,0,1,1,"#012169");T([[0,0],[.1,0],[1,.9],[1,1],[.9,1],[0,.1]],"#fff");T([[1,0],[.9,0],[0,.9],[0,1],[.1,1],[1,.1]],"#fff");T([[0,0],[.04,0],[1,.96],[1,1],[.96,1],[0,.04]],"#c8102e");T([[1,0],[.96,0],[0,.96],[0,1],[.04,1],[1,.04]],"#c8102e");R(.4,0,.2,1,"#fff");R(0,.37,1,.26,"#fff");R(.45,0,.1,1,"#c8102e");R(0,.43,1,.14,"#c8102e")},
+  nord=(R,bg,c1,c2)=>{R(0,0,1,1,bg);R(.28,0,.18,1,c1);R(0,.38,1,.24,c1);if(c2){R(.33,0,.08,1,c2);R(0,.44,1,.12,c2)}};
+Object.assign(FL,{
+"Israel":(R,C,T,S,H,V)=>{R(0,0,1,1,"#fff");R(0,.09,1,.12,B);R(0,.79,1,.12,B);T([[.5,.33],[.598,.585],[.402,.585]],B);T([[.5,.67],[.598,.415],[.402,.415]],B)},
+"Italy":(R,C,T,S,H,V)=>V(["#009246","#fff","#ce2b37"]),"France":(R,C,T,S,H,V)=>V(["#0055a4","#fff","#ef4135"]),
+"Germany":(R,C,T,S,H,V)=>H(["#000","#dd0000","#ffce00"]),"Spain":(R,C,T,S,H,V)=>H(["#aa151b","#f1bf00","#aa151b"],[1,2,1]),
+"Portugal":(R,C,T,S,H,V)=>{V(["#006600","#ff0000"],[2,3]);C(.4,.5,.2,"#ffcc00")},
+"Greece":(R,C,T,S,H,V)=>{H(Array.from({length:9},(_,i)=>i%2?"#fff":"#0d5eaf"));R(0,0,.37,5/9,"#0d5eaf");R(.15,0,.07,5/9,"#fff");R(0,.25,.37,.056,"#fff")},
+"Netherlands":(R,C,T,S,H,V)=>H(["#ae1c28","#fff","#21468b"]),"Belgium":(R,C,T,S,H,V)=>V(["#000","#fae042","#ed2939"]),
+"Austria":(R,C,T,S,H,V)=>H(["#ed2939","#fff","#ed2939"]),"Switzerland":(R,C,T,S,H,V)=>{R(0,0,1,1,"#d52b1e");R(.44,.2,.12,.6,"#fff");R(.3,.41,.4,.18,"#fff")},
+"United Kingdom":(R,C,T,S,H,V)=>UJ(R,T),"Ireland":(R,C,T,S,H,V)=>V(["#169b62","#fff","#ff883e"]),"Poland":(R,C,T,S,H,V)=>H(["#fff","#dc143c"]),
+"Czech Republic":(R,C,T,S,H,V)=>{H(["#fff","#d7141a"]);T([[0,0],[.5,.5],[0,1]],"#11457e")},"Hungary":(R,C,T,S,H,V)=>H(["#ce2939","#fff","#477050"]),
+"Romania":(R,C,T,S,H,V)=>V(["#002b7f","#fcd116","#ce1126"]),"Bulgaria":(R,C,T,S,H,V)=>H(["#fff","#00966e","#d62612"]),"Croatia":(R,C,T,S,H,V)=>H(["#ff0000","#fff","#171796"]),
+"Republic of Serbia":(R,C,T,S,H,V)=>H(["#c6363c","#0c4076","#fff"]),"Montenegro":(R,C,T,S,H,V)=>{R(0,0,1,1,"#d4af37");R(.04,.06,.92,.88,"#c40308")},
+"Turkey":(R,C,T,S,H,V)=>{R(0,0,1,1,"#e30a17");C(.38,.5,.25,"#fff");C(.43,.5,.2,"#e30a17");S(.6,.5,.12,"#fff")},
+"Sweden":(R,C,T,S,H,V)=>{R(0,0,1,1,"#006aa7");R(.3,0,.12,1,"#fecc00");R(0,.42,1,.16,"#fecc00")},
+"Norway":(R,C,T,S,H,V)=>nord(R,"#ba0c2f","#fff","#00205b"),"Denmark":(R,C,T,S,H,V)=>{R(0,0,1,1,"#c8102e");R(.28,0,.1,1,"#fff");R(0,.42,1,.16,"#fff")},
+"Finland":(R,C,T,S,H,V)=>{R(0,0,1,1,"#fff");R(.28,0,.14,1,"#003580");R(0,.4,1,.2,"#003580")},"Iceland":(R,C,T,S,H,V)=>nord(R,"#02529c","#fff","#dc1e35"),
+"Russia":(R,C,T,S,H,V)=>H(["#fff","#0039a6","#d52b1e"]),"Ukraine":(R,C,T,S,H,V)=>H(["#0057b7","#ffd700"]),
+"United States of America":(R,C,T,S,H,V)=>{H(Array.from({length:13},(_,i)=>i%2?"#fff":"#b22234"));R(0,0,.4,7/13,"#3c3b6e");for(let i=0;i<4;i++)for(let j=0;j<3;j++)R(.05+i*.09,.07+j*.13,.04,.06,"#fff")},
+"Canada":(R,C,T,S,H,V)=>{V(["#d52b1e","#fff","#d52b1e"],[1,2,1]);S(.5,.52,.25,"#d52b1e")},"Mexico":(R,C,T,S,H,V)=>{V(["#006847","#fff","#ce1126"]);C(.5,.5,.12,"#8c6239")},
+"Brazil":(R,C,T,S,H,V)=>{R(0,0,1,1,"#009c3b");T([[.5,.1],[.92,.5],[.5,.9],[.08,.5]],"#ffdf00");C(.5,.5,.22,"#002776")},
+"Argentina":(R,C,T,S,H,V)=>{H(["#74acdf","#fff","#74acdf"]);C(.5,.5,.08,"#f6b40e")},"Japan":(R,C,T,S,H,V)=>{R(0,0,1,1,"#fff");C(.5,.5,.3,"#bc002d")},
+"China":(R,C,T,S,H,V)=>{R(0,0,1,1,"#de2910");S(.17,.27,.15,"#ffde00");S(.34,.1,.05,"#ffde00");S(.4,.2,.05,"#ffde00");S(.4,.33,.05,"#ffde00");S(.34,.43,.05,"#ffde00")},
+"South Korea":(R,C,T,S,H,V)=>{R(0,0,1,1,"#fff");C(.5,.5,.2,"#cd2e3a");C(.5,.58,.1,"#0047a0");R(.1,.1,.12,.05,"#000");R(.78,.1,.12,.05,"#000");R(.1,.85,.12,.05,"#000");R(.78,.85,.12,.05,"#000")},
+"India":(R,C,T,S,H,V)=>{H(["#ff9933","#fff","#138808"]);C(.5,.5,.1,"#000080")},"Thailand":(R,C,T,S,H,V)=>H(["#a51931","#f4f5f8","#2d2a4a","#f4f5f8","#a51931"],[1,1,2,1,1]),
+"Vietnam":(R,C,T,S,H,V)=>{R(0,0,1,1,"#da251d");S(.5,.52,.3,"#ffff00")},"Egypt":(R,C,T,S,H,V)=>H(["#ce1126","#fff","#000"]),
+"Morocco":(R,C,T,S,H,V)=>{R(0,0,1,1,"#c1272d");S(.5,.52,.22,"#006233")},
+"South Africa":(R,C,T,S,H,V)=>{H(["#e03c31","#001489"]);T([[0,0],[.5,.5],[0,1]],"#007749");T([[0,.2],[.28,.5],[0,.8]],"#000")},
+"Australia":(R,C,T,S,H,V)=>{R(0,0,1,1,"#00247d");R(0,0,.5,.5,"#00247d");R(.2,0,.1,.5,"#fff");R(0,.2,.5,.1,"#fff");R(.23,0,.04,.5,"#cf142b");R(0,.23,.5,.04,"#cf142b");S(.25,.75,.1,"#fff");S(.75,.25,.06,"#fff");S(.85,.5,.06,"#fff");S(.75,.8,.06,"#fff");S(.65,.5,.06,"#fff")},
+"New Zealand":(R,C,T,S,H,V)=>{R(0,0,1,1,"#00247d");R(.2,0,.1,.5,"#fff");R(0,.2,.5,.1,"#fff");R(.23,0,.04,.5,"#cc142b");R(0,.23,.5,.04,"#cc142b");S(.75,.3,.07,"#cc142b");S(.85,.5,.07,"#cc142b");S(.7,.78,.07,"#cc142b");S(.6,.52,.07,"#cc142b")},
+"Jordan":(R,C,T,S,H,V)=>{H(["#000","#fff","#007a3d"]);T([[0,0],[.45,.5],[0,1]],"#ce1126")},
+"United Arab Emirates":(R,C,T,S,H,V)=>{R(0,0,.25,1,"#ff0000");R(.25,0,.75,.33,"#00732f");R(.25,.33,.75,.34,"#fff");R(.25,.67,.75,.33,"#000")}});
+FL["Serbia"]=FL["Republic of Serbia"];FL["Czechia"]=FL["Czech Republic"];FL["United States"]=FL["United States of America"]}
+const FLG=k=>FL[k]||FL[ALIAS[k]];let libPal=[];
+const hexRGB=h=>{h=h.replace("#","");if(h.length==3)h=h.split("").map(x=>x+x).join("");return[0,2,4].map(i=>parseInt(h.substr(i,2),16))};
+function drawFlag(sp,g,x0,y0,w,h,pal){const P=c=>{pal.push(c);return c},
+  R=(x,y,a,b,c)=>{g.fillStyle=P(c);const X=Math.round(x0+x*w),Y=Math.round(y0+y*h);g.fillRect(X,Y,Math.round(x0+(x+a)*w)-X,Math.round(y0+(y+b)*h)-Y)},
+  C=(x,y,r,c)=>{g.fillStyle=P(c);g.beginPath();g.arc(x0+x*w,y0+y*h,r*h,0,7);g.fill()},
+  T=(p,c)=>{g.fillStyle=P(c);g.beginPath();p.forEach(([x,y],i)=>g[i?"lineTo":"moveTo"](x0+x*w,y0+y*h));g.closePath();g.fill()},
+  S=(x,y,r,c)=>{const q=[];for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,rr=i%2?r*.4:r;q.push([x+rr*Math.cos(a)*h/w,y+rr*Math.sin(a)])}T(q,c)},
+  H=(cs,ws)=>{ws=ws||cs.map(()=>1);const t=ws.reduce((a,b)=>a+b);let y=0;cs.forEach((c,i)=>{R(0,y,1,ws[i]/t,c);y+=ws[i]/t})},
+  V=(cs,ws)=>{ws=ws||cs.map(()=>1);const t=ws.reduce((a,b)=>a+b);let x=0;cs.forEach((c,i)=>{R(x,0,ws[i]/t,1,c);x+=ws[i]/t})};
+  sp(R,C,T,S,H,V)}
+const FF=()=>`"${$("font").value}",sans-serif`;let TI={fs:26},flagSrc=null,curRaw=[],asT=0;
+const fmtD=v=>v?v.split("-").reverse().join("."):"";
+const dt=()=>{const a=fmtD($("d1").value),b=fmtD($("d2").value);return a&&b&&a!=b?a+" - "+b:(a||b)};
+let PZ=null,FZ=null;
+function frameShapes(){if(FZ&&FZ.pr===PR)return FZ.v;const half=42,GN=288,gs=2*half/GN,mask=new Uint8Array(GN*GN),ed=[];
+  PR.rings.forEach(r=>{for(let k=0;k<r.length;k++){const a=r[k],b=r[(k+1)%r.length];if(a[1]!=b[1])ed.push(a[1]<b[1]?[a[0],a[1],b[0],b[1]]:[b[0],b[1],a[0],a[1]])}});
+  for(let j=0;j<GN;j++){const y=-half+(j+.5)*gs,xs=[];ed.forEach(e=>{if(e[1]<=y&&y<e[3])xs.push(e[0]+(y-e[1])*(e[2]-e[0])/(e[3]-e[1]))});xs.sort((a,b)=>a-b);
+    for(let k=0;k+1<xs.length;k+=2){const i0=Math.max(0,Math.ceil((xs[k]+half)/gs-.5)),i1=Math.min(GN-1,Math.floor((xs[k+1]+half)/gs-.5));for(let i=i0;i<=i1;i++)mask[j*GN+i]=1}}
+  const D=new Float32Array(GN*GN);for(let k=0;k<D.length;k++)D[k]=mask[k]?0:1e4;
+  for(let j=0;j<GN;j++)for(let i=0;i<GN;i++){const k=j*GN+i;let d=D[k];if(i>0)d=Math.min(d,D[k-1]+1);if(j>0)d=Math.min(d,D[k-GN]+1);if(i>0&&j>0)d=Math.min(d,D[k-GN-1]+1.414);if(i<GN-1&&j>0)d=Math.min(d,D[k-GN+1]+1.414);D[k]=d}
+  for(let j=GN-1;j>=0;j--)for(let i=GN-1;i>=0;i--){const k=j*GN+i;let d=D[k];if(i<GN-1)d=Math.min(d,D[k+1]+1);if(j<GN-1)d=Math.min(d,D[k+GN]+1);if(i<GN-1&&j<GN-1)d=Math.min(d,D[k+GN+1]+1.414);if(i>0&&j<GN-1)d=Math.min(d,D[k+GN-1]+1.414);D[k]=d}
+  const O=new Int8Array(GN*GN).fill(-1),Cv=new Int8Array(GN*GN).fill(-1);for(let k=0;k<D.length;k++){if(D[k]*gs<=4)O[k]=0;if(D[k]*gs<=.7)Cv[k]=0}
+  const v={outer:traceMask(O,GN,0,gs,-half),cav:traceMask(Cv,GN,0,gs,-half)};FZ={pr:PR,v};return v}
+function smoothLoop(P){const q=P.filter((p,i)=>{const a=P[(i+P.length-1)%P.length],b=P[(i+1)%P.length];return(p[0]-a[0])*(b[1]-p[1])-(p[1]-a[1])*(b[0]-p[0])!=0});if(q.length<4)return null;
+  let ar=0;for(let i=0;i<q.length;i++){const a=q[i],b=q[(i+1)%q.length];ar+=a[0]*b[1]-b[0]*a[1]}if(ar/2<1)return null;
+  const o=[];for(let i=0;i<q.length;i++){const a=q[i],b=q[(i+1)%q.length];o.push([.75*a[0]+.25*b[0],.75*a[1]+.25*b[1]],[.25*a[0]+.75*b[0],.25*a[1]+.75*b[1]])}return o}
+function traceMask(g,GN,p,gs,off){off=off===undefined?-35:off;const E=new Map(),add=(a,b,c,d)=>{const k=a+","+b;let v=E.get(k);if(!v){v=[];E.set(k,v)}v.push([c,d])},at=(i,j)=>i>=0&&j>=0&&i<GN&&j<GN&&g[j*GN+i]==p;
+  for(let j=0;j<GN;j++)for(let i=0;i<GN;i++)if(at(i,j)){if(!at(i,j-1))add(i,j,i+1,j);if(!at(i+1,j))add(i+1,j,i+1,j+1);if(!at(i,j+1))add(i+1,j+1,i,j+1);if(!at(i-1,j))add(i,j+1,i,j)}
+  const loops=[];while(E.size){const k0=E.keys().next().value,[sx,sy]=k0.split(",").map(Number),pts=[[sx,sy]];let cx=sx,cy=sy,gd=0;
+    for(;;){const k=cx+","+cy,v=E.get(k);if(!v)break;const nx=v.pop();if(!v.length)E.delete(k);cx=nx[0];cy=nx[1];if(cx==sx&&cy==sy)break;pts.push([cx,cy]);if(++gd>400000)break}
+    if(pts.length>=4)loops.push(pts)}
+  return loops.map(l=>smoothLoop(l.map(([x,y])=>[off+x*gs,off+y*gs]))).filter(Boolean)}
+function puzzlePieces(n){if(PZ&&PZ.pr===PR&&PZ.n==n)return PZ.out;if(!PR.rings||!PR.rings.length)return[[]];
+  const GN=240,gs=70/GN,mask=new Uint8Array(GN*GN),ed=[];
+  PR.rings.forEach(r=>{for(let k=0;k<r.length;k++){const a=r[k],b=r[(k+1)%r.length];if(a[1]!=b[1])ed.push(a[1]<b[1]?[a[0],a[1],b[0],b[1]]:[b[0],b[1],a[0],a[1]])}});
+  for(let j=0;j<GN;j++){const y=-35+(j+.5)*gs,xs=[];ed.forEach(e=>{if(e[1]<=y&&y<e[3])xs.push(e[0]+(y-e[1])*(e[2]-e[0])/(e[3]-e[1]))});xs.sort((a,b)=>a-b);
+    for(let k=0;k+1<xs.length;k+=2){const i0=Math.max(0,Math.ceil((xs[k]+35)/gs-.5)),i1=Math.min(GN-1,Math.floor((xs[k+1]+35)/gs-.5));for(let i=i0;i<=i1;i++)mask[j*GN+i]=1}}
+  const C=[];for(let j=0;j<GN;j+=2)for(let i=0;i<GN;i+=2)if(mask[j*GN+i])C.push([-35+(i+.5)*gs,-35+(j+.5)*gs]);if(C.length<n*20)return[PR.rings];
+  let m=[0,0];C.forEach(p=>{m[0]+=p[0]/C.length;m[1]+=p[1]/C.length});let S=[C.reduce((b,p)=>Math.hypot(p[0]-m[0],p[1]-m[1])<Math.hypot(b[0]-m[0],b[1]-m[1])?p:b)];
+  while(S.length<n){let bp=null,bd=-1;C.forEach(p=>{const d=Math.min(...S.map(q=>Math.hypot(p[0]-q[0],p[1]-q[1])));if(d>bd){bd=d;bp=p}});S.push(bp)}
+  for(let it=0;it<10;it++){const sum=S.map(()=>[0,0,0]);C.forEach(p=>{let bi=0,bd=1e9;S.forEach((q,i)=>{const d=(p[0]-q[0])**2+(p[1]-q[1])**2;if(d<bd){bd=d;bi=i}});sum[bi][0]+=p[0];sum[bi][1]+=p[1];sum[bi][2]++});S=S.map((q,i)=>sum[i][2]?[sum[i][0]/sum[i][2],sum[i][1]/sum[i][2]]:q)}
+  const near=(x,y)=>{let bi=0,bd=1e9;S.forEach((q,i)=>{const d=(x-q[0])**2+(y-q[1])**2;if(d<bd){bd=d;bi=i}});return bi},inM=(x,y)=>{const i=Math.floor((x+35)/gs),j=Math.floor((y+35)/gs);return i>=0&&j>=0&&i<GN&&j<GN&&mask[j*GN+i]};
+  const r=Math.max(1.8,Math.min(4.4,.17*Math.sqrt(C.length*4*gs*gs/n))),kn=[];
+  for(let a=0;a<n;a++)for(let b=a+1;b<n;b++){const dx=S[b][0]-S[a][0],dy=S[b][1]-S[a][1],L=Math.hypot(dx,dy),nx=dx/L,ny=dy/L,tx=-ny,ty=nx,mx=(S[a][0]+S[b][0])/2,my=(S[a][1]+S[b][1])/2,ts=[];
+    for(let t=-45;t<=45;t++){const px=mx+tx*t,py=my+ty*t;if(inM(px,py)&&near(px-nx*.9,py-ny*.9)==a&&near(px+nx*.9,py+ny*.9)==b)ts.push(t)}
+    if(ts.length<2*r+2)continue;const t0=ts[ts.length>>1],f=(a+b)%2?b:a,sg=f==a?1:-1;kn.push({f,t:f==a?b:a,cx:mx+tx*t0,cy:my+ty*t0,nx:nx*sg,ny:ny*sg,tx,ty})}
+  const lab=new Int8Array(GN*GN).fill(-1);
+  for(let j=0;j<GN;j++)for(let i=0;i<GN;i++)if(mask[j*GN+i]){const x=-35+(i+.5)*gs,y=-35+(j+.5)*gs,l0=near(x,y);let l=l0;
+    for(const k of kn)if(l0==k.f||l0==k.t){const rx=x-k.cx,ry=y-k.cy,al=rx*k.nx+ry*k.ny,ac=rx*k.tx+ry*k.ty;if(Math.hypot(al-1.3*r,ac)<r||(al>-.4&&al<1.3*r&&Math.abs(ac)<.42*r))l=k.f}lab[j*GN+i]=l}
+  const g2=lab.slice();for(let j=0;j<GN;j++)for(let i=0;i<GN;i++){const k=j*GN+i,l=lab[k];if(l<0)continue;for(const nb of[i>0?k-1:-1,i<GN-1?k+1:-1,j>0?k-GN:-1,j<GN-1?k+GN:-1])if(nb>=0&&lab[nb]>=0&&lab[nb]<l){g2[k]=-2;break}}
+  const out=[];for(let p=0;p<n;p++){const lp=traceMask(g2,GN,p,gs);if(lp.length)out.push(lp)}
+  PZ={pr:PR,n,out};return out.length?out:[PR.rings]}
+function pipR(x,y,r){let c=false;for(let p=0,q=r.length-1;p<r.length;q=p++){const u=r[p],v=r[q];if((u[1]>y)!=(v[1]>y)&&x<(v[0]-u[0])*(y-u[1])/(v[1]-u[1])+u[0])c=!c}return c}
+function magnetSpot(){if(!LM)return null;const D=new Float32Array(N*N);for(let j=0;j<N;j++)for(let i=0;i<N;i++){const k=j*N+i;D[k]=LM[k]?((i==0||j==0||i==N-1||j==N-1)?1:1e4):0}
+  for(let j=0;j<N;j++)for(let i=0;i<N;i++){const k=j*N+i;if(!D[k])continue;let d=D[k];if(i>0)d=Math.min(d,D[k-1]+1);if(j>0)d=Math.min(d,D[k-N]+1);if(i>0&&j>0)d=Math.min(d,D[k-N-1]+1.414);if(i<N-1&&j>0)d=Math.min(d,D[k-N+1]+1.414);D[k]=d}
+  for(let j=N-1;j>=0;j--)for(let i=N-1;i>=0;i--){const k=j*N+i;if(!D[k])continue;let d=D[k];if(i<N-1)d=Math.min(d,D[k+1]+1);if(j<N-1)d=Math.min(d,D[k+N]+1);if(i<N-1&&j<N-1)d=Math.min(d,D[k+N+1]+1.414);if(i>0&&j<N-1)d=Math.min(d,D[k+N-1]+1.414);D[k]=d}
+  let b=0,bi=-1;for(let k=0;k<N*N;k++)if(D[k]>b){b=D[k];bi=k}return bi<0?null:{x:-35+((bi%N)+.5)*CS,y:-35+(Math.floor(bi/N)+.5)*CS,clear:b*CS}}
+function holderParts(){const k=.58,oy=-27,bz=5,tilt=.21,parts=[],bb=(a,b,c)=>new THREE.BoxGeometry(a,b,c);
+  parts.push({name:"1_base",geoms:[bb(100,80,bz).translate(0,-8,bz/2),bb(100,6,10).translate(0,3,bz+4.8),bb(100,6,56).translate(0,0,28).rotateX(-tilt).translate(0,23,bz-.5)]});
+  const land=[];(PR.rings||[]).forEach(r=>{if(r.length<3)return;land.push(new THREE.ExtrudeGeometry(new THREE.Shape(r.map(([x,y])=>new THREE.Vector2(x*k,y*k+oy))),{depth:2.5,bevelEnabled:false}).translate(0,0,bz-.3))});
+  parts.push({name:"2_country",geoms:land});
+  const pg=[];pins.forEach(p=>{const [x,y]=toMM(p.lon,p.lat);if(Math.abs(x)>36||Math.abs(y)>36)return;pg.push(new THREE.SphereGeometry(p.fav?2.4:1.7,12,10).translate(x*k,y*k+oy,bz+2.4))});
+  parts.push({name:"3_pins",geoms:pg});return parts}
+function holderFinal(){const parts=holderParts();parts.forEach(p=>{const k=keyOf(p.name);p.rep=repK(k);p.color=$("c_"+p.rep).value});return parts}
+function build(){if(TOOL=="holder")return holderFinal();const small=TOOL!="stand",BH=small?0:+$("bh").value,LH=small?(TOOL=="magnet"?5.4:TOOL=="puzzle"?3:4):+$("lh").value,GP=small?0:+$("gap").value,OY=small?0:14,parts=[],puz=TOOL=="puzzle";const geo=(ge)=>ge;
+  let base=null;if(!small){base=new THREE.ExtrudeGeometry(new THREE.Shape(outline($("shape").value).map(p=>new THREE.Vector2(...p))),{depth:BH,bevelEnabled:false});
+  parts.push({name:"1_base",color:$("c_base").value,geoms:[base]});}
+  const rw=+$("rim").value;if(!small&&rw>0){const O=outline($("shape").value),f=1-1.6*rw/62,sh=new THREE.Shape(O.map(p=>new THREE.Vector2(...p)));sh.holes.push(new THREE.Path(O.map(([x,y])=>new THREE.Vector2(x*f,-6+(y+6)*f))));
+    parts.push({name:"1b_rim",color:$("c_base").value,geoms:[new THREE.ExtrudeGeometry(sh,{depth:BH+.6+.6*rw,bevelEnabled:false})]})}
+  const mg=small&&TOOL=="magnet"?magnetSpot():null,scT=TARGET.magnet/70,mr=(+$("mgs").value/2+.15)/scT,pd=2.3/scT;
+  const landG=r=>{const pts=r.map(([x,y])=>new THREE.Vector2(x,y+OY));if(mg&&pipR(mg.x,mg.y,r)){const s1=new THREE.Shape(pts),h=new THREE.Path();h.absarc(mg.x,mg.y,mr,0,Math.PI*2,true);s1.holes.push(h);
+    return[new THREE.ExtrudeGeometry(s1,{depth:pd,bevelEnabled:false}),new THREE.ExtrudeGeometry(new THREE.Shape(pts),{depth:LH-pd,bevelEnabled:false}).translate(0,0,pd)]}
+    return[new THREE.ExtrudeGeometry(new THREE.Shape(pts),{depth:LH,bevelEnabled:false}).translate(0,0,BH+GP)]};
+  let G=PR.gr&&PR.gr.length>1?PR.gr:[PR.rings||[]];if(puz)G=puzzlePieces(+$("pcs").value);
+  G.forEach((rs,gi)=>{const land=[];rs.forEach(r=>{if(r.length<3)return;land.push(...landG(r))});parts.push({name:"2_country"+(G.length>1?"_"+(gi+1):""),color:$("c_land").value,geoms:land})});
+  if(puz&&$("pfr").checked){const fr=frameShapes(),ox=PR.w+14,mk=l=>l.map(p=>new THREE.Vector2(p[0]+ox,p[1])),fg=[];
+    fr.outer.forEach(ol=>{fg.push(new THREE.ExtrudeGeometry(new THREE.Shape(mk(ol)),{depth:1.6,bevelEnabled:false}));const sh=new THREE.Shape(mk(ol));fr.cav.forEach(cl=>{if(pipR(cl[0][0],cl[0][1],ol))sh.holes.push(new THREE.Path(mk(cl)))});fg.push(new THREE.ExtrudeGeometry(sh,{depth:4.6,bevelEnabled:false}))});
+    parts.push({name:"2f_frame",color:$("c_base").value,geoms:fg})}
+  if(G.length>1&&!puz){const bg=[];G.forEach(rs=>rs.forEach(r=>{for(let i=0;i<r.length;i++){const a=r[i],b=r[(i+1)%r.length],dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy);if(L>.25)bg.push(new THREE.BoxGeometry(L+.5,.8,.5).rotateZ(Math.atan2(dy,dx)).translate((a[0]+b[0])/2,(a[1]+b[1])/2+OY,BH+GP+LH+.25))}}));parts.push({name:"2d_borders",color:$("c_text").value,geoms:bg})}
+  if(GP>0&&LM){const pl=[],ok=(x,y,r)=>[[0,0],[r,r],[-r,r],[r,-r],[-r,-r]].every(([a,b])=>{const i=Math.floor((x+a+35)/CS),j=Math.floor((y+b+35)/CS);return i>=0&&j>=0&&i<N&&j<N&&LM[j*N+i]});
+    let best=[];for(const [st,r] of [[9,1.8],[7,1.8],[6,1.6],[5,1.5],[4.5,1.4],[4,1.3]]){const t=[];for(let y=-36;y<=36;y+=st)for(let x=-36;x<=36;x+=st)if(ok(x,y,r))t.push([x,y]);if(t.length>best.length)best=t;if(t.length>=10)break}pl.push(...best)
+    if(!pl.length){let sx=0,sy=0,c=0;for(let j=0;j<N;j++)for(let i=0;i<N;i++)if(LM[j*N+i]){sx+=-35+(i+.5)*CS;sy+=-35+(j+.5)*CS;c++}if(c)pl.push([sx/c,sy/c])}
+    parts.push({name:"2a_pillars",color:$("c_base").value,geoms:pl.map(([x,y])=>new THREE.CylinderGeometry(1.5,1.5,GP+.4,10).rotateX(Math.PI/2).translate(x,y+OY,BH+GP/2))})}
+  const wg=[],Z=BH+GP+LH,wp=([lo,la])=>{const [x,y]=toMM(lo,la);return[x,y+OY]};
+  (puz?[]:water.lakes).forEach(r=>{if(r.length>2)wg.push(new THREE.ExtrudeGeometry(new THREE.Shape(smooth(r,true).map(p=>new THREE.Vector2(...wp(p)))),{depth:.4,bevelEnabled:false}).translate(0,0,Z))});
+  (puz?[]:water.rivers).forEach(r=>{const Q=smooth(r,false).map(wp);Q.forEach((q,i)=>{wg.push(new THREE.CylinderGeometry(.6,.6,.4,8).rotateX(Math.PI/2).translate(q[0],q[1],Z+.2));if(i){const a=Q[i-1],dx=q[0]-a[0],dy=q[1]-a[1],L=Math.hypot(dx,dy);if(L>0)wg.push(new THREE.BoxGeometry(L,1.2,.4).rotateZ(Math.atan2(dy,dx)).translate((a[0]+q[0])/2,(a[1]+q[1])/2,Z+.2))}})});
+  for(let j=0;j<N;j++){let i=0;while(i<N){if(WM[j*N+i]){const i0=i;while(i<N&&WM[j*N+i])i++;wg.push(new THREE.BoxGeometry((i-i0)*CS,CS,.4).translate(-35+(i0+i)/2*CS,-35+(j+.5)*CS+OY,Z+.2))}else i++}}
+  parts.push({name:"2b_water",color:$("c_water").value,geoms:wg});
+  const rg=[];for(let j=0;j<N;j++){let i=0;while(i<N){const hh=RH[j*N+i];if(hh>0){const i0=i;while(i<N&&RH[j*N+i]==hh)i++;rg.push(new THREE.BoxGeometry((i-i0)*CS,CS,hh).translate(-35+(i0+i)/2*CS,-35+(j+.5)*CS+OY,Z+hh/2))}else i++}}
+  parts.push({name:"2c_relief",color:$("c_relief").value,geoms:rg});
+  const pg=[],k=+$("psz").value*(small?.6:1),pt=$("ps").value;(puz?[]:pins).forEach(p=>{const [x,y]=toMM(p.lon,p.lat);if(Math.abs(x)>36||Math.abs(y)>36)return;pg.push(...(p.fav?pinGeo("heart",x,y+OY,BH+GP+LH+relAt(x,y),k*1.5):pinGeo(pt,x,y+OY,BH+GP+LH+relAt(x,y),k)))});
+  parts.push({name:"3_pins",color:$("c_pin").value,geoms:pg});
+  if(!small){const W=180,H=80,c=document.createElement("canvas");c.width=W;c.height=H;const g=c.getContext("2d");g.fillStyle="#000";g.textAlign="center";g.textBaseline="middle";
+  let fs=26;const title=$("trip").value||" ";do{g.font=`bold ${fs}px ${FF()}`;fs--}while(g.measureText(title).width>W-8&&fs>10);TI.fs=fs+1;
+  g.fillText(title,W/2,18);const sub=[dt(),$("tsub").value.trim()].filter(Boolean).join(" · ");if(sub){let f2=12;do{g.font=`bold ${f2}px ${FF()}`;f2--}while(g.measureText(sub).width>W-8&&f2>7);g.fillText(sub,W/2,36)}g.font=`bold 13px ${FF()}`;const lines=[];let cur="";
+  if($("shownames").checked)pins.map((p,i)=>$("numpins").checked&&p.name?`${i+1}. ${p.name}`:p.name).filter(Boolean).forEach(w=>{const t=cur?cur+" · "+w:w;if(g.measureText(t).width>W-8&&cur){lines.push(cur);cur=w}else cur=t});if(cur)lines.push(cur);
+  lines.slice(0,sub?2:3).forEach((l,i)=>g.fillText(l,W/2,(sub?52:40)+i*16));
+  const im=g.getImageData(0,0,W,H).data,A=new Uint8Array(W*H),u=.3,tg=[];for(let y=0;y<H;y++)for(let x=0;x<W;x++){let v=0;for(let b=-1;b<2&&!v;b++)for(let a=-1;a<2;a++){const X=x+a,Y=y+b;if(X>=0&&Y>=0&&X<W&&Y<H&&im[(Y*W+X)*4+3]>110){v=1;break}}A[y*W+x]=v}
+  for(let y=0;y<H;y++){let x=0;while(x<W){if(A[y*W+x]){const x0=x;while(x<W&&A[y*W+x])x++;tg.push(new THREE.BoxGeometry((x-x0)*u,u,1).translate(-36+(x0+x)/2*u,-36-(y+.5)*u,BH+.5))}else x++}}
+  parts.push({name:"4_text",color:$("c_text").value,geoms:tg});
+  if(flagGrid){const by={},multi=NC()>=5;for(let y=0;y<FH;y++){let x=0;while(x<FW){const kf=i=>{const c=flagGrid[i];if(!c)return null;if(multi)return c;const v=parseInt(c.substr(1,2),16)*.3+parseInt(c.substr(3,2),16)*.59+parseInt(c.substr(5,2),16)*.11;return v<85?1.8:v<170?1.1:.5},col=kf(y*FW+x);if(col){const x0=x;while(x<FW&&kf(y*FW+x)==col)x++;const hh=multi?1:col;(by[col]=by[col]||[]).push(new THREE.BoxGeometry((x-x0)*u,u,hh).translate(22+(x0+x)/2*u,-43-(y+.5)*u,BH+hh/2))}else x++}}
+    Object.keys(by).forEach((col,i)=>parts.push({name:"5_flag_"+(i+1),color:col,geoms:by[col]}))}}
+  const rt=$("route").value;if(!puz&&rt!="0"&&pins.length>1){const rg2=[];for(let i=1;i<pins.length;i++){const a=toMM(pins[i-1].lon,pins[i-1].lat),b=toMM(pins[i].lon,pins[i].lat),L=Math.hypot(b[0]-a[0],b[1]-a[1]),n=Math.max(1,Math.ceil(L/1.5));
+    for(let j=0;j<n;j++){if(rt=="2"&&j%2)continue;const p0=[a[0]+(b[0]-a[0])*j/n,a[1]+(b[1]-a[1])*j/n],p1=[a[0]+(b[0]-a[0])*(j+1)/n,a[1]+(b[1]-a[1])*(j+1)/n],z=Math.max(relAt(p0[0],p0[1]),relAt(p1[0],p1[1]))+BH+GP+LH,dx=p1[0]-p0[0],dy=p1[1]-p0[1],l=Math.hypot(dx,dy);
+      rg2.push(new THREE.BoxGeometry(l+.3,1.2,.8).rotateZ(Math.atan2(dy,dx)).translate((p0[0]+p1[0])/2,(p0[1]+p1[1])/2+OY,z+.2))}}parts.push({name:"3b_route",color:$("c_pin").value,geoms:rg2})}
+  if(!small&&$("qron").checked&&$("qrurl").value.trim()&&typeof qrcode!="undefined"){try{const q=qrcode(0,"M");q.addData($("qrurl").value.trim());q.make();const n=q.getModuleCount(),m=1.1,Wp=n*m+6;base.computeBoundingBox();
+    const cx=base.boundingBox.max.x+Wp/2+8,cy=-6,mg=[];for(let r=0;r<n;r++){let c=0;while(c<n){if(q.isDark(r,c)){const c0=c;while(c<n&&q.isDark(r,c))c++;mg.push(new THREE.BoxGeometry((c-c0)*m,m,.8).translate(cx-n*m/2+(c0+c)/2*m,cy+n*m/2-(r+.5)*m,2))}else c++}}
+    parts.push({name:"6_qr_plate",color:$("c_base").value,geoms:[new THREE.BoxGeometry(Wp,Wp,1.6).translate(cx,cy,.8)]},{name:"6_qr",color:$("c_text").value,geoms:mg})}catch(e){}}
+  if(TOOL=="key"||TOOL=="orn"){let ty=null,tx=0;for(let j=N-1;j>=0&&ty===null;j--){let i=0;while(i<N){if(LM[j*N+i]){const i0=i;while(i<N&&LM[j*N+i])i++;if((i-i0)>=24){ty=-35+(j+.5)*CS;tx=-35+((i0+i)/2)*CS;break}}else i++}}
+    if(ty===null){(PR.rings||[]).forEach(r=>r.forEach(p=>{if(ty===null||p[1]>ty){ty=p[1];tx=p[0]}}))}
+    if(ty!==null){const Ro=TOOL=="key"?8:6.5,ri=TOOL=="key"?3.4:2.2,cy=ty+Ro-3,sh=new THREE.Shape(),hl=new THREE.Path();sh.absarc(tx,cy,Ro,0,Math.PI*2,false);hl.absarc(tx,cy,ri,0,Math.PI*2,true);sh.holes.push(hl);
+      parts.push({name:"2a_loop",color:$("c_land").value,geoms:[new THREE.ExtrudeGeometry(sh,{depth:LH,bevelEnabled:false})]})}}
+  const nn=NC();parts.forEach(p=>{const k=keyOf(p.name);p.rep=repK(k);if(!(k=="flag"&&nn>=5))p.color=$("c_"+p.rep).value});parts.forEach(p=>{const m=/^2_country_(\d+)$/.exec(p.name);if(m&&nn>=5)p.color=shade(p.color,+m[1]-1,G.length)});return parts}
+function pinGeo(t,x,y,z,k){const G=THREE,st=(h)=>new G.CylinderGeometry(1.1*k,1.1*k,h*k,10).rotateX(Math.PI/2).translate(x,y,z+h*k/2),
+  flat=(pts,d)=>new G.ExtrudeGeometry(new G.Shape(pts.map(p=>new G.Vector2(p[0],p[1]))),{depth:d,bevelEnabled:false}).rotateX(Math.PI/2).translate(x,y+d/2,0);
+  if(t=="cone")return[new G.ConeGeometry(2.6*k,7*k,16).rotateX(-Math.PI/2).translate(x,y,z+3.5*k),new G.SphereGeometry(2.6*k,16,12).translate(x,y,z+7*k)];
+  if(t=="col")return[new G.CylinderGeometry(1.8*k,1.8*k,9*k,16).rotateX(Math.PI/2).translate(x,y,z+4.5*k)];
+  if(t=="cube")return[st(6),new G.BoxGeometry(4.4*k,4.4*k,4.4*k).translate(x,y,z+8*k)];
+  if(t=="star"){const q=[];for(let i=0;i<10;i++){const a=Math.PI/2+i*Math.PI/5,r=(i%2?1.5:3.6)*k;q.push([r*Math.cos(a),r*Math.sin(a)])}const g=flat(q,1.4*k);g.translate(0,0,z+9*k);return[st(6),g]}
+  if(t=="heart"){const q=[];for(let i=0;i<40;i++){const a=i*Math.PI/20;q.push([.22*k*16*Math.pow(Math.sin(a),3),.22*k*(13*Math.cos(a)-5*Math.cos(2*a)-2*Math.cos(3*a)-Math.cos(4*a))])}const g=flat(q,1.4*k);g.translate(0,0,z+9*k);return[st(6),g]}
+  if(t=="flag"){const g=flat([[0,0],[5.5*k,-2*k],[0,-4*k]],1*k);g.translate(0,0,z+10*k);return[st(10),g]}
+  return[st(7),new G.SphereGeometry(2.4*k,16,12).translate(x,y,z+8*k)]}
+const NC=()=>+$("ncol").value;
+const keyOf=n=>n.startsWith("5_flag")?"flag":n[0]=="1"?"base":n=="2a_loop"?"land":n=="2f_frame"?"base":n=="2a_pillars"?"base":n.startsWith("2_country")?"land":n=="2b_water"?"water":n=="2c_relief"?"relief":n[0]=="3"?"pin":n=="6_qr_plate"?"base":"text";
+const repK=k=>{const n=NC();if(n>=5)return k;if(n==1)return"base";if(n==2)return["base","land","relief"].includes(k)?"base":"text";if(n==3)return k=="base"?"base":(k=="land"||k=="relief")?"land":"text";return k=="base"?"base":(k=="land"||k=="relief")?"land":k=="water"?"water":"text"};
+function syncPickers(){const he=LANG=="en"?{base:"Stand",land:"Country",water:"Water",relief:"Mountains",pin:"Pins",text:"Lettering"}:{base:"מעמד",land:"מדינה",water:"מים",relief:"הרים",pin:"סיכות",text:"כיתוב"},ks=Object.keys(he);ks.forEach(k=>{const el=$("c_"+k),show=repK(k)==k;el.parentElement.style.display=show?"":"none";
+  if(show){const m=ks.filter(x=>repK(x)==k).map(x=>he[x]);if(NC()<5&&k=="text")m.push(LANG=="en"?"Flag":"דגל");el.previousElementSibling.textContent=m.join("/")}})}
+function scaleFor(P){const bb=new THREE.Box3(),sm=TOOL!="stand";P.forEach(p=>{if(sm?(TOOL=="holder"||p.name.startsWith("2_country")||p.name=="2a_loop"||p.name=="2f_frame"):(p.name=="1_base"||p.name.startsWith("6_qr")))p.geoms.forEach(g=>{g.computeBoundingBox();bb.union(g.boundingBox)})});const w=bb.max.x-bb.min.x,h=bb.max.y-bb.min.y,m=Math.max(w,h),lim=(+$("bed").value-10)/m,sc=sm?Math.min(TARGET[TOOL]/m,lim):Math.min(1,lim);return{sc,w:w*sc/10,h:h*sc/10}}
+function volume(P,sc){let v=0;P.forEach(p=>p.geoms.forEach(ge=>{const g=ge.index?ge.toNonIndexed():ge,a=g.attributes.position.array;for(let i=0;i<a.length;i+=9)v+=(a[i]*(a[i+4]*a[i+8]-a[i+5]*a[i+7])+a[i+1]*(a[i+5]*a[i+6]-a[i+3]*a[i+8])+a[i+2]*(a[i+3]*a[i+7]-a[i+4]*a[i+6]))/6}));return Math.abs(v)*sc**3/1000}
+const fmtT=h=>h<1?Math.max(5,Math.round(h*60))+" דק׳":h.toFixed(1)+" שע׳";
+function showSize(P){const z=scaleFor(P),wr_=[],k_=+$("psz").value;$("sz").textContent=`גודל בהדפסה: ${z.w.toFixed(1)}×${z.h.toFixed(1)} ס״מ`+(z.sc<1&&TOOL=="stand"?" (הוקטן להתאים למשטח)":"");
+  if(TOOL=="magnet"){const sp=magnetSpot();if(!sp||sp.clear*TARGET.magnet/70<+$("mgs").value/2+1.2)wr_.push("המדינה צרה מדי למגנט בגודל הזה – בחרו מגנט קטן יותר")}
+  if(z.sc<.75&&TOOL=="stand")wr_.push(`המודל הוקטן ל-${Math.round(z.sc*100)}% כדי להתאים למשטח, ופרטים קטנים יהיו קשים להדפסה`);
+  if(pins.length&&2.2*k_*z.sc<1.6)wr_.push("הסיכות דקות מדי – הגדילו את הסימונים");
+  const th=TI.fs*.3*.72*z.sc;if(TOOL=="stand"&&th<2.2)wr_.push(`האותיות קטנות (כ-${th.toFixed(1)} מ״מ) – קצרו את שם הטיול או הגדילו את המשטח`);
+  if(water.rivers.length&&1.2*z.sc<.8)wr_.push("הנחלים צרים מדי להדפסה");
+  if($("fm").value=="img")wr_.push("פירוט הדגל מתמונה עדין – דגל פשוט יודפס טוב יותר");
+    $("warn").innerHTML=wr_.length?wr_.map(x=>"⚠️ "+x).join("<br>"):"✅ לא זוהו בעיות הדפסה מוכרות"}
+// preview
+const LOWQ=(()=>{let v=null;try{v=localStorage.getItem("trip3d_q")}catch(e){}if(v=="low")return true;if(v=="high")return false;const n=navigator,hc=n.hardwareConcurrency||8,dm=n.deviceMemory||8;return hc<=4||dm<=4||/Android|iPhone|iPad|Mobile/i.test(n.userAgent)&&hc<=6})();
+const vc=$("view"),R=new THREE.WebGLRenderer({canvas:vc,antialias:!LOWQ,alpha:true,powerPreference:LOWQ?"low-power":"default"}),sc=new THREE.Scene(),cam=new THREE.PerspectiveCamera(40,1,1,1000);
+cam.position.set(0,75,175);cam.lookAt(0,0,0);sc.add(new THREE.AmbientLight(0xffffff,.65));const dl=new THREE.DirectionalLight(0xffffff,.8);dl.position.set(60,120,90);sc.add(dl);
+const pivot=new THREE.Group();sc.add(pivot);let model=null,auto=true;pivot.rotation.x=.5;
+let tm=0;function setBusy(b,txt){const e=$("busy");if(!e)return;e.classList.toggle("on",!!b);if(b)$("busyt").textContent=txt||L_("בונה מודל…","Building model…")}
+function update(){setBusy(true);applyBg();computeMasks();drawMap();clearTimeout(asT);asT=setTimeout(autosave,1000);clearTimeout(tm);tm=setTimeout(()=>makeFlag(render),LOWQ?220:60)}
+function render(){if(model)pivot.remove(model);model=new THREE.Group();model.rotation.x=-Math.PI/2;
+  const P0=build();showSize(P0);P0.forEach(p=>{if(!p.geoms.length)return;const arr=p.geoms.map(ge=>(ge.index?ge.toNonIndexed():ge).attributes.position.array),pos=new Float32Array(arr.reduce((t,a)=>t+a.length,0));let o=0;arr.forEach(a=>{pos.set(a,o);o+=a.length});
+    const g=new THREE.BufferGeometry();g.setAttribute("position",new THREE.BufferAttribute(pos,3));g.computeVertexNormals();model.add(new THREE.Mesh(g,new THREE.MeshLambertMaterial({color:p.color})))});const bx=new THREE.Box3().setFromObject(model),cw=bx.max.x-bx.min.x;model.position.x=-(bx.min.x+bx.max.x)/2;const dd=Math.max(175,1.4*cw);cam.position.set(0,.43*dd,dd);cam.lookAt(0,0,0);pivot.add(model);setBusy(false)}
+let drag=null;vc.onpointerdown=e=>{drag=[e.clientX,e.clientY];auto=false;vc.setPointerCapture(e.pointerId)};
+vc.onpointerup=()=>drag=null;vc.onpointermove=e=>{if(!drag)return;pivot.rotation.y+=(e.clientX-drag[0])*.01;pivot.rotation.x=Math.max(-.2,Math.min(1.6,pivot.rotation.x+(e.clientY-drag[1])*.01));drag=[e.clientX,e.clientY]};
+let _lf=0;(function loop(t){requestAnimationFrame(loop);if(document.hidden)return;if(LOWQ&&t-_lf<40)return;_lf=t;const w=vc.clientWidth;if(vc.width!=w)R.setSize(w,w,false);if(auto)pivot.rotation.y+=LOWQ?.012:.006;R.render(sc,cam)})(0);
+if(matchMedia("(prefers-reduced-motion:reduce)").matches)auto=false;
+(function(){const q=$("qbtn");if(q){const lab=()=>{q.textContent=LOWQ?"⚡ מצב מהיר":"✨ איכות מלאה";q.setAttribute("aria-pressed",LOWQ?"true":"false");q.title=L_("מצב מהיר מקל על מכשירים חלשים. לחיצה מחליפה ומרעננת את העמוד","Fast mode helps weak devices. Click to switch and reload")};lab();q.onclick=()=>{try{localStorage.setItem("trip3d_q",LOWQ?"high":"low")}catch(e){}location.reload()}}})();
+/* ===== נגישות ===== */
+(function(){
+ const B=document.body,hd=document.querySelector("header");
+ if(hd&&hd.nextElementSibling){const m=hd.nextElementSibling;if(!m.id)m.id="mainc";m.tabIndex=-1;const a=document.createElement("a");a.className="skip";a.href="#"+m.id;a.textContent=L_("דלג לתוכן","Skip to content");a.onclick=e=>{e.preventDefault();m.focus();m.scrollIntoView()};B.prepend(a)}
+ const lbl=i=>{if(i.type=="hidden"||i.getAttribute("aria-label")||i.getAttribute("aria-labelledby")||(i.labels&&i.labels.length))return;const l=i.closest("label")||(i.previousElementSibling&&/^(LABEL|SPAN|B|SMALL)$/.test(i.previousElementSibling.tagName)?i.previousElementSibling:null);let t=((l&&l.textContent)||i.placeholder||i.title||"").trim();if(!t){let e=i;for(let k=0;k<4&&e&&!t;k++){let x=e.previousElementSibling;while(x&&!t){if(x.tagName=="LABEL"||x.tagName=="B")t=x.textContent.trim();x=x.previousElementSibling}e=e.parentElement}if(t){const sib=[...(i.parentElement?i.parentElement.querySelectorAll("input"):[])];if(sib.length>1)t+=" "+(sib.indexOf(i)+1)}}if(t)i.setAttribute("aria-label",t.slice(0,60))};
+ const pass=root=>{if(!root.querySelectorAll)return;
+  root.querySelectorAll("button,[role=button]").forEach(b=>{if(!b.getAttribute("aria-label")&&!b.textContent.trim()&&b.title)b.setAttribute("aria-label",b.title)});
+  root.querySelectorAll(".tool,.chip b,.gi,[data-rm],[data-i]").forEach(e=>{if(!/^(BUTTON|A|INPUT|SELECT|TEXTAREA)$/.test(e.tagName)&&!e.hasAttribute("tabindex")){e.tabIndex=0;if(!e.getAttribute("role"))e.setAttribute("role","button")}});
+  root.querySelectorAll("input,select,textarea").forEach(lbl);
+  root.querySelectorAll("img:not([alt])").forEach(i=>i.alt="");
+  root.querySelectorAll("canvas").forEach(c=>{if(!c.getAttribute("role")){c.setAttribute("role","img");c.setAttribute("aria-label",c.id=="view"?L_("תצוגה תלת-ממדית של המזכרת","3D preview of the souvenir"):L_("מפה","Map"))}});
+  root.querySelectorAll("#dlg,#authm,.modal,[id$=modal]").forEach(d=>{if(!d.getAttribute("role")){d.setAttribute("role","dialog");d.setAttribute("aria-modal","true")}})};
+ const busy=$("busy");if(busy){busy.setAttribute("role","status");busy.setAttribute("aria-live","polite")}
+ let tq=0;new MutationObserver(()=>{clearTimeout(tq);tq=setTimeout(()=>pass(B),150)}).observe(B,{childList:true,subtree:true});pass(B);
+ addEventListener("keydown",e=>{const t=e.target;
+  if((e.key=="Enter"||e.key==" ")&&t&&t.getAttribute&&t.getAttribute("role")=="button"&&!/^(BUTTON|A|INPUT|SELECT|TEXTAREA)$/.test(t.tagName)){e.preventDefault();t.click();return}
+  if(e.key=="Escape"){const ov=[...document.querySelectorAll("body *")].filter(x=>{const cs=getComputedStyle(x);return cs.position=="fixed"&&cs.display!="none"&&cs.visibility!="hidden"&&(+cs.zIndex||0)>=30&&x.offsetWidth>200&&x.offsetHeight>150&&x.querySelector("button")});const top=ov[ov.length-1];if(top){const c=[...top.querySelectorAll("button")].find(b=>/^(✕|×|סגירה|סגור|ביטול|Close|Cancel)$/i.test(b.textContent.trim().replace(/^[✕×]\s*/,"")||b.textContent.trim()))||[...top.querySelectorAll("button")].find(b=>/✕|×|סגירה|סגור|ביטול|Close|Cancel/i.test(b.textContent));if(c){c.click()}}}});
+ new MutationObserver(ms=>{ms.forEach(m=>{const x=m.target;if(x.nodeType==1&&m.attributeName=="style"&&getComputedStyle(x).display!="none"&&(x.id=="dlg"||x.getAttribute("role")=="dialog")){const f=x.querySelector("input,select,button,[tabindex]");if(f&&!x.contains(document.activeElement))setTimeout(()=>f.focus({preventScroll:true}),50)}})}).observe(B,{attributes:true,attributeFilter:["style"],subtree:true});
+})();
+// STL + ZIP
+function stl(geoms,sc=1){const tris=[];geoms.forEach(ge=>{const g=ge.index?ge.toNonIndexed():ge,a=g.attributes.position.array;for(let i=0;i<a.length;i+=9)tris.push(Array.from(a.subarray(i,i+9),v=>v*sc))});
+  const buf=new ArrayBuffer(84+tris.length*50),v=new DataView(buf);v.setUint32(80,tris.length,true);let o=84;
+  tris.forEach(t=>{const A=new THREE.Vector3(t[0],t[1],t[2]),B=new THREE.Vector3(t[3],t[4],t[5]),C=new THREE.Vector3(t[6],t[7],t[8]),n=B.sub(A).cross(C.sub(A)).normalize();
+    [n.x,n.y,n.z,...t].forEach((f,j)=>v.setFloat32(o+j*4,isFinite(f)?f:0,true));o+=50});return new Uint8Array(buf)}
+const CT3='<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/></Types>',
+RELS3='<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Target="/3D/3dmodel.model" Id="rel0" Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/></Relationships>';
+async function make3mf(groups,sc){const mats=groups.map(g=>`<base name="${g.n.join("+")}" displaycolor="${g.c.toUpperCase()}FF"/>`).join(""),objs=[];
+  groups.forEach((gr,i)=>{const vm=new Map(),V=[],T=[],vi=(x,y,z)=>{const k=x.toFixed(3)+","+y.toFixed(3)+","+z.toFixed(3);let id=vm.get(k);if(id===undefined){id=V.length/3;vm.set(k,id);V.push(x,y,z)}return id};
+    gr.g.forEach(ge=>{const g=ge.index?ge.toNonIndexed():ge,a=g.attributes.position.array;for(let j=0;j<a.length;j+=9){const p=vi(a[j]*sc,a[j+1]*sc,a[j+2]*sc),q=vi(a[j+3]*sc,a[j+4]*sc,a[j+5]*sc),r=vi(a[j+6]*sc,a[j+7]*sc,a[j+8]*sc);if(p!=q&&q!=r&&p!=r)T.push(p,q,r)}});
+    let vx="",tx="";for(let j=0;j<V.length;j+=3)vx+=`<vertex x="${V[j].toFixed(3)}" y="${V[j+1].toFixed(3)}" z="${V[j+2].toFixed(3)}"/>`;for(let j=0;j<T.length;j+=3)tx+=`<triangle v1="${T[j]}" v2="${T[j+1]}" v3="${T[j+2]}"/>`;
+    objs.push(`<object id="${i+2}" type="model" pid="1" pindex="${i}"><mesh><vertices>${vx}</vertices><triangles>${tx}</triangles></mesh></object>`)});
+  const model=`<?xml version="1.0" encoding="UTF-8"?><model unit="millimeter" xml:lang="en-US" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02"><resources><basematerials id="1">${mats}</basematerials>${objs.join("")}</resources><build>${groups.map((_,i)=>`<item objectid="${i+2}"/>`).join("")}</build></model>`,en=new TextEncoder();
+  return new Uint8Array(await zip([{name:"[Content_Types].xml",data:en.encode(CT3)},{name:"_rels/.rels",data:en.encode(RELS3)},{name:"3D/3dmodel.model",data:en.encode(model)}]).arrayBuffer())}
+const CT=(()=>{const t=[];for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+function crc(b){let c=~0;for(let i=0;i<b.length;i++)c=CT[(c^b[i])&255]^(c>>>8);return ~c>>>0}
+function zip(files){const out=[],cd=[];let off=0,cds=0;
+  files.forEach(f=>{const nb=new TextEncoder().encode(f.name),cr=crc(f.data),n=f.data.length;
+    const L=new DataView(new ArrayBuffer(30));L.setUint32(0,0x04034b50,true);L.setUint16(4,20,true);L.setUint32(14,cr,true);L.setUint32(18,n,true);L.setUint32(22,n,true);L.setUint16(26,nb.length,true);
+    const C=new DataView(new ArrayBuffer(46));C.setUint32(0,0x02014b50,true);C.setUint16(4,20,true);C.setUint16(6,20,true);C.setUint32(16,cr,true);C.setUint32(20,n,true);C.setUint32(24,n,true);C.setUint16(28,nb.length,true);C.setUint32(42,off,true);
+    out.push(L,nb,f.data);cd.push(C,nb);off+=30+nb.length+n;cds+=46+nb.length});
+  const E=new DataView(new ArrayBuffer(22));E.setUint32(0,0x06054b50,true);E.setUint16(8,files.length,true);E.setUint16(10,files.length,true);E.setUint32(12,cds,true);E.setUint32(16,off,true);
+  return new Blob([...out,...cd,E],{type:"application/zip"})}
+function tplSrc(){if(TPLSRC===null){const b=atob($("tpl").textContent.trim());TPLSRC=new TextDecoder().decode(Uint8Array.from(b,ch=>ch.charCodeAt(0)))}return TPLSRC}
+function buildHtml(c){const P1="%%"+"TPL%%",P2="%%"+"CFG%%",b=$("tpl").textContent.trim(),j=JSON.stringify(c).replace(/</g,"\\u003c");return tplSrc().split(P1).join(b).split(P2).join(j)}
+
+const NMH={base:"מעמד",country:"מדינה",pins:"סיכות",text:"כיתוב",flag:"דגל",water:"מים",relief:"הרים",pillars:"עמודים",rim:"מסגרת",borders:"גבולות",route:"קו מסלול",qr_plate:"לוחית QR",qr:"קוד QR",loop:"טבעת",frame:"מסגרת הפאזל",labels:"שמות/מספרים"},NME={base:"stand",country:"country",pins:"pins",text:"lettering",flag:"flag",water:"water",relief:"mountains",pillars:"pillars",rim:"frame",borders:"borders",route:"route line",qr_plate:"QR plate",qr:"QR code",loop:"ring",frame:"puzzle frame",labels:"names/numbers"};
+let PEND=null;
+function meshCheck(P){let open=0,tris=0,deg=0;const bad=[];P.forEach(p=>{let po=0;p.geoms.forEach(ge=>{const g=ge.index?ge.toNonIndexed():ge,a=g.attributes.position.array,vm=new Map(),E=new Map(),vid=(x,y,z)=>{const k=Math.round(x*1e3)+","+Math.round(y*1e3)+","+Math.round(z*1e3);let i=vm.get(k);if(i===undefined){i=vm.size;vm.set(k,i)}return i};
+    for(let i=0;i<a.length;i+=9){const v=[vid(a[i],a[i+1],a[i+2]),vid(a[i+3],a[i+4],a[i+5]),vid(a[i+6],a[i+7],a[i+8])];tris++;if(v[0]==v[1]||v[1]==v[2]||v[0]==v[2]){deg++;continue}
+      for(let e=0;e<3;e++){const u=v[e],w=v[(e+1)%3],k=u<w?u+"_"+w:w+"_"+u;E.set(k,(E.get(k)||0)+1)}}
+    E.forEach(n=>{if(n!=2)po++})});if(po){open+=po;bad.push([p.name,po])}});return{tris,open,deg,bad}}
+function printCheck(P,sc){const out={thin:{},tiny:{},flt:{},skipped:false},comps=[];let tris=0;
+ P.forEach(p=>p.geoms.forEach(ge=>{tris+=(ge.index?ge.index.count:ge.attributes.position.count)/3}));
+ if(tris>450000){out.skipped=true;return out}
+ P.forEach(p=>p.geoms.forEach(ge=>{const g=ge.index?ge.toNonIndexed():ge,a=g.attributes.position.array,vm=new Map(),par=[],f=i=>{while(par[i]!==i){par[i]=par[par[i]];i=par[i]}return i},vid=(x,y,z)=>{const k=Math.round(x*100)+","+Math.round(y*100)+","+Math.round(z*100);let i=vm.get(k);if(i===undefined){i=par.length;vm.set(k,i);par.push(i)}return i},fv=[];
+  for(let i=0;i<a.length;i+=9){const u=vid(a[i],a[i+1],a[i+2]),v=vid(a[i+3],a[i+4],a[i+5]),w=vid(a[i+6],a[i+7],a[i+8]);par[f(u)]=f(v);par[f(v)]=f(w);fv.push(u)}
+  const bb=new Map();for(let t=0;t<fv.length;t++){const r=f(fv[t]),i=t*9;let b=bb.get(r);if(!b){b=[1e9,1e9,1e9,-1e9,-1e9,-1e9];bb.set(r,b)}for(let k=0;k<9;k+=3)for(let d=0;d<3;d++){const v=a[i+k+d];if(v<b[d])b[d]=v;if(v>b[3+d])b[3+d]=v}}
+  bb.forEach(b=>comps.push({n:p.name.replace(/^\d+[a-z]?_/,"").replace(/_\d+$/,""),b}))}));
+ const add=(o,n)=>{o[n]=(o[n]||0)+1};let gz=1e9;comps.forEach(c=>{gz=Math.min(gz,c.b[2]*sc)});
+ comps.forEach(c=>{const dx=(c.b[3]-c.b[0])*sc,dy=(c.b[4]-c.b[1])*sc,dz=(c.b[5]-c.b[2])*sc,mn=Math.min(dx,dy),mx=Math.max(dx,dy);
+  if(mx<1.5&&dz<1.5)add(out.tiny,c.n);else if((mn<.6&&mx>=1.5)||dz<.15)add(out.thin,c.n)});
+ if(comps.length<=1500)comps.forEach(c=>{const z0=c.b[2]*sc;if(z0<=gz+.15)return;const ok=comps.some(o=>o!==c&&o.b[5]*sc>=z0-.15&&o.b[2]*sc<z0-.05&&o.b[0]<c.b[3]&&o.b[3]>c.b[0]&&o.b[1]<c.b[4]&&o.b[4]>c.b[1]);if(!ok)add(out.flt,c.n)});
+ return out}
+async function prepareFiles(){await new Promise(r=>{setBusy(true,L_("מכין קבצים ובודק את המודל…","Preparing files and checking the model…"));setTimeout(r,40)});const P=build(),z=scaleFor(P),sc=z.sc,n=NC(),all=[].concat(...P.map(p=>p.geoms)),G={},nm=x=>(LANG=="en"?NME:NMH)[x]||x;
+  const files=[{name:"all_in_one.stl",data:stl(all,sc),desc:L_("כל החלקים בקובץ אחד – להדפסה בצבע אחד","All parts in one file – for single-color printing")}];
+  if(n>1)P.forEach(p=>{if(!p.geoms.length)return;const key=n>=5?p.name:p.rep;(G[key]=G[key]||{g:[],n:[],c:p.color}).g.push(...p.geoms);G[key].n.push(p.name.replace(/^\d+[a-z]?_/,"").replace(/_\d+$/,""))});
+  if(n>1)Object.values(G).forEach((o,i)=>files.push({name:`color${i+1}_${[...new Set(o.n)].join("+")}.stl`,data:stl(o.g,sc),desc:L_("חלק לצבע ","Part for color ")+(i+1)+": "+[...new Set(o.n)].map(nm).join(" + ")}));
+  try{const groups=n>1?Object.values(G):[{g:all,n:["model"],c:(P[0]&&P[0].color)||"#cccccc"}];
+    files.splice(1,0,{name:"trip3d.3mf",data:await make3mf(groups.map(o=>({g:o.g,n:[...new Set(o.n)],c:o.c})),sc),desc:n>1?L_("קובץ אחד עם כל החלקים והצבעים – נפתח ישר בסלייסר","One file with all parts and colors – opens directly in your slicer"):L_("קובץ אחד – נפתח ישר בסלייסר","One file – opens directly in your slicer")})}catch(e){}
+  const chk=meshCheck(P);let pc=null;try{pc=printCheck(P,sc)}catch(e){}setBusy(false);return{files,z,n,chk,pc}}
+function pcHtml(pc){if(!pc)return"";if(pc.skipped)return`<div class="chk-box" style="margin:8px 0;font-size:13px;color:#6b6a64">${L_("בדיקת הדפסתיות דולגה (המודל גדול מאוד).","Printability check skipped (very large model).")}</div>`;
+ const nm=o=>Object.entries(o).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([k,v])=>(LANG=="en"?(NME[k]||k):(NMH[k]||k))+(v>1?" ×"+v:"")).join(", "),cnt=o=>Object.values(o).reduce((a,b)=>a+b,0),L=[];
+ if(cnt(pc.thin))L.push(L_("פרטים דקים מ-0.6 מ״מ ("+cnt(pc.thin)+"): "+nm(pc.thin)+". ייתכן שלא יודפסו בדיוק. עזרו: מיטה גדולה יותר, שם קצר יותר, או פחות פרטים.","Details thinner than 0.6 mm ("+cnt(pc.thin)+"): "+nm(pc.thin)+". They may not print accurately. Try a larger bed, a shorter name or fewer details."));
+ if(cnt(pc.tiny))L.push(L_("פרטים זעירים ("+cnt(pc.tiny)+"): "+nm(pc.tiny)+". עלולים להתנתק מהמשטח בזמן ההדפסה. הוסיפו Brim.","Tiny details ("+cnt(pc.tiny)+"): "+nm(pc.tiny)+". They may detach during printing. Add a brim."));
+ if(cnt(pc.flt))L.push(L_("חלקים שנראים צפים בלי משהו מתחתם ("+cnt(pc.flt)+"): "+nm(pc.flt)+". הוסיפו תמיכות או בדקו בתצוגת השכבות.","Parts that look like they float with nothing below ("+cnt(pc.flt)+"): "+nm(pc.flt)+". Add supports or check the layer preview."));
+ return L.length?`<div class="chk-box" style="margin:8px 0;font-size:13px;color:#b45309">⚠️ ${L_("בדיקת הדפסתיות (משוערת):","Printability check (approximate):")}<ul style="margin:4px 0 0;padding-inline-start:18px">${L.map(x=>"<li>"+x+"</li>").join("")}</ul></div>`:`<div class="chk-box" style="margin:8px 0;font-size:13px;color:#166534">${L_("✅ בדיקת הדפסתיות: לא נמצאו פרטים דקים מדי או חלקים צפים.","✅ Printability check: no too-thin details or floating parts found.")}</div>`}
+function closeDlg(){$("dlg").style.display="none";PEND=null}
+async function myId(){try{const u=await claude.use("user");return u?await u.id():null}catch(e){return null}}
+$("dl").onclick=async()=>{const m=$("msg");try{m.textContent=L_("מכין קבצים…","Preparing files…");PEND=await prepareFiles();m.textContent="";const signed=!!(await myId());
+  const w=$("warn").textContent.startsWith("⚠️")?`<p class="hint" style="color:#b45309">${$("warn").innerHTML}</p>`:"";
+  $("dbox").innerHTML=`<h2>${L_("מה תקבלו בהורדה","What you'll get in the download")}</h2><p class="hint">${L_("גודל המודל","Model size")}: ${PEND.z.w.toFixed(1)}×${PEND.z.h.toFixed(1)} ${L_("ס״מ","cm")} · ${NC()>=5?"5+":NC()} ${L_("צבעים","colors")}</p><p class="hint">${L_("הקבצים יישמרו יחד בקובץ ZIP אחד.","The files are saved together in one ZIP file.")}</p>`+w+
+   (signed?"":`<div class="gate">${L_("🔒 כדי להוריד יש להתחבר לחשבון Claude. ההורדה נרשמת כדי שבעל האתר יוכל לעקוב אחרי השימוש (מזהה משתמש, כלי ותאריך בלבד). אחרי ההתחברות רעננו את הדף.","🔒 You must be signed in to Claude to download. Downloads are logged so the site owner can track usage (user ID, tool and date only). After signing in, reload the page.")}</div>`)+
+   `<div class="chk-box" style="margin:8px 0;font-size:13px;color:${PEND.chk.open?"#b45309":"#166534"}">${PEND.chk.open?L_("⚠️ בדיקת שלמות אוטומטית: נמצאו קצוות פתוחים ב-"+PEND.chk.bad.length+" חלקים ("+PEND.chk.bad.slice(0,4).map(x=>x[0].replace(/^\d+[a-z]?_/,"")).join(", ")+"). הסלייסר בדרך כלל מתקן את זה, אבל כדאי לבדוק בתצוגת השכבות.","⚠️ Automatic integrity check: open edges found in "+PEND.chk.bad.length+" parts ("+PEND.chk.bad.slice(0,4).map(x=>x[0].replace(/^\d+[a-z]?_/,"")).join(", ")+"). Slicers usually repair this, but check the layer preview."):L_("✅ בדיקת שלמות אוטומטית: כל החלקים סגורים ("+PEND.chk.tris.toLocaleString()+" משולשים).","✅ Automatic integrity check: all parts are closed ("+PEND.chk.tris.toLocaleString()+" triangles).")}</div>`+
+   pcHtml(PEND.pc)+PEND.files.map(f=>`<div class="fi"><b dir="ltr">${f.name}</b><i>${Math.max(1,Math.round(f.data.length/1024))} KB</i><span>${f.desc}</span></div>`).join("")+
+   `<div class="row" style="margin-top:14px"><button class="go" id="dgo" style="margin:0"${signed?"":" disabled"}>${L_("⬇ הורדה","⬇ Download")}</button><button id="dno">${L_("ביטול","Cancel")}</button></div>`;
+  $("dlg").style.display="flex";$("dno").onclick=closeDlg;
+  $("dgo").onclick=async()=>{if(!(await myId())){m.textContent=L_("כדי להוריד יש להתחבר לחשבון Claude.","You must sign in to Claude to download.");closeDlg();return}
+    if(!(await statHit("dl",MULTI?"multi":TOOL))){m.textContent=L_("לא ניתן לרשום את ההורדה – נדרשת התחברות עם הרשאה מתאימה.","The download couldn't be logged – signing in with the right permission is required.");closeDlg();return}
+    try{const d=await claude.use("downloads");if(!d){closeDlg();m.textContent=L_("ההורדה לא זמינה בתצוגה הזו","Download isn't available in this view");return}
+      await d.save({filename:"trip3d.zip",data:zip(PEND.files)});closeDlg();m.textContent=L_("נשמר. פתחו את ה-ZIP והעלו את הקובץ המתאים לסלייסר.","Saved. Open the ZIP and upload the right file to your slicer.")}
+    catch(e){closeDlg();m.textContent=e&&e.code=="declined"?L_("ההורדה בוטלה","Download cancelled"):L_("שגיאה בהורדה","Download error")}}}
+  catch(e){m.textContent=L_("שגיאה בהכנת הקבצים","Error preparing the files")}};
+["trip","tsub","shownames","d1","d2","bh","rim","lh","bg","gap","route","qron","qrurl","mgs","shape","c_base","c_land","c_pin","c_text","c_water","c_relief","wcol","wtol","rmode","rh","showimg","ps","psz","fm","f1","f2","f3"].forEach(i=>$(i).addEventListener((i=="trip"||i=="tsub")?"input":"change",update));
+["c_base","c_land","c_pin","c_text","c_water","c_relief","wcol","wtol","rh","f1","f2","f3"].forEach(i=>$(i).addEventListener("input",update));
+["w","r"].forEach(p=>["sx","sy","ox","oy"].forEach(a=>{$(p+a).addEventListener("input",update)}));
+const SV=["pcs","pfr","mgs","trip","tsub","d1","d2","bh","shape","font","c_base","c_land","c_water","c_relief","c_pin","c_text","fm","f1","f2","f3","ps","psz","bed","ncol","far","shownames","numpins","wcol","wtol","rmode","rh","wsx","wsy","wox","woy","rsx","rsy","rox","roy","showimg","cin","rim","lh","bg","gap","route","qron","qrurl"];
+function applyTool(){const st=TOOL=="stand",hide=(id,d)=>{let n=$(id);if(n.parentElement.tagName=="LABEL"||n.parentElement.classList.contains("row")||n.parentElement.classList.contains("cols"))n=n.parentElement;n.style.display=d?"none":"";const p=n.previousElementSibling;if(p&&p.tagName=="LABEL"&&n.tagName!="LABEL")p.style.display=d?"none":""};
+  ["bh","rim","gap","shape","tsub","d1","d2","font","shownames","numpins","fm","qron","qrurl","lh","bg"].forEach(i=>hide(i,!st&&i!="bg"));hide("mgs",TOOL!="magnet");hide("pcs",TOOL!="puzzle");hide("pfr",TOOL!="puzzle");$("f1").parentElement.style.display=st?"":"none";$("fimg").style.display=st&&$("fm").value=="img"?"block":"none"}
+function getProj(img){const o={v:1,tool:TOOL,crop,f:{},multi:grp?multiNames:null,pins,water,flagSrc:img?flagSrc:null};SV.forEach(i=>o.f[i]=$(i).type=="checkbox"?$(i).checked:$(i).value);
+  o.cur=(grp||countries[findC($("cin").value)]===curRaw)?null:curRaw.map(r=>r.map(p=>[+(+p[0]).toFixed(3),+(+p[1]).toFixed(3)]));
+  if(img){o.ly={};["water","relief"].forEach(k=>{if(LY[k]&&LY[k].c)o.ly[k]=LY[k].c.toDataURL("image/jpeg",.8)})}return o}
+function putProj(o){$("far").checked=!!(o.f&&o.f.far);const nm=findC(o.f.cin);
+  MULTI=!!o.multi;TOOL=o.tool||"stand";applyTool();if(o.multi&&o.multi.every(n=>countries[n])){multiNames=o.multi;setCountry(o.multi.flatMap(n=>countries[n]),false,o.multi.map(n=>countries[n]))}else if(o.cur)setCountry(o.cur);else if(nm)setCountry(countries[nm]);
+  Object.entries(o.f).forEach(([i,v])=>{const e=$(i);if(!e)return;if(e.type=="checkbox")e.checked=v;else e.value=v});
+  pins=o.pins||[];water=o.water||{lakes:[],rivers:[]};flagSrc=o.flagSrc||null;crop=o.crop||null;
+  ["water","relief"].forEach(k=>{if(o.ly&&o.ly[k])loadLayerURL(k,o.ly[k])});
+  fit();renderPins();syncPickers();fontLoad();update()}
+function autosave(){if($("intro").style.display!="none")return;try{localStorage.setItem("trip3d_p",JSON.stringify(getProj(false)));localStorage.setItem("trip3d_pt",String(Date.now()))}catch(e){}}
+document.addEventListener("visibilitychange",()=>{if(document.hidden)autosave()});addEventListener("pagehide",()=>autosave());
+function fontLoad(){try{document.fonts.load(`bold 20px "${$("font").value}"`).then(update)}catch(e){}}
+$("font").onchange=()=>{fontLoad();update()};
+$("fimg").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{flagSrc=r.result;update()};r.readAsDataURL(f)};
+$("sv").onclick=async()=>{try{const d=await claude.use("downloads");if(!d){$("msg").textContent="השמירה לא זמינה בתצוגה הזו";return}
+  await d.save({filename:"trip3d-project.json",data:new Blob([JSON.stringify(getProj(true))],{type:"application/json"})});$("msg").textContent="הפרויקט נשמר. אפשר לטעון אותו בכפתור 'טעינה'."}catch(e){$("msg").textContent=e&&e.code=="declined"?"השמירה בוטלה":"שמירה נכשלה"}};
+$("ld").onclick=()=>$("ldf").click();
+$("ldf").onchange=async e=>{try{putProj(JSON.parse(await e.target.files[0].text()));$("intro").style.display="none";$("msg").textContent="הפרויקט נטען"}catch(_){$("msg").textContent="לא הצלחתי לטעון את הקובץ"}e.target.value=""};
+try{if(localStorage.getItem("trip3d_p"))$("cont").style.display="block"}catch(e){}
+$("cont").onclick=()=>{try{putProj(JSON.parse(localStorage.getItem("trip3d_p")));$("intro").style.display="none";$("msg").textContent="המשכתם מהפרויקט האחרון"}catch(_){$("msg").textContent="לא הצלחתי לטעון"}};
+$("shot").onclick=async()=>{try{const d=await claude.use("downloads");if(!d){$("msg").textContent="לא זמין בתצוגה הזו";return}
+  R.setSize(1080,1080,false);R.render(sc,cam);const c=document.createElement("canvas");c.width=1080;c.height=1300;const g=c.getContext("2d");
+  const bgc=BGS[$("bg").value]||BGS.night,gr=g.createRadialGradient(540,500,100,540,560,900);gr.addColorStop(0,bgc[0]);gr.addColorStop(1,bgc[1]);g.fillStyle=gr;g.fillRect(0,0,1080,1300);g.drawImage(vc,0,0,1080,1080);
+  const w=vc.clientWidth;R.setSize(w,w,false);g.direction="rtl";g.textAlign="center";g.fillStyle=$("bg").value=="light"?"#1d1d1b":"#fff";g.font=`bold 56px ${FF()}`;g.fillText($("trip").value,540,1150);
+  g.font=`28px ${FF()}`;g.fillStyle=$("bg").value=="light"?"#57534e":"#cbd5e1";g.fillText([dt(),$("tsub").value].filter(Boolean).join(" · "),540,1205);
+  const b=await new Promise(r=>c.toBlob(r,"image/png"));await d.save({filename:"trip3d.png",data:b});$("msg").textContent="התמונה נשמרה"}catch(e){$("msg").textContent=e&&e.code=="declined"?"השמירה בוטלה":"יצירת התמונה נכשלה"}};
+["numpins"].forEach(i=>$(i).addEventListener("change",update));
+["bed","ncol"].forEach(i=>$(i).onchange=()=>{syncPickers();update()});
+const STY={classic:{n:"קלאסי",c:{base:"#d8d3c4",land:"#6aa05a",water:"#2f80ed",relief:"#8b6b4a",pin:"#dc2626",text:"#374151"}},
+beach:{n:"חוף וים",c:{base:"#f2e3b8",land:"#e9c46a",water:"#2a9d8f",relief:"#c8963e",pin:"#e76f51",text:"#264653"}},
+alpine:{n:"הרים ושלג",c:{base:"#e5e9ee",land:"#7fa38b",water:"#4ea8de",relief:"#6b7280",pin:"#ef4444",text:"#1f2937"}},
+night:{n:"לילה",c:{base:"#1f2937",land:"#3b4a63",water:"#38bdf8",relief:"#64748b",pin:"#fbbf24",text:"#e5e7eb"}},
+minimal:{n:"מינימליסטי",c:{base:"#f5f5f4",land:"#a8a29e",water:"#93c5fd",relief:"#78716c",pin:"#111827",text:"#111827"}}};
+const EM=e=>`<div class="em">${e}</div>`,SWt=c=>`<div class="sw">${Object.values(c).map(v=>`<i style="background:${v}"></i>`).join("")}</div>`;
+const SHN={circle:"עיגול",square:"ריבוע",round:"ריבוע מעוגל",hex:"משושה",oct:"מתומן",oval:"אליפסה"},PNN={ball:["כדור","🔴"],cone:["סיכה","📍"],col:["עמוד","🗼"],cube:["קובייה","🧊"],star:["כוכב","⭐"],heart:["לב","❤️"]},FLN={none:["בלי דגל","🚫"],lib:["דגל המדינה (אוטומטי)","🏴"],h3:["פסים אופקיים","☰"],v3:["פסים אנכיים","⫼"],img:["תמונת דגל","🖼️"]};
+const STALL=[{k:"loc",t:"איפה הייתם? 🌍",type:"text"},
+{k:"when",t:"מתי הייתם? 📅",type:"when"},
+{k:"kind",t:"איזה סוג טיול זה היה? ✈️",o:[["sea","ים וחופים","🏖️"],["mnt","הרים וטבע","🏔️"],["city","עיר ותרבות","🏙️"],["nat","טיול משפחתי","👨‍👩‍👧"],["rom","רומנטי","💕"]].map(([v,t,e])=>({v,t,i:EM(e)}))},
+{k:"pl",t:"אילו מקומות ביקרתם? 📍",type:"places"},
+{k:"fav",t:"איזה מקום היה האהוב עליכם? ❤️",type:"fav"},
+{k:"sty",t:"איזה סגנון מתאים לכם? 🎨",o:Object.entries(STY).map(([v,x])=>({v,t:x.n,i:SWt(x.c)}))},
+{k:"shp",t:"איזו צורה למעמד? 🧱",o:Object.entries(SHN).map(([v,t])=>({v,t,i:`<div class="ic ${v}"></div>`}))},
+{k:"rim",t:"איך ייראה קצה המעמד? 🖼️",o:[[0,"חלק","▫️"],[1,"מסגרת דקה","🔲"],[2,"מסגרת עבה","⬛"]].map(([v,t,e])=>({v,t,i:EM(e)}))},
+{k:"pin",t:"איך נסמן את המקומות? 📌",o:Object.entries(PNN).map(([v,[t,e]])=>({v,t,i:EM(e)}))},
+{k:"psz",t:"באיזה גודל הסימונים? 📏",o:[[.7,"קטן"],[1,"בינוני"],[1.4,"גדול"]].map(([v,t])=>({v,t,i:`<div class="ic circle" style="width:${v*30}px;height:${v*30}px"></div>`}))},
+{k:"font",t:"איזה גופן לכיתוב? 🔤",o:[["Rubik","רגיל"],["Frank Ruhl Libre","קלאסי"],["Secular One","עגול ועבה"],["Heebo","חלק"]].map(([v,t])=>({v,t,i:`<div class="em" style="font-family:'${v}',sans-serif">אבג Abc</div>`}))},
+{k:"route",t:"לחבר את המקומות בקו מסלול? 🧭",o:[[0,"בלי קו","🚫"],[1,"קו רציף","➖"],[2,"קו מקווקו","➖➖"]].map(([v,t,e])=>({v,t,i:EM(e)}))},
+{k:"nm",t:"לכתוב את שמות המקומות על המעמד? ✍️",o:[[1,"כן, עם השמות","📝"],[0,"רק שם הטיול","🔤"]].map(([v,t,e])=>({v,t,i:EM(e)}))},
+{k:"num",t:"למספר את המקומות ברשימה? 🔢",o:[[1,"כן","1️⃣"],[0,"לא","➖"]].map(([v,t,e])=>({v,t,i:EM(e)}))},
+{k:"bh",t:"כמה עבה המעמד? 🧱",o:[[2,"דק"],[3,"רגיל"],[5,"עבה"]].map(([v,t])=>({v,t,i:`<div class="ic square" style="width:46px;height:${v*7}px"></div>`}))},
+{k:"gap",t:"להרים את המדינה על עמודים קטנים? 🏛️",o:[[0,"צמוד למעמד","⬜"],[3,"מוגבה טיפה","🔹"],[6,"מוגבה יותר","🔷"]].map(([v,t,e])=>({v,t,i:EM(e)}))},
+{k:"lh",t:"כמה תרצו שהמדינה תבלוט? ⛰️",o:[[1.5,"שטוח"],[2.5,"רגיל"],[4,"מוגבה"]].map(([v,t])=>({v,t,i:`<div class="ic square" style="width:46px;height:${v*8}px"></div>`}))},
+{k:"fl",t:"דגל על המעמד? 🏳️",o:Object.entries(FLN).map(([v,[t,e]])=>({v,t,i:EM(e)}))},
+{k:"bg",t:"איזה רקע לתצוגה ולתמונה? 🌅",o:Object.entries({night:["לילה"],sunset:["שקיעה"],ocean:["אוקיינוס"],forest:["יער"],light:["בהיר"]}).map(([v,[t]])=>({v,t,i:`<div class="bgc" style="background:radial-gradient(circle at 40% 35%,${BGS[v][0]},${BGS[v][1]})"></div>`}))},
+{k:"qr",t:"רוצים קוד QR לאלבום התמונות? 📷",type:"qr"},
+{k:"prn",t:"איזו מדפסת יש לכם? 🖨️",type:"printer"},
+{k:"ncol",t:"כמה צבעים המדפסת מדפיסה? 🌈",o:NCS.map(([v,t])=>({v,t,i:EM(v>=5?"🎨":"●".repeat(v))}))},
+{k:"mag",t:"באיזה גודל המגנט? 🧲",o:[[8,"8 מ״מ"],[10,"10 מ״מ"],[12,"12 מ״מ"]].map(([v,t])=>({v,t,i:`<div class="ic circle" style="width:${v*3}px;height:${v*3}px"></div>`}))},
+{k:"pcs",t:"לכמה חלקים נחלק את המדינה? 🧩",o:[[4,"4 חלקים"],[6,"6 חלקים"],[9,"9 חלקים"],[12,"12 חלקים"]].map(([v,t])=>({v,t,i:EM("🧩")}))},
+{k:"pfr",t:"רוצים מסגרת למילוי הפאזל? 🖼️",o:[[0,"בלי מסגרת","🚫"],[1,"עם מסגרת","🖼️"]].map(([v,t,e])=>({v,t,i:EM(e)}))},
+{k:"done",t:"הכול מוכן! 🎉",type:"sum"}];
+let ST=STALL;
+const MODEST={k:"mode",t:"איך תרצו להתחיל? ⚡",o:[["quick","מהיר – 5 שאלות","⚡"],["full","מלא – כל האפשרויות","🎛️"]].map(([v,t,e])=>({v,t,i:EM(e)}))},QUICK=["loc","pl","sty","prn","ncol","done"];
+let wi=0;const W={mode:"full",pcs:6,pfr:0,mag:10,route:0,qr:"",ctys:[],cty:"",trip:"",gap:3,name:"",fav:"",rim:0,lh:2.5,bg:"night",font:"Rubik",num:0,d1:"",d2:"",kind:"",bh:3,sub:"",pl:"",psz:1,nm:1,sty:"classic",shp:"circle",pin:"ball",fl:"none",prn:"",bed:220,ncol:1};
+const cards=(k,o)=>`<div class="cards">${o.map(x=>`<button class="cd ${W[k]==x.v?"on":""}" data-k="${k}" data-v="${String(x.v).replace(/"/g,"&quot;")}">${x.i}<b>${x.t}</b></button>`).join("")}</div>`;
+function wread(){if($("wcty")&&!MULTI)W.cty=$("wcty").value.trim();if($("wtrip"))W.trip=$("wtrip").value.trim();if($("wprn"))W.prn=$("wprn").value.trim();if($("wqr"))W.qr=$("wqr").value.trim();if($("wnm"))W.name=$("wnm").value.trim();if($("wsub"))W.sub=$("wsub").value.trim();if($("wd1"))W.d1=$("wd1").value;if($("wd2"))W.d2=$("wd2").value;if($("wpl"))W.pl=$("wpl").value}
+const skipStep=st=>(st.k=="fav"&&!W.pl.trim())||(st.k=="num"&&!W.nm);
+function wr(){const st=ST[wi],last=wi==ST.length-1,vis=ST.filter(x=>!skipStep(x)),pos=vis.indexOf(st)+1,h=[`<div class="prog"><i style="width:${pos/vis.length*100}%"></i></div><div class="step"><h1>${st.k=="loc"&&MULTI?"אילו מדינות ביקרתם? 🌍":st.type=="sum"&&W.name?st.t.replace("הכול מוכן!","הכול מוכן, "+W.name+"!"):st.t}</h1><div class="stp">שלב ${pos} מתוך ${vis.length}</div>`];
+  if(st.type=="text"&&MULTI)h.push('<p class="sub">הוסיפו 2 עד 6 מדינות. נבנה מהן מפה אחת על מעמד אחד.</p><label>הקלידו מדינה (עברית או אנגלית) ובחרו מהרשימה</label><div class="row"><input id="wcty" list="cl" placeholder="איטליה, Greece…"><button id="wadd" style="width:auto;flex:none">➕ הוסף</button></div><div id="chips"></div><label>שם הטיול (יודפס על המעמד)</label><input id="wtrip" placeholder="הטיול שלנו 2026"><label>איך קוראים לך? (לא חובה)</label><input id="wnm" placeholder="דני">');
+  else if(st.type=="text")h.push('<p class="sub">ספרו לנו על הטיול.</p><label>המדינה (בעברית או באנגלית)</label><input id="wcty" list="cl" placeholder="איטליה, Japan…">'+(TOOL=="stand"?'<label>שם הטיול (יודפס על המעמד)</label><input id="wtrip" placeholder="הטיול שלנו 2026"><label>איך קוראים לך? (לא חובה)</label><input id="wnm" placeholder="דני">':''));
+  else if(st.type=="when")h.push('<p class="sub">התאריכים יודפסו על המעמד, מתחת לשם הטיול.</p><label>מתאריך</label><input type="date" id="wd1"><label>עד תאריך (אפשר להשאיר ריק)</label><input type="date" id="wd2"><label>שורה נוספת (לא חובה, למשל שמות המטיילים)</label><input id="wsub" placeholder="משפחת כהן">');
+  else if(st.type=="places")h.push('<p class="sub">כתבו מקום בכל שורה (עד 8), ואנחנו נחפש ונסמן אותם על המפה. אפשר גם לדלג ולסמן אחר כך בעצמכם.</p><textarea id="wpl" rows="7" placeholder="מגדל פיזה\nהקולוסיאום\nהגונדולות בוונציה"></textarea>');
+  else if(st.type=="qr")h.push('<p class="sub">הדביקו קישור לאלבום התמונות של הטיול ונבנה תגית QR קטנה להדבקה. אפשר לדלג.</p><label>קישור (לא חובה)</label><input id="wqr" placeholder="https://photos.app.goo.gl/…">');
+  else if(st.type=="printer")h.push('<p class="sub">נתאים את הגודל והקבצים למדפסת שלכם.</p><label>דגם (לא חובה)</label><input id="wprn" placeholder="Bambu A1, Ender 3…"><label>גודל משטח ההדפסה</label>'+cards("bed",BEDS.map(([v,t])=>({v,t,i:EM("📐")}))));
+  else if(st.type=="sum"){const rows=[[MULTI?"מדינות":"מדינה",MULTI?W.ctys.map(cname).join(", "):cname(W.cty)],["שם הטיול",W.trip||"הטיול שלנו"],["קו מסלול",["ללא","רציף","מקווקו"][W.route]],["תאריכים",(W.d1?W.d1.split("-").reverse().join("."):"")+(W.d2?" - "+W.d2.split("-").reverse().join("."):"")||"ללא"],["שם",W.name||"-"],["מקומות",W.pl.split("\n").filter(x=>x.trim()).length||"נסמן אחר כך"],["סגנון",STY[W.sty].n],["צורת מעמד",SHN[W.shp]+(W.rim?", עם מסגרת":"")],["אהוב",W.fav||"-"],["סימון",PNN[W.pin][0]+(W.psz==1?"":W.psz<1?", קטן":", גדול")],["כיתוב על המעמד",W.nm?"עם שמות":"שם הטיול בלבד"],["דגל",FLN[W.fl][0]],["מדפסת",(W.prn?W.prn+", ":"")+W.bed+" מ״מ"],["צבעים",W.ncol>=5?"5 ומעלה":W.ncol]];
+    h.push('<p class="sub">ככה נבנה את המודל. אפשר לשנות הכול אחר כך.</p>'+(TOOL=="stand"?rows:rows.filter(r=>["מדינה","מדינות","מקומות","סגנון","סימון","קו מסלול","אהוב","מדפסת","צבעים"].includes(r[0]))).map(r=>`<div class="rc"><b>${r[0]}</b><span>${r[1]}</span></div>`).join(""))}
+  else if(st.type=="fav"){const L=W.pl.split("\n").map(x=>x.trim()).filter(Boolean).slice(0,8);h.push(L.length?'<p class="sub">נסמן אותו בלב גדול.</p>'+cards("fav",[{v:"none",t:"אין מועדף",i:EM("🤷")},...L.map(v=>({v,t:v,i:EM("📍")}))]):'<p class="sub">לא הוזנו מקומות, אפשר לדלג.</p>')}
+  else h.push(cards(st.k,st.o));
+  h.push(`<p class="hint" id="werr" style="color:#dc2626"></p><div class="nav">${wi?'<button class="back" id="wback">חזרה</button>':""}<button class="go" id="wnext">${last?"בונים! ✨":"הבא ←"}</button></div></div>`);
+  $("s2").innerHTML=h.join("");if($("wcty"))$("wcty").value=MULTI?"":W.cty;if(MULTI&&ST[wi].k=="loc"){renderChips();$("wcty").onkeydown=e=>{if(e.key=="Enter")addCty()}};if($("wtrip"))$("wtrip").value=W.trip;if($("wprn"))$("wprn").value=W.prn;if($("wqr"))$("wqr").value=W.qr;if($("wnm"))$("wnm").value=W.name;if($("wsub"))$("wsub").value=W.sub;if($("wd1"))$("wd1").value=W.d1;if($("wd2"))$("wd2").value=W.d2;if($("wpl"))$("wpl").value=W.pl}
+function renderChips(){$("chips").innerHTML=W.ctys.map((c,i)=>`<span class="chip">${cname(c)}<b data-rm="${i}">✕</b></span>`).join("")}
+function addCty(){const v=$("wcty").value.trim();if(!v)return true;const n=findC(v);
+  if(!n){$("werr").textContent="לא מצאתי את המדינה. הקלידו שם ובחרו מהרשימה.";return false}
+  if(W.ctys.includes(n)){$("wcty").value="";return true}if(W.ctys.length>=6){$("werr").textContent="אפשר עד 6 מדינות";return false}
+  W.ctys.push(n);$("wcty").value="";$("werr").textContent="";renderChips();return true}
+
+$("s2").onclick=e=>{if(e.target.id=="wadd"){addCty();return}if(e.target.dataset&&e.target.dataset.rm!=null){W.ctys.splice(+e.target.dataset.rm,1);renderChips();return}
+  const c=e.target.closest(".cd");if(c){const k=c.dataset.k,v=c.dataset.v;W[k]=isNaN(v)?v:+v;if(k=="mode")ST=[MODEST,...(v=="quick"?STALL.filter(x=>QUICK.includes(x.k)):STALL)];if(k=="fav")W.fav=v=="none"?"":v;if(k=="kind")W.sty={sea:"beach",mnt:"alpine",city:"minimal",nat:"classic",rom:"night"}[v];c.parentElement.querySelectorAll(".cd").forEach(x=>x.classList.toggle("on",x==c));return}
+  if(e.target.id=="wback"){wread();do{wi--}while(wi>0&&skipStep(ST[wi]));wr();return}
+  if(e.target.id!="wnext")return;wread();
+  if(ST[wi].k=="loc"&&MULTI){if(!addCty())return;if(W.ctys.length<2){$("werr").textContent="בחרו לפחות 2 מדינות";return}}
+  else if(ST[wi].k=="loc"){const n=findC(W.cty);if(!n){$("werr").textContent="לא מצאתי את המדינה. הקלידו שם ובחרו מהרשימה.";return}W.cty=n}
+  if(wi<ST.length-1){do{wi++}while(wi<ST.length-1&&skipStep(ST[wi]));wr();return}
+  if(MULTI){multiNames=[...W.ctys];$("cin").value=W.ctys.map(cname).join(", ");setCountry(W.ctys.flatMap(n=>countries[n]),false,W.ctys.map(n=>countries[n]))}else{$("cin").value=cname(W.cty);setCountry(countries[W.cty])}if(W.trip)$("trip").value=W.trip;else if(W.name)$("trip").value=(LANG=="en"?"Trip of ":"הטיול של ")+W.name;$("pcs").value=W.pcs;$("pfr").checked=!!W.pfr;$("mgs").value=W.mag;$("route").value=W.route;$("qrurl").value=W.qr;$("qron").checked=!!W.qr;$("rim").value=W.rim;$("lh").value=W.lh;$("gap").value=W.gap;$("bg").value=W.bg;const x=STY[W.sty].c;Object.keys(x).forEach(k=>$("c_"+k).value=x[k]);
+  $("tsub").value=W.sub;$("font").value=W.font;$("numpins").checked=!!W.num;fontLoad();$("d1").value=W.d1;$("d2").value=W.d2;$("bh").value=W.bh;$("shownames").checked=!!W.nm;$("psz").value=W.psz;$("shape").value=W.shp;$("ps").value=W.pin;$("fm").value=W.fl;$("bed").value=W.bed;$("ncol").value=W.ncol;syncPickers();update();$("intro").style.display="none";
+  $("msg").textContent=`ההגדרות הותאמו${W.prn?" ל-"+W.prn:""}: ${W.ncol>=5?"5+":W.ncol} צבעים, משטח ${W.bed} מ״מ.`+(W.fl=="img"?" העלו תמונת דגל בחלק של הדגל.":"");
+  for(let i=0;i<28;i++){const f=document.createElement("span");f.className="cf";f.textContent=["🎉","✨","🌍","📍","⭐"][i%5];f.style.left=Math.random()*100+"vw";f.style.animationDelay=Math.random()*.6+"s";document.body.append(f);setTimeout(()=>f.remove(),2800)}
+  const L=W.pl.split("\n").map(x=>x.trim()).filter(Boolean).slice(0,8);if(L.length)findAll(L)};
+async function findAll(L){const m=$("msg");try{const sm=await claude.use("sample");if(!sm){m.textContent="חיפוש אוטומטי לא זמין – סמנו על המפה";return}m.textContent="מחפש את המקומות שלכם…";
+  const rs=await Promise.allSettled(L.map(q=>sm.json(`Geocode this place: "${q}" in or near ${$("cin").value}. JSON only: {"lat":number,"lon":number} or {"error":"not found"}.`,{cache:false})));let n=0;
+  rs.forEach((r,i)=>{const v=r.status=="fulfilled"&&r.value;if(v&&typeof v.lat=="number"&&typeof v.lon=="number"){pins.push({lon:v.lon,lat:v.lat,name:L[i],fav:!!W.fav&&L[i]==W.fav});n++}});renderPins();update();
+  m.textContent=`נמצאו ${n} מתוך ${L.length} מקומות. כדאי לבדוק במפה, ואפשר לתקן בלחיצה.`}catch(_){m.textContent="חיפוש המקומות נכשל – אפשר להוסיף ידנית"}}
+const CTY=["🏳️","שם המדינה (בעברית או באנגלית)","r","למשל Italy או Japan. אפשר גם קובץ GeoJSON של המדינה."],
+PLC=["📍","המקומות שהייתם בהם","o","יסומנו על המודל. אפשר גם להוסיף בלחיצה על המפה."],
+PRN=["🖨️","מדפסת תלת-ממד וסלייסר","","הקבצים יוצאים בפורמט STL ו-3MF, וגם כקבצים נפרדים לכל צבע."],
+STAND=[["✏️","שם הטיול","r","הוא יודפס על המעמד, לכן כדאי משהו קצר."],["📍","רשימת המקומות שהייתם בהם","r","אפשר ללחוץ על המפה, לחפש לפי שם, או להדביק קואורדינטות או קישור מגוגל מפות (הכי מדויק)."],["📅","תאריכי הטיול","o","התאריכים יודפסו על המעמד, מתחת לשם הטיול."],
+ ["🚩","דגל המדינה","o","תמונה של הדגל, או הצבעים שלו אם הוא עשוי פסים."],["💧","תמונה עם אגמים ונחלים","o","מפה של המדינה שבה המים בכחול, חתוכה בדיוק סביב המדינה."],["⛰️","תמונה של הרים וגבעות","o","מפה פיזית או מפת גבהים באפור, חתוכה סביב המדינה כמו התמונה של המים."],["🎨","צבעים וצורת מעמד","o","כדאי לחשוב מראש על צבעי המעמד, המדינה והסיכות."],["🖨️","מדפסת תלת-ממד וסלייסר","","המודל יוצא בגודל של כ-14 ס״מ בקבצי STL. להדפסה בכמה צבעים יש קובץ נפרד לכל חלק."]],
+INTRO={stand:[CTY,...STAND],multi:[["🌍","שמות 2 עד 6 מדינות","r","הוסיפו מדינות בעברית או באנגלית. נבנה מהן מפה אחת."],...STAND],
+ key:[CTY,PLC,["🔗","טבעת או שרשרת מפתחות","r","כדי לחבר את המחזיק למפתחות."],PRN],
+ magnet:[CTY,PLC,["🧲","מגנט עגול דק","r","בקוטר 8, 10 או 12 מ״מ. מדביקים אותו בכיס שמאחור."],PRN],
+ orn:[CTY,PLC,["🧵","חוט, סרט או אטב","r","כדי לתלות את הקישוט."],PRN],
+ holder:[CTY,PLC,["📱","טלפון או טאבלט קטן","","המעמד מתאים לטלפון בעובי של עד כ-14 מ״מ, כולל מגן."],PRN],
+ puzzle:[CTY,["🧩","מספר חלקים","o","4, 6, 9 או 12 חלקים. תוכלו לבחור בשלב הבא."],["🖼️","מסגרת בצורת המדינה","o","מגש בצורת המדינה שמחזיק את החלקים במקום."],PRN]};
+function renderIntro(){const k=MULTI?"multi":TOOL,T={stand:["🌍","מזכרת תלת-ממד מהטיול"],multi:["🗺️","מזכרת מכמה מדינות"],key:["🔑","מחזיק מפתחות"],magnet:["🧲","מגנט למקרר"],orn:["🎄","קישוט לתליה"],puzzle:["🧩","פאזל של המדינה"],holder:["📱","מעמד לטלפון"]}[k];
+  $("s1e").textContent=T[0];$("s1t").textContent=T[1];$("s1items").innerHTML=INTRO[k].map(([e,t,g,d])=>`<div class="it"><div class="em">${e}</div><div><b>${t}${g?` <i class="tag ${g=="o"?"o":""}">${g=="o"?"אופציונלי":"חובה"}</i>`:""}</b><span>${d}</span></div></div>`).join("");
+  document.querySelectorAll("#s1 .it").forEach((e,i)=>e.style.animationDelay=i*70+"ms")}
+const TOOLNAME={holder:"מעמד לטלפון",stand:"מזכרת",key:"מחזיק מפתחות",magnet:"מגנט",orn:"קישוט",puzzle:"פאזל"};
+// views
+$("vtop").onclick=()=>{auto=false;pivot.rotation.set(Math.PI/2,0,0)};
+$("vdef").onclick=()=>{pivot.rotation.set(.5,0,0);auto=true};
+// import places
+function numPair(a,b){a=+a;b=+b;return Math.abs(a)>90?[b,a]:[a,b]}
+function parseKML(t){const d=new DOMParser().parseFromString(t,"text/xml"),o=[];d.querySelectorAll("Placemark").forEach(p=>{const c=p.querySelector("Point coordinates");if(!c)return;const [lo,la]=c.textContent.trim().split(/[,\s]+/).map(Number),n=p.querySelector("name");if(isFinite(lo)&&isFinite(la))o.push({lon:lo,lat:la,name:n?n.textContent.trim():""})});return o}
+function parseGPX(t){const d=new DOMParser().parseFromString(t,"text/xml"),o=[];d.querySelectorAll("wpt,rtept").forEach(p=>{const n=p.querySelector("name");o.push({lon:+p.getAttribute("lon"),lat:+p.getAttribute("lat"),name:n?n.textContent.trim():""})});return o}
+function parseGJ(t){const j=JSON.parse(t),o=[],f=x=>{if(!x)return;if(x.type=="FeatureCollection")x.features.forEach(f);else if(x.type=="Feature"){const g=x.geometry;if(g&&g.type=="Point"){const p=x.properties||{};o.push({lon:g.coordinates[0],lat:g.coordinates[1],name:p.name||p.Title||p.title||(p.location&&p.location.name)||""})}else if(g&&g.type=="MultiPoint")g.coordinates.forEach(c=>o.push({lon:c[0],lat:c[1],name:(x.properties&&x.properties.name)||""}))}};f(j);return o}
+function parseLines(t){const o=[];t.split(/\r?\n/).forEach(l=>{const m=l.match(/(-?\d{1,3}\.\d{2,})\s*[,;\s]\s*(-?\d{1,3}\.\d{2,})/);if(!m)return;const [la,lo]=numPair(m[1],m[2]);let nm="",pl=l.match(/place\/([^\/@?]+)/);if(pl)try{nm=decodeURIComponent(pl[1].replace(/\+/g," "))}catch(e){nm=pl[1]}
+  else nm=l.replace(m[0],"").replace(/https?:\S+/g,"").replace(/[@:;,"]+/g," ").replace(/\s+/g," ").trim();o.push({lon:lo,lat:la,name:nm})});return o}
+async function readKmz(buf){const v=new DataView(buf),u=new Uint8Array(buf);let e=buf.byteLength-22;while(e>=0&&v.getUint32(e,true)!=0x06054b50)e--;if(e<0)throw 0;let p=v.getUint32(e+16,true);const n=v.getUint16(e+10,true);
+  for(let i=0;i<n;i++){const meth=v.getUint16(p+10,true),cs=v.getUint32(p+20,true),nl=v.getUint16(p+28,true),xl=v.getUint16(p+30,true),cl=v.getUint16(p+32,true),lo=v.getUint32(p+42,true),name=new TextDecoder().decode(u.subarray(p+46,p+46+nl));p+=46+nl+xl+cl;
+    if(/\.kml$/i.test(name)){const st=lo+30+v.getUint16(lo+26,true)+v.getUint16(lo+28,true),data=u.subarray(st,st+cs);if(meth==0)return new TextDecoder().decode(data);return await new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).text()}}throw 0}
+function importPins(L){const m=$("msg");L=L.filter(p=>isFinite(p.lon)&&isFinite(p.lat)&&Math.abs(p.lat)<=90&&Math.abs(p.lon)<=180);if(!L.length){m.textContent="לא נמצאו מקומות בקובץ או ברשימה";return}
+  const B=pick(raw).map(bb);let n=0,out=0;L.slice(0,40).forEach(p=>{if(pins.length>=40||pins.some(q=>Math.abs(q.lon-p.lon)<1e-4&&Math.abs(q.lat-p.lat)<1e-4))return;if(B.length&&!B.some(b=>p.lon>=b[0]-1&&p.lon<=b[1]+1&&p.lat>=b[2]-1&&p.lat<=b[3]+1))out++;pins.push({lon:p.lon,lat:p.lat,name:p.name||"מקום "+(pins.length+1)});n++});
+  renderPins();update();m.textContent="יובאו "+n+" מקומות מהקובץ"+(out?" ("+out+" מחוץ למדינה שנבחרה)":"")}
+$("impb").onclick=async()=>{try{const f=$("impf").files[0];let L=[];if(f){const x=f.name.toLowerCase();if(x.endsWith(".kmz"))L=parseKML(await readKmz(await f.arrayBuffer()));else{const t=await f.text();L=x.endsWith(".kml")?parseKML(t):x.endsWith(".gpx")?parseGPX(t):(x.endsWith(".json")||x.endsWith(".geojson"))?parseGJ(t):parseLines(t)}}
+  const t2=$("impt").value.trim();if(t2)L=L.concat(parseLines(t2));importPins(L);$("impt").value="";$("impf").value=""}catch(e){$("msg").textContent="לא הצלחתי לקרוא את הקובץ"}};
+// gallery
+let gdb=null,gid=null,curKey=null,useCloud=false,GL=[];
+async function gInit(){try{const d=await claude.use("db"),u=await claude.use("user");if(d&&u){gid=await u.id();gdb=d}}catch(e){}return !!gdb}
+const gCol=()=>gdb.collection("data/users/"+gid);
+async function gList(){if(useCloud&&gdb){try{const q=await gCol().orderBy("ts","desc").limit(40).get();return q.docs.map(d=>Object.assign({id:d.id},d.data()))}catch(e){}}try{return JSON.parse(localStorage.getItem("trip3d_g")||"[]")}catch(e){return[]}}
+function thumb(){R.setSize(200,200,false);R.render(sc,cam);const c=document.createElement("canvas");c.width=c.height=200;const g=c.getContext("2d"),b=BGS[$("bg").value]||BGS.night,gr=g.createRadialGradient(100,90,10,100,110,150);gr.addColorStop(0,b[0]);gr.addColorStop(1,b[1]);g.fillStyle=gr;g.fillRect(0,0,200,200);g.drawImage(vc,0,0,200,200);const w=vc.clientWidth;R.setSize(w,w,false);return c.toDataURL("image/jpeg",.7)}
+async function gSave(){const m=$("msg");let pj=getProj(false);let proj=JSON.stringify(pj);if(proj.length>230000){pj.cur=null;proj=JSON.stringify(pj)}if(proj.length>230000){m.textContent="הפרויקט גדול מדי לגלריה – שמרו אותו כקובץ";return}
+  const rec={name:$("trip").value||TOOLNAME[TOOL],tool:TOOL,ts:Date.now(),thumb:thumb(),proj},key=curKey||("p"+Date.now());
+  try{if(useCloud&&gdb){await gCol().doc(key).set(rec)}else{let L=[];try{L=JSON.parse(localStorage.getItem("trip3d_g")||"[]")}catch(e){}L=L.filter(x=>x.id!=key);L.unshift(Object.assign({id:key},rec));localStorage.setItem("trip3d_g",JSON.stringify(L.slice(0,12)))}
+    curKey=key;m.textContent=useCloud&&gdb?"נשמר בגלריה שלך, מקושרת לחשבון":"נשמר בגלריה בדפדפן הזה";renderGallery()}catch(e){m.textContent="השמירה בגלריה נכשלה"}}
+async function renderGallery(){GL=await gList();$("gal").innerHTML=GL.length?GL.map((r,i)=>`<div class="tool gi"><img src="${r.thumb||""}" alt=""><b></b><span>${TOOLNAME[r.tool]||""} · ${new Date(r.ts).toLocaleDateString()}</span><div class="gb"><button data-o="${i}">פתח</button><button data-d="${i}">מחק</button></div></div>`).join(""):'<p class="hint">עוד אין פרויקטים שמורים.</p>';
+  $("gal").querySelectorAll(".gi b").forEach((b,i)=>b.textContent=GL[i].name||"")}
+$("gal").onclick=async e=>{const o=e.target.dataset.o,d=e.target.dataset.d;if(o!=null){const r=GL[+o];try{putProj(JSON.parse(r.proj));curKey=r.id;$("home").style.display="none";$("intro").style.display="none";$("msg").textContent="הפרויקט נטען"}catch(_){$("msg").textContent="לא הצלחתי לטעון את הקובץ"}}
+  else if(d!=null){const r=GL[+d];try{if(useCloud&&gdb)await gCol().doc(r.id).delete();else{const L=JSON.parse(localStorage.getItem("trip3d_g")||"[]").filter(x=>x.id!=r.id);localStorage.setItem("trip3d_g",JSON.stringify(L))}if(curKey==r.id)curKey=null;renderGallery()}catch(_){}}};
+$("gs").onclick=gSave;
+$("cloud").onchange=async()=>{if($("cloud").checked){const ok=await gInit();if(!ok){$("cloud").checked=false;$("galnote").textContent="שמירה בחשבון לא זמינה בתצוגה הזו";return}useCloud=true;try{localStorage.setItem("trip3d_cloud","1")}catch(e){}}else{useCloud=false;try{localStorage.removeItem("trip3d_cloud")}catch(e){}}renderGallery()};
+(async()=>{try{if(localStorage.getItem("trip3d_cloud")){if(await gInit()){useCloud=true;$("cloud").checked=true}}}catch(e){}renderGallery()})();
+$("hm").addEventListener("click",renderGallery);
+const X={"⚡ מצב מהיר":"⚡ Fast mode","✨ איכות מלאה":"✨ Full quality","דלג לתוכן":"Skip to content",
+"סטודיו המזכרות":"Souvenir Studio","בחרו מה תרצו ליצור היום":"Choose what you'd like to create today",
+"מזכרת תלת-ממד לטיול":"3D Trip Souvenir","בוחרים מדינה, מסמנים את המקומות שהייתם בהם, ומקבלים קבצי הדפסה עם מעמד וכיתוב.":"Pick a country, mark the places you visited, and get print files with a stand and lettering.",
+"מזכרת מכמה מדינות":"Multi-Country Souvenir","טיול שעבר בשתי מדינות או יותר? בוחרים עד 6 מדינות ומקבלים מפה אחת משותפת עם גבולות בולטים.":"A trip through two or more countries? Pick up to 6 countries and get one shared map with clear borders.",
+"מחזיק מפתחות":"Keychain","צורת המדינה כמחזיק מפתחות קטן עם טבעת, עם הסימונים של המקומות שהייתם בהם.":"The country shape as a small keychain with a ring, marked with the places you visited.",
+"מגנט למקרר":"Fridge Magnet","צורת המדינה כמגנט שטוח, עם כיס מובנה למגנט עגול שמדביקים מאחור.":"The country shape as a flat magnet, with a built-in pocket for a round magnet glued on the back.",
+"קישוט לתליה":"Hanging Ornament","צורת המדינה כתליון או קישוט לעץ ולחלון, עם חור לחוט.":"The country shape as a pendant or tree/window ornament, with a hole for string.",
+"בקרוב…":"Coming soon…","עוד כלים בדרך":"More tools on the way","התחילו ←":"Start →","↩ המשך מהפרויקט האחרון":"↩ Continue last project",
+"מחולל מזכרת תלת-ממד לטיול":"3D Trip Souvenir Maker","בוחרים מדינה, מסמנים או מחפשים מקומות, ומקבלים קבצים להדפסה תלת-ממדית עם מעמד, כיתוב ודגל.":"Pick a country, mark or search for places, and get 3D-print files with a stand, lettering and a flag.",
+"🏠 דף הבית":"🏠 Home","ℹ️ מה צריך להכין":"ℹ️ What to prepare","💾 שמירת פרויקט":"💾 Save project","📂 טעינה":"📂 Load","📸 תמונה לשיתוף":"📸 Share image",
+"מזכרת תלת-ממד מהטיול":"3D Souvenir from Your Trip","לפני שמתחילים, כדאי להכין את הדברים הבאים. כך התהליך יהיה מהיר וקל.":"Before you start, it helps to have these ready, so the process is quick and easy.",
+"חובה":"Required","אופציונלי":"Optional","שם המדינה (בעברית או באנגלית)":"Country name (Hebrew or English)","למשל Italy או Japan. אפשר גם קובץ GeoJSON של המדינה.":"E.g. Italy or Japan. A country GeoJSON file also works.",
+"שם הטיול":"Trip name","הוא יודפס על המעמד, לכן כדאי משהו קצר.":"It will be printed on the stand, so keep it short.","רשימת המקומות שהייתם בהם":"List of places you visited",
+"אפשר ללחוץ על המפה, לחפש לפי שם, או להדביק קואורדינטות או קישור מגוגל מפות (הכי מדויק).":"You can click the map, search by name, or paste coordinates or a Google Maps link (most accurate).",
+"דגל המדינה":"Country flag","תמונה של הדגל, או הצבעים שלו אם הוא עשוי פסים.":"A flag image, or its colors if it's made of stripes.",
+"תמונה עם אגמים ונחלים":"Image with lakes and rivers","מפה של המדינה שבה המים בכחול, חתוכה בדיוק סביב המדינה.":"A map of the country with water in blue, cropped exactly around the country.",
+"תמונה של הרים וגבעות":"Image of mountains and hills","מפה פיזית או מפת גבהים באפור, חתוכה סביב המדינה כמו התמונה של המים.":"A physical or grayscale elevation map, cropped around the country like the water image.",
+"צבעים וצורת מעמד":"Colors and stand shape","כדאי לחשוב מראש על צבעי המעמד, המדינה והסיכות.":"Think ahead about the colors of the stand, country and pins.",
+"מדפסת תלת-ממד וסלייסר":"3D printer and slicer","המודל יוצא בגודל של כ-14 ס״מ בקבצי STL. להדפסה בכמה צבעים יש קובץ נפרד לכל חלק.":"The model is about 14 cm, in STL files. For multi-color printing there is a separate file for each part.","מתחילים ←":"Let's start →",
+"איפה הייתם? 🌍":"Where did you go? 🌍","אילו מדינות ביקרתם? 🌍":"Which countries did you visit? 🌍","מתי הייתם? 📅":"When were you there? 📅","איזה סוג טיול זה היה? ✈️":"What kind of trip was it? ✈️","אילו מקומות ביקרתם? 📍":"Which places did you visit? 📍","איזה מקום היה האהוב עליכם? ❤️":"Which place was your favorite? ❤️","איזה סגנון מתאים לכם? 🎨":"Which style suits you? 🎨","איזו צורה למעמד? 🧱":"Which shape for the stand? 🧱","איך ייראה קצה המעמד? 🖼️":"How should the stand edge look? 🖼️","איך נסמן את המקומות? 📌":"How should we mark the places? 📌","באיזה גודל הסימונים? 📏":"What size should the markers be? 📏","לחבר את המקומות בקו מסלול? 🧭":"Connect the places with a route line? 🧭","איזה גופן לכיתוב? 🔤":"Which font for the lettering? 🔤","לכתוב את שמות המקומות על המעמד? ✍️":"Write the place names on the stand? ✍️","למספר את המקומות ברשימה? 🔢":"Number the places in the list? 🔢","כמה עבה המעמד? 🧱":"How thick should the stand be? 🧱","להרים את המדינה על עמודים קטנים? 🏛️":"Raise the country on small pillars? 🏛️","כמה תרצו שהמדינה תבלוט? ⛰️":"How much should the country stand out? ⛰️","דגל על המעמד? 🏳️":"A flag on the stand? 🏳️","איזה רקע לתצוגה ולתמונה? 🌅":"Which background for the preview and image? 🌅","רוצים קוד QR לאלבום התמונות? 📷":"Want a QR code for the photo album? 📷","איזו מדפסת יש לכם? 🖨️":"Which 3D printer do you have? 🖨️","כמה צבעים המדפסת מדפיסה? 🌈":"How many colors does your printer print? 🌈","באיזה גודל המגנט? 🧲":"What magnet size? 🧲","הכול מוכן! 🎉":"All set! 🎉",
+"ספרו לנו על הטיול.":"Tell us about the trip.","המדינה (בעברית או באנגלית)":"Country (Hebrew or English)","שם הטיול (יודפס על המעמד)":"Trip name (printed on the stand)","איך קוראים לך? (לא חובה)":"What's your name? (optional)","הוסיפו 2 עד 6 מדינות. נבנה מהן מפה אחת על מעמד אחד.":"Add 2 to 6 countries. We'll build one map from them on one stand.","הקלידו מדינה (עברית או אנגלית) ובחרו מהרשימה":"Type a country (Hebrew or English) and pick from the list","➕ הוסף":"➕ Add",
+"התאריכים יודפסו על המעמד, מתחת לשם הטיול.":"The dates will be printed on the stand, below the trip name.","מתאריך":"From date","עד תאריך (אפשר להשאיר ריק)":"To date (can be left empty)","שורה נוספת (לא חובה, למשל שמות המטיילים)":"Extra line (optional, e.g. traveler names)",
+"כתבו מקום בכל שורה (עד 8), ואנחנו נחפש ונסמן אותם על המפה. אפשר גם לדלג ולסמן אחר כך בעצמכם.":"Write one place per line (up to 8) and we'll search for them and mark them on the map. You can also skip and mark them yourselves later.",
+"נסמן אותו בלב גדול.":"We'll mark it with a big heart.","לא הוזנו מקומות, אפשר לדלג.":"No places entered, you can skip.","אין מועדף":"No favorite",
+"הדביקו קישור לאלבום התמונות של הטיול ונבנה תגית QR קטנה להדבקה. אפשר לדלג.":"Paste a link to the trip photo album and we'll build a small QR tag to attach. You can skip.","קישור (לא חובה)":"Link (optional)",
+"נתאים את הגודל והקבצים למדפסת שלכם.":"We'll adapt the size and files to your printer.","דגם (לא חובה)":"Model (optional)","גודל משטח ההדפסה":"Print bed size","ככה נבנה את המודל. אפשר לשנות הכול אחר כך.":"This is how we'll build the model. You can change everything later.",
+"קלאסי":"Classic","חוף וים":"Beach & sea","הרים ושלג":"Mountains & snow","לילה":"Night","מינימליסטי":"Minimal","עיגול":"Circle","ריבוע":"Square","ריבוע מעוגל":"Rounded square","משושה":"Hexagon","מתומן":"Octagon","אליפסה":"Ellipse",
+"כדור":"Ball","סיכה":"Pin","עמוד":"Column","קובייה":"Cube","כוכב":"Star","לב":"Heart","בלי דגל":"No flag","דגל המדינה (אוטומטי)":"Country flag (automatic)","פסים אופקיים":"Horizontal stripes","פסים אנכיים":"Vertical stripes","תמונת דגל":"Flag image",
+"ים וחופים":"Sea & beaches","הרים וטבע":"Mountains & nature","עיר ותרבות":"City & culture","טיול משפחתי":"Family trip","רומנטי":"Romantic","קטן":"Small","בינוני":"Medium","גדול":"Large","כן, עם השמות":"Yes, with names","רק שם הטיול":"Trip name only","בלי קו":"No line","קו רציף":"Solid line","קו מקווקו":"Dashed line",
+"רגיל":"Regular","עגול ועבה":"Round & bold","חלק":"Smooth","דק":"Thin","עבה":"Thick","שטוח":"Flat","מוגבה":"Raised","צמוד למעמד":"Flush with the stand","מוגבה טיפה":"Slightly raised","מוגבה יותר":"Raised more","מסגרת דקה":"Thin frame","מסגרת עבה":"Thick frame",
+"שקיעה":"Sunset","אוקיינוס":"Ocean","יער":"Forest","בהיר":"Light","כן":"Yes","לא":"No","קטנה – עד 12 ס״מ (מדפסות מיני)":"Small – up to 12 cm (mini printers)","220 מ״מ (למשל Ender 3)":"220 mm (e.g. Ender 3)","256 מ״מ (למשל Bambu, Prusa)":"256 mm (e.g. Bambu, Prusa)","350 מ״מ ומעלה":"350 mm and up",
+"צבע אחד":"One color","2 צבעים":"2 colors","3 צבעים":"3 colors","4 צבעים (למשל AMS)":"4 colors (e.g. AMS)","5 צבעים ומעלה":"5+ colors","5 ומעלה":"5 and up","הבא ←":"Next →","חזרה":"Back","בונים! ✨":"Build! ✨",
+"מדינה":"Country","מדינות":"Countries","שם":"Name","תאריכים":"Dates","מקומות":"Places","נסמן אחר כך":"We'll mark later","סגנון":"Style","צורת מעמד":"Stand shape","סימון":"Marker","כיתוב על המעמד":"Lettering on stand","עם שמות":"With names","שם הטיול בלבד":"Trip name only","אהוב":"Favorite","קו מסלול":"Route line","דגל":"Flag","מדפסת":"Printer","צבעים":"Colors","ללא":"None","רציף":"Solid","מקווקו":"Dashed",
+"גודל משטח המדפסת":"Printer bed size","מספר צבעים במדפסת":"Colors your printer prints","מדינה (בעברית או באנגלית)":"Country (Hebrew or English)","כולל איים רחוקים":"Include remote islands","✂️ התמקדות באזור":"✂️ Focus on a region","בטל חיתוך":"Clear crop","או קובץ GeoJSON משלכם":"Or your own GeoJSON file",
+"תאריכי הטיול (יודפסו על המעמד)":"Trip dates (printed on the stand)","שורה נוספת (למשל שמות המטיילים)":"Extra line (e.g. traveler names)","גופן הכיתוב":"Lettering font","הצג שמות מקומות על המעמד":"Show place names on the stand","מספר את המקומות ברשימה":"Number the places in the list",
+"עובי המעמד":"Stand thickness","גימור קצה המעמד":"Stand edge finish","הגבהת המדינה על עמודים":"Raise country on pillars","מוגבה טיפה (3 מ״מ)":"Slightly raised (3 mm)","מוגבה יותר (6 מ״מ)":"Raised more (6 mm)","גודל המגנט (קוטר)":"Magnet size (diameter)","גובה המדינה":"Country height","רקע התצוגה והתמונה":"Preview & image background","צורת המעמד":"Stand shape",
+"צורת סימון מיקום":"Place marker shape","כדור על מוט":"Ball on a stick","סיכת מפה":"Map pin","קובייה על מוט":"Cube on a stick","קו מסלול בין המקומות":"Route line between places","מעמד":"Stand","סיכות":"Pins","כיתוב":"Lettering","מים":"Water","הרים":"Mountains",
+"דגל (בתחתית המעמד)":"Flag (at the bottom of the stand)","פסים אופקיים – 2 צבעים":"Horizontal stripes – 2 colors","פסים אופקיים – 3 צבעים":"Horizontal stripes – 3 colors","פסים אנכיים – 2 צבעים":"Vertical stripes – 2 colors","פסים אנכיים – 3 צבעים":"Vertical stripes – 3 colors","העלאת תמונת דגל":"Upload a flag image",
+"תגית QR לאלבום התמונות":"QR tag for the photo album","התגית נבנית כלוחית נפרדת, להדבקה על המעמד או לצידו.":"The tag is built as a separate plate, to glue on the stand or beside it.","מים מתמונה (מדויק)":"Water from an image (accurate)","🎯 טפטפת":"🎯 Eyedropper",
+"הרים וגבעות מתמונה":"Mountains & hills from an image","מפה פיזית (ירוק נמוך ← חום/לבן גבוה)":"Physical map (green low → brown/white high)","גווני אפור (בהיר = גבוה)":"Grayscale (light = high)","גווני אפור (כהה = גבוה)":"Grayscale (dark = high)","גובה מרבי":"Max height","הצג את התמונות על המפה":"Show images on the map",
+"התמונה צריכה להיות חתוכה סביב המדינה. השתמשו בשכבת התצוגה וביישור כדי להתאים אותה לקו המתאר. רק מה שבתוך גבולות המדינה נלקח, כך שים ושמות מחוץ למדינה לא משפיעים.":"The image should be cropped around the country. Use the overlay and alignment to match it to the outline. Only what is inside the country borders is used, so sea and labels outside don't matter.",
+"אגמים ונחלים":"Lakes & rivers","✏️ צייר נחל":"✏️ Draw river","✏️ צייר אגם":"✏️ Draw lake","סיום":"Done","🗑 מים":"🗑 Water","🌊 הצעה אוטומטית (קירוב בלבד)":"🌊 Auto suggestion (approximate)",
+"חיפוש מקום להוספה":"Search for a place to add","חפש":"Search","⬇ הורדת קבצי STL (ZIP)":"⬇ Download STL files (ZIP)","מפה":"Map","תצוגה מקדימה":"Preview",
+"קווי המתאר מוצגים ללא מפת רקע. החיפוש משתמש ב-Claude כדי למצוא קואורדינטות, ולכן מדויק בערך. לדיוק מלא הדביקו קואורדינטות או קישור מגוגל מפות.":"Outlines are shown without a background map. Search uses Claude to find coordinates, so it is only roughly accurate. For full accuracy paste coordinates or a Google Maps link.","גררו לסיבוב.":"Drag to rotate.",
+"יישור התמונה":"Align image","רוחב":"Width","גובה":"Height","הזזה אופקית":"Shift horizontally","הזזה אנכית":"Shift vertically","✅ לא זוהו בעיות הדפסה מוכרות":"✅ No known print problems detected",
+"נשמר. אפשר להעלות את הקובץ לסלייסר.":"Saved. You can upload the file to your slicer.","ההורדה בוטלה":"Download cancelled","שגיאה בהורדה":"Download error","ההורדה לא זמינה בתצוגה הזו":"Download isn't available in this view",
+"הפרויקט נשמר. אפשר לטעון אותו בכפתור 'טעינה'.":"Project saved. You can load it with the 'Load' button.","השמירה בוטלה":"Save cancelled","שמירה נכשלה":"Save failed","השמירה לא זמינה בתצוגה הזו":"Saving isn't available in this view","הפרויקט נטען":"Project loaded","לא הצלחתי לטעון את הקובץ":"Couldn't load the file","המשכתם מהפרויקט האחרון":"Continuing the last project","התמונה נשמרה":"Image saved","יצירת התמונה נכשלה":"Creating the image failed","לא זמין בתצוגה הזו":"Not available in this view","לא הצלחתי לקרוא את הקובץ":"Couldn't read the file",
+"גררו מלבן על המפה כדי לבחור את האזור":"Drag a rectangle on the map to choose the region","לחצו על המפה לסימון נקודות, ואז 'סיום'":"Click the map to mark points, then 'Done'","מחפש אגמים ונחלים… (עד חצי דקה)":"Searching for lakes and rivers… (up to half a minute)","לא הצלחתי לקרוא את קובץ המים":"Couldn't read the water file",
+"צבע המים נבחר":"Water color selected","הנקודה מחוץ לתמונה":"The point is outside the image","לחצו על המפה על נקודה של מים בתמונה":"Click the map on a water point in the image","בחרו תוצאה:":"Choose a result:","נוסף לפי קואורדינטות":"Added by coordinates","מחפש…":"Searching…",
+"לא נמצא. נסו שם מדויק יותר, הדביקו קואורדינטות (32.08, 34.78) או קישור מגוגל מפות, או לחצו על המפה.":"Not found. Try a more exact name, paste coordinates (32.08, 34.78) or a Google Maps link, or click the map.","החיפוש נכשל – אפשר ללחוץ על המפה או להדביק קואורדינטות":"Search failed – you can click the map or paste coordinates","החיפוש לא זמין בתצוגה הזו – לחצו על המפה":"Search isn't available in this view – click the map",
+"מחפש את המקומות שלכם…":"Searching for your places…","חיפוש אוטומטי לא זמין – סמנו על המפה":"Auto search isn't available – mark on the map","חיפוש המקומות נכשל – אפשר להוסיף ידנית":"Place search failed – you can add them manually","אין דגל מובנה למדינה הזו – אפשר להעלות תמונת דגל":"No built-in flag for this country – you can upload a flag image",
+"לא מצאתי את המדינה. הקלידו שם ובחרו מהרשימה.":"Country not found. Type a name and pick from the list.","בחרו לפחות 2 מדינות":"Pick at least 2 countries","אפשר עד 6 מדינות":"Up to 6 countries","העלו תמונת דגל בחלק של הדגל.":"Upload a flag image in the flag section.",
+"הסיכות דקות מדי – הגדילו את הסימונים":"The pins are too thin – enlarge the markers","הנחלים צרים מדי להדפסה":"The rivers are too narrow to print","פירוט הדגל מתמונה עדין – דגל פשוט יודפס טוב יותר":"The flag image detail is fine – a simple flag will print better","המדינה צרה מדי למגנט בגודל הזה – בחרו מגנט קטן יותר":"The country is too narrow for a magnet this size – pick a smaller magnet",
+"לא הצלחתי לטעון":"Couldn't load","🔒 הורדת הקבצים מחייבת התחברות לחשבון Claude (כדי שבעל האתר יוכל לעקוב אחרי השימוש).":"🔒 Downloading files requires signing in to Claude (so the site owner can track usage).","🔗 שיתוף פרויקט":"🔗 Share project","📥 פתיחה מקוד שיתוף":"📥 Open from share code","איך תרצו להתחיל? ⚡":"How would you like to start? ⚡","מהיר – 5 שאלות":"Quick – 5 questions","מלא – כל האפשרויות":"Full – all options","מעמד לטלפון":"Phone Stand","מעמד לטלפון או לטאבלט קטן, עם צורת המדינה והמקומות שהייתם בהם.":"A stand for a phone or small tablet, with the country shape and the places you visited.","טלפון או טאבלט קטן":"Phone or small tablet","המעמד מתאים לטלפון בעובי של עד כ-14 מ״מ, כולל מגן.":"The stand fits a phone up to about 14 mm thick, including a case.","קובץ אזורים (אופציונלי)":"Regions file (optional)","GeoJSON של מחוזות המדינה, כדי לחלק לפי אזורים אמיתיים.":"A GeoJSON of the country's districts, to split by real regions.","חלוקה לפי אזורים אמיתיים (GeoJSON)":"Split by real regions (GeoJSON)","קובץ GeoJSON של מחוזות או אזורים, למשל מ-Natural Earth (admin 1), geoBoundaries או GADM. כל אזור יהפוך לחלק בפאזל.":"A GeoJSON file of districts or regions, e.g. from Natural Earth (admin 1), geoBoundaries or GADM. Each region becomes a puzzle piece.","כתוב על כל חלק את שמו (או מספר)":"Write each piece's name (or number) on it","רוצים לחלק לפי אזורים אמיתיים? 🗺️":"Want to split by real regions? 🗺️","יש לכם קובץ GeoJSON של האזורים? אפשר לדלג ונחלק אוטומטית.":"Have a GeoJSON file of the regions? You can skip and we'll split automatically.","קובץ GeoJSON של אזורים (לא חובה)":"Regions GeoJSON file (optional)","לכתוב על כל חלק את שמו? 🔤":"Write each piece's name on it? 🔤","כן, שם או מספר":"Yes, name or number","חולק ל-":"Split into "," אזורים":" regions","לא הצלחתי לקרוא את קובץ האזורים (צריך לפחות 2 אזורים)":"Couldn't read the regions file (at least 2 regions are needed)","🌍 מחולל מזכרת תלת-ממד לטיול":"🌍 3D Trip Souvenir Maker","הטיול שלנו":"Our trip","תאריכי הטיול":"Trip dates","שמות 2 עד 6 מדינות":"2 to 6 country names","הוסיפו מדינות בעברית או באנגלית. נבנה מהן מפה אחת.":"Add countries in Hebrew or English. We'll build one map from them.","המקומות שהייתם בהם":"Places you visited","יסומנו על המודל. אפשר גם להוסיף בלחיצה על המפה.":"They'll be marked on the model. You can also add them by clicking the map.","טבעת או שרשרת מפתחות":"Key ring or chain","כדי לחבר את המחזיק למפתחות.":"To attach the holder to your keys.","מגנט עגול דק":"Thin round magnet","בקוטר 8, 10 או 12 מ״מ. מדביקים אותו בכיס שמאחור.":"8, 10 or 12 mm in diameter. Glue it into the pocket on the back.","חוט, סרט או אטב":"String, ribbon or clip","כדי לתלות את הקישוט.":"To hang the ornament.","מספר חלקים":"Number of pieces","4, 6, 9 או 12 חלקים. תוכלו לבחור בשלב הבא.":"4, 6, 9 or 12 pieces. You'll choose in the next step.","מסגרת למילוי הפאזל":"Frame for the puzzle","מגש בצורת המדינה שמחזיק את החלקים במקום.":"A country-shaped tray that holds the pieces in place.","מסגרת בצורת המדינה":"Country-shaped frame","הוסף מסגרת בצורת המדינה":"Add a country-shaped frame","הקבצים יוצאים בפורמט STL ו-3MF, וגם כקבצים נפרדים לכל צבע.":"Files come out as STL and 3MF, plus separate files per color.","🔝 מבט מלמעלה":"🔝 Top view","↺ זווית רגילה":"↺ Default angle","⭐ שמירה בגלריה":"⭐ Save to gallery","ייבוא מקומות (KML / KMZ / GPX / GeoJSON / CSV)":"Import places (KML / KMZ / GPX / GeoJSON / CSV)","📥 ייבוא":"📥 Import","הפרויקטים שלי":"My projects","☁️ שמירה בחשבון (זמין בכל מכשיר)":"☁️ Save to account (available on every device)","הגלריה שומרת את ההגדרות והסיכות, בלי התמונות שהעליתם.":"The gallery saves settings and pins, without the images you uploaded.","פתח":"Open","מחק":"Delete","עוד אין פרויקטים שמורים.":"No saved projects yet.","מספר חלקי הפאזל":"Number of puzzle pieces","הוסף מסגרת (מגש) לפאזל":"Add a frame (tray) for the puzzle","פאזל של המדינה":"Country Puzzle","המדינה מחולקת לחלקים שמרכיבים יחד. מתנה נהדרת לילדים.":"The country is split into pieces to assemble together. A great gift for kids.","לכמה חלקים נחלק את המדינה? 🧩":"How many pieces should we split the country into? 🧩","רוצים מסגרת למילוי הפאזל? 🖼️":"Want a frame to assemble the puzzle in? 🖼️","4 חלקים":"4 pieces","6 חלקים":"6 pieces","9 חלקים":"9 pieces","12 חלקים":"12 pieces","בלי מסגרת":"No frame","עם מסגרת":"With frame","ב-Google My Maps בוחרים \"ייצוא ל-KML/KMZ\". אפשר גם להדביק קישורים מגוגל מפות, שורה לכל מקום.":"In Google My Maps choose \"Export to KML/KMZ\". You can also paste Google Maps links, one per line.","לא נמצאו מקומות בקובץ או ברשימה":"No places found in the file or list","נשמר בגלריה שלך, מקושרת לחשבון":"Saved to your gallery, tied to your account","נשמר בגלריה בדפדפן הזה":"Saved to the gallery in this browser","השמירה בגלריה נכשלה":"Saving to the gallery failed","הפרויקט גדול מדי לגלריה – שמרו אותו כקובץ":"The project is too large for the gallery – save it as a file","שמירה בחשבון לא זמינה בתצוגה הזו":"Saving to an account isn't available in this view","הקבצים לפי צבע":"the per-color files"};
+const F={"חולק ל-":"Split into "," אזורים":" regions"," אגמים ו-":" lakes and "," נחלים (קירוב)":" rivers (approx.)","נוספו ":"Added ","נוסף: ":"Added: ","מים נטענו: ":"Water loaded: "," אגמים, ":" lakes, ","נמצאו ":"Found "," מתוך ":" of "," מקומות. כדאי לבדוק במפה, ואפשר לתקן בלחיצה.":" places. Check them on the map; you can fix by clicking.",
+"שלב ":"Step ","הכול מוכן, ":"All set, ","ההגדרות הותאמו":"Settings adapted"," ל-":" for "," צבעים, משטח ":" colors, bed ","מ״מ":"mm","ס״מ":"cm","גודל בהדפסה: ":"Printed size: ","(הוקטן להתאים למשטח)":"(scaled down to fit the bed)",
+"⚖️ כ-":"⚖️ about "," גרם חומר (בערך ₪":" g of material (about ₪"," במחיר 100₪ לק״ג)":" at ₪100/kg)","⏱ זמן הדפסה: כ-":"⏱ Print time: about "," עד ":" to ","(הערכה גסה)":"(rough estimate)"," דק׳":" min"," שע׳":" h",
+"המודל הוקטן ל-":"The model was scaled to ","% כדי להתאים למשטח, ופרטים קטנים יהיו קשים להדפסה":"% to fit the bed, so small details will be hard to print","האותיות קטנות (כ-":"The letters are small (about "," מ״מ) – קצרו את שם הטיול או הגדילו את המשטח":" mm) – shorten the trip name or use a larger bed",
+"נשמר. הקובץ ":"Saved. The file "," נפתח ישר בסלייסר עם הצבעים, וגם ":" opens directly in the slicer with the colors, plus "," להדפסה בצבע אחד, ו-":" for single-color printing, and "," קבצי הצבעים":" color files"," להדפסה רב-צבעית.":" for multi-color printing.",
+"(מחוץ למדינה שנבחרה)":"(outside the selected country)","מקומות (":"Places (",") – אפשר גם ללחוץ על המפה":") – you can also click the map",", עם מסגרת":", with frame",", קטן":", small",", גדול":", large",
+"ציור: לחצו על המפה לאורך הנחל או סביב האגם ואז ":"Drawing: click along the river or around the lake, then ","סיום\" – הקווים מוחלקים אוטומטית. ההצעה האוטומטית לא מדויקת. לדיוק מלא העלו ":"Done” – lines are smoothed automatically. The automatic suggestion is not accurate. For full accuracy upload "," של מים.":" of the water.",
+"לא הצלחתי לטעון את רשימת המדינות המלאה – מוצגות שתי מדינות בלבד. אפשר להעלות":"Couldn't load the full country list – only two countries are shown. You can upload","הטיול של ":"Trip of ","יובאו ":"Imported "," מקומות מהקובץ":" places from the file"," מחוץ למדינה שנבחרה)":" outside the selected country)"};
+const PH={"ישראל, Italy, Japan…":"Israel, Italy, Japan…","משפחת כהן":"The Cohen family","יולי 2026":"July 2026","הטיול שלנו 2026":"Our trip 2026","דני":"Danny","איטליה, Greece…":"Italy, Greece…","איטליה, Japan…":"Italy, Japan…","עיר, אתר, כתובת, קואורדינטות או קישור גוגל מפות":"City, site, address, coordinates or Google Maps link","מגדל פיזה\nהקולוסיאום\nהגונדולות בוונציה":"Leaning Tower of Pisa\nColosseum\nGondolas in Venice","צבע המים בתמונה":"Water color in the image","סבילות צבע":"Color tolerance","הזז למעלה":"Move up","המקום האהוב":"Favorite place","גודל":"Size","🔗 שיתוף פרויקט":"🔗 Share project","📥 פתיחה מקוד שיתוף":"📥 Open from share code","ניהול":"Admin","או הדביקו רשימה: שורה לכל מקום, למשל  מגדל פיזה 43.7230, 10.3966":"Or paste a list: one place per line, e.g.  Leaning Tower of Pisa 43.7230, 10.3966"};
+const FK=Object.keys(F).sort((a,b)=>b.length-a.length),HEB=/[\u0590-\u05FF]/;
+function tr(t){if(LANG!="en")return t;const k=t.trim();if(X[k]!==undefined)return t.replace(k,X[k]);let o=t;for(const f of FK)if(o.includes(f))o=o.split(f).join(F[f]);return o}
+function trNode(n){if(n.nodeType==3){if(n.__he===undefined){if(!HEB.test(n.nodeValue))return;n.__he=n.nodeValue}const v=LANG=="en"?tr(n.__he):n.__he;if(n.nodeValue!==v)n.nodeValue=v}
+  else if(n.nodeType==1&&n.tagName!="SCRIPT"&&n.tagName!="STYLE"){["placeholder","title"].forEach(a=>{if(!n.hasAttribute(a))return;n.__a=n.__a||{};if(n.__a[a]===undefined){const v=n.getAttribute(a);if(!HEB.test(v))return;n.__a[a]=v}n.setAttribute(a,LANG=="en"?(PH[n.__a[a]]||tr(n.__a[a])):n.__a[a])});n.childNodes.forEach(trNode)}}
+new MutationObserver(ms=>ms.forEach(m=>m.addedNodes.forEach(trNode))).observe(document.body,{childList:true,subtree:true});
+function setLang(l){LANG=l;document.documentElement.lang=l;document.documentElement.dir=l=="en"?"ltr":"rtl";document.title=l=="en"?"3D Trip Souvenir Maker":"מחולל מזכרת תלת-ממד לטיול";
+  const d=$("trip");if(l=="en"&&d.value=="הטיול שלנו 2026")d.value="Our trip 2026";if(l=="he"&&d.value=="Our trip 2026")d.value="הטיול שלנו 2026";
+  trNode(document.body);$("lg").textContent=l=="en"?"🌐 עברית":"🌐 English";try{localStorage.setItem("trip3d_l",l)}catch(e){}
+  if($("s2").innerHTML&&$("s2").style.display!="none"){wread();wr()}syncPickers();update()}
+$("lg").onclick=()=>setLang(LANG=="en"?"he":"en");
+{let sl=null;try{sl=localStorage.getItem("trip3d_l")}catch(e){}if((sl||CFG.lang)=="en")setLang("en")}
+
+applyTool();renderIntro();syncPickers();
+const k0=countries.Israel?"Israel":Object.keys(countries)[0];$("cin").value=cname(k0);setCountry(countries[k0]);
+</script></body></html>

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>תנאי שימוש</title><style>body{font:16px/1.7 system-ui,"Segoe UI",Arial,sans-serif;max-width:780px;margin:30px auto;padding:0 18px;color:#1d1d1b}h1{font-size:26px}h2{font-size:18px;margin-top:26px}a{color:#c2410c}code{background:#eee;padding:1px 6px;border-radius:5px}table{border-collapse:collapse;width:100%;font-size:14px}td,th{border:1px solid #ddd;padding:6px 8px;text-align:start;vertical-align:top}.note{background:#fef3c7;border-radius:10px;padding:10px 14px;font-size:14px}.top{display:flex;justify-content:space-between;align-items:center}button{font:inherit;padding:4px 12px;border-radius:99px;border:1px solid #bbb;background:#fff;cursor:pointer}@media(prefers-color-scheme:dark){body{background:#171716;color:#eeede8}code{background:#333}.note{background:#3b2f0b;color:#fde68a}td,th{border-color:#444}button{background:#232321;color:#eee;border-color:#555}}</style></head><body>
+<div class="top"><a href="/">←</a><button id="lb">English</button></div>
+<div data-l="he"><h1>תנאי שימוש</h1>
+<p class="note">זהו נוסח כללי שהוכן כנקודת פתיחה בלבד. בעל האתר אחראי להתאים אותו, ומומלץ להיוועץ בעורך דין לפני פרסום.</p>
+<h2>השירות</h2><p>האתר מאפשר ליצור קבצי תלת-ממד (STL/3MF) של מזכרות בצורת מדינות, להדפסה עצמית. השירות ניתן כפי שהוא (AS IS), ללא התחייבות לזמינות רציפה או לתוצאת הדפסה מסוימת.</p>
+<h2>חשבון</h2><p>ההורדה מחייבת חשבון. אתם אחראים לשמירת הסיסמה ולפעולות בחשבון. אסור להירשם בפרטים כוזבים, לעקוף את מכסות ההורדה או לפגוע בפעילות האתר. הנהלת האתר רשאית לחסום חשבון שמפר את התנאים.</p>
+<h2>מכסות</h2><p>כמות ההורדות היומית מוגבלת וייתכן שתשתנה מעת לעת.</p>
+<h2>דיוק ובטיחות</h2><p>קווי המתאר של המדינות, הדגלים והמים הם קירוב ואינם מיועדים לניווט או לשימוש מדעי. הדפסה תלת-ממדית כרוכה בחום וחלקים קטנים: מומלץ להשגיח, ולא להעניק חלקים קטנים לילדים צעירים. האחריות על ההדפסה והשימוש בתוצר היא של המשתמש.</p>
+<h2>קניין רוחני</h2><p>הקבצים שיצרתם לפי הנתונים שהזנתם מיועדים לשימוש אישי. נתוני מפות מקורם בספריות פתוחות.</p>
+<h2>הגבלת אחריות</h2><p>במידה המותרת בחוק, בעל האתר אינו אחראי לנזק עקיף או תוצאתי הנובע מהשימוש בשירות.</p>
+<h2>פרטיות</h2><p>ראו <a href="/privacy.html">מדיניות הפרטיות</a>. ליצירת קשר: <span id="cx">פנו לבעל האתר</span>.</p></div><div data-l="en" style="display:none"><h1>Terms of use</h1>
+<p class="note">This is a general draft meant as a starting point only. The site owner is responsible for adapting it, and should consult a lawyer before publishing.</p>
+<h2>The service</h2><p>The site lets you create 3D files (STL/3MF) of country-shaped souvenirs for self-printing. The service is provided as is, with no guarantee of continuous availability or of any particular print result.</p>
+<h2>Account</h2><p>Downloading requires an account. You are responsible for keeping your password and for activity in your account. You may not sign up with false details, bypass download limits or interfere with the site. The site owner may block an account that violates these terms.</p>
+<h2>Limits</h2><p>The number of daily downloads is limited and may change from time to time.</p>
+<h2>Accuracy and safety</h2><p>Country outlines, flags and water are approximations and are not meant for navigation or scientific use. 3D printing involves heat and small parts: supervise it, and do not give small parts to young children. Responsibility for printing and using the result is the user's.</p>
+<h2>Intellectual property</h2><p>Files you create from the data you enter are for personal use. Map data comes from open libraries.</p>
+<h2>Limitation of liability</h2><p>To the extent permitted by law, the site owner is not liable for indirect or consequential damages arising from use of the service.</p>
+<h2>Privacy</h2><p>See the <a href="/privacy.html">privacy policy</a>. Contact: <span id="cx">the site owner</span>.</p></div>
+<script>let L="he";try{L=localStorage.getItem("trip3d_l")||"he"}catch(e){}
+function setL(l){L=l;try{localStorage.setItem("trip3d_l",l)}catch(e){}document.documentElement.lang=l;document.documentElement.dir=l=="en"?"ltr":"rtl";document.querySelectorAll("[data-l]").forEach(e=>e.style.display=e.dataset.l==l?"":"none");document.title=document.querySelector("[data-l='"+l+"'] h1").textContent;const b=document.getElementById("lb");b.textContent=l=="en"?"עברית":"English"}
+document.getElementById("lb").onclick=()=>setL(L=="en"?"he":"en");setL(L);
+const c=document.getElementById("cx");if(c)fetch("/api/config").then(r=>r.json()).then(j=>{if(j.contactEmail){const a=document.createElement("a");a.href="mailto:"+j.contactEmail.replace(/[^\w@.+-]/g,"");a.textContent=j.contactEmail;c.replaceChildren(a)}}).catch(()=>{})</script></body></html>

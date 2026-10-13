@@ -1,0 +1,340 @@
+// ספריית עזר משותפת: אחסון, הגדרות, סטטיסטיקות והתראות
+import crypto from "node:crypto";
+
+export const TOOLS = ["stand", "multi", "key", "magnet", "orn", "puzzle", "holder"];
+export const DEFAULTS = {
+  tools: {}, banner: "", bannerOn: false, maint: false, lang: "he",
+  inviteOnly: false, dlLimit: 5, notifyDownload: true, notifyReport: true, errAlert: true, errThreshold: 5, blocks: [], abuseDl: 20, refBonus: 1, refMax: 5, extBackup: true, aiOn: false, aiLimit: 10, aiGlobal: 300, early: [], vip: [], galReward: 1, streakOn: true, lbOn: true,
+  requireVerify: false, notifySecurity: true, autoBackup: true,
+};
+
+export const isProd = () => !process.env.CONTEXT || process.env.CONTEXT === "production";
+let _mem = null;
+// שים לב: ב-Netlify אסור לשמור את חיבור האחסון בין בקשות (האישורים תקפים לבקשה אחת בלבד), לכן יוצרים אותו מחדש בכל קריאה
+export async function store() {
+  if (process.env.TRIP3D_MEMORY) {
+    if (_mem) return _mem;
+    const m = (globalThis.__trip3dMem ||= new Map());
+    _mem = {
+      get: async (k) => (m.has(k) ? JSON.parse(m.get(k)) : null),
+      setJSON: async (k, v) => { m.set(k, JSON.stringify(v)); },
+      delete: async (k) => { m.delete(k); },
+      list: async (p) => [...m.keys()].filter((k) => k.startsWith(p)).sort(),
+    };
+    return _mem;
+  }
+  const { getStore } = await import("@netlify/blobs");
+  const s = getStore({ name: isProd() ? "trip3d" : "trip3d-staging", consistency: "strong" });
+  return {
+    get: (k) => s.get(k, { type: "json" }),
+    setJSON: (k, v) => s.setJSON(k, v),
+    delete: (k) => s.delete(k),
+    list: async (p) => {
+      const r = await s.list({ prefix: p });
+      return (r.blobs || []).map((b) => b.key).sort();
+    },
+  };
+}
+
+export const dayKey = (t = Date.now()) => new Date(t).toISOString().slice(0, 10);
+export const rid = (n = 6) => crypto.randomBytes(n).toString("hex");
+
+export async function getSettings() {
+  const st = await store();
+  const s = (await st.get("settings")) || {};
+  return { ...DEFAULTS, ...s };
+}
+
+export async function bump(items) {
+  // items: [[group,key,n?], ...] – מעלה מונים ביומית
+  const st = await store();
+  const k = "s/" + dayKey();
+  const s = (await st.get(k)) || {};
+  for (const [g, key, n = 1] of items) {
+    s[g] = s[g] || {};
+    s[g][key] = (s[g][key] || 0) + n;
+  }
+  await st.setJSON(k, s);
+}
+
+export async function notify(text, file) {
+  if (!isProd()) text = "[בדיקה] " + text;
+  const tasks = [];
+  const e = process.env;
+  if (e.TELEGRAM_BOT_TOKEN && e.TELEGRAM_CHAT_ID) {
+    if (file) {
+      const fd = new FormData();
+      fd.append("chat_id", e.TELEGRAM_CHAT_ID); fd.append("caption", text.slice(0, 1000));
+      fd.append("document", new Blob([file.content], { type: file.mime || "text/csv" }), file.name);
+      tasks.push(fetch(`https://api.telegram.org/bot${e.TELEGRAM_BOT_TOKEN}/sendDocument`, { method: "POST", body: fd }));
+    } else tasks.push(fetch(`https://api.telegram.org/bot${e.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+      method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ chat_id: e.TELEGRAM_CHAT_ID, text }),
+    }));
+  }
+  if (e.DISCORD_WEBHOOK_URL)
+    tasks.push(fetch(e.DISCORD_WEBHOOK_URL, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ content: text.slice(0, 1900) }) }));
+  if (e.RESEND_API_KEY && e.NOTIFY_EMAIL)
+    tasks.push(fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { "content-type": "application/json", authorization: "Bearer " + e.RESEND_API_KEY },
+      body: JSON.stringify({ from: e.FROM_EMAIL || "onboarding@resend.dev", to: [e.NOTIFY_EMAIL], subject: text.split("\n")[0].slice(0, 90), text,
+        ...(file ? { attachments: [{ filename: file.name, content: Buffer.from(file.content).toString("base64") }] } : {}) }),
+    }));
+  if (globalThis.__notifyHook) globalThis.__notifyHook(text, file);
+  await Promise.allSettled(tasks);
+}
+
+export async function rangeStats(days) {
+  const st = await store();
+  const keys = (await st.list("s/")).slice(-days);
+  const series = [];
+  for (const k of keys) {
+    const v = (await st.get(k)) || {};
+    series.push({ d: k.slice(2), ...v });
+  }
+  return series;
+}
+
+export function sumGroup(series, g) {
+  const o = {};
+  series.forEach((s) => Object.entries(s[g] || {}).forEach(([k, n]) => (o[k] = (o[k] || 0) + n)));
+  return o;
+}
+
+export async function weeklySummary() {
+  const series = await rangeStats(7);
+  const t = (g) => Object.values(sumGroup(series, g)).reduce((a, b) => a + b, 0);
+  const byTool = sumGroup(series, "dl");
+  const countries = Object.entries(sumGroup(series, "country")).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const ok = t("fbok"), bad = t("fbbad");
+  return [
+    "📊 דוח שבועי – מזכרות תלת-ממד",
+    `פתיחות כלים: ${t("open")} · התחלות שאלון: ${t("wizstart")} · מודלים שנבנו: ${t("build")} · הורדות: ${t("dl")}`,
+    `משוב הדפסה: ${ok} הצליחו, ${bad} נכשלו · שגיאות בדפדפן: ${t("error")}`,
+    "משפך: " + funnelOf(series).map(([k, n]) => `${k} ${n}`).join(" → "),
+    "הורדות לפי כלי: " + (Object.entries(byTool).map(([k, n]) => `${k} ${n}`).join(", ") || "—"),
+    "מדינות מובילות: " + (countries.map(([k, n]) => `${k} (${n})`).join(", ") || "—"),
+  ].join("\n");
+}
+
+// ---------- מייל, אבטחה והגבלת קצב ----------
+export const mailEnabled = () => !!(process.env.RESEND_API_KEY && process.env.FROM_EMAIL);
+export async function sendMail(to, subject, text) {
+  if (!isProd() && !process.env.STAGING_MAIL) return false; // בסביבת בדיקה לא שולחים מיילים אמיתיים
+  if (globalThis.__mailHook) { globalThis.__mailHook({ to, subject, text }); return mailEnabled(); }
+  if (!mailEnabled()) return false;
+  try {
+    const r = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { "content-type": "application/json", authorization: "Bearer " + process.env.RESEND_API_KEY },
+      body: JSON.stringify({ from: process.env.FROM_EMAIL, to: [to], subject, text }),
+    });
+    return r.ok;
+  } catch { return false; }
+}
+export async function rateHit(key, limit, windowMs) {
+  const st = await store();
+  const k = "rl/" + key;
+  const v = (await st.get(k)) || { n: 0, ts: Date.now() };
+  if (Date.now() - v.ts > windowMs) { v.n = 0; v.ts = Date.now(); }
+  v.n++;
+  await st.setJSON(k, v);
+  return v.n > limit;
+}
+export async function secEvent(type, detail, S) {
+  const st = await store();
+  await st.setJSON("z/" + Date.now() + "-" + rid(2), { ts: Date.now(), type, detail: String(detail || "").slice(0, 200) });
+  if (S && S.notifySecurity) {
+    const k = "n/sec_" + type, last = await st.get(k);
+    if (!last || Date.now() - last.ts > 10 * 60e3) {
+      await st.setJSON(k, { ts: Date.now() });
+      await notify("🛡️ אירוע אבטחה: " + type + "\n" + String(detail || "").slice(0, 200));
+    }
+  }
+}
+
+// ---------- דוח שבועי כקובץ, יומן פעולות וגיבויים ----------
+export async function weeklyCsv(days = 7) {
+  const series = await rangeStats(days);
+  const q = (v) => '"' + String(v ?? "").replace(/"/g, '""') + '"';
+  const tot = (o) => Object.values(o || {}).reduce((a, b) => a + (+b || 0), 0);
+  const rows = [["תאריך", "מבקרים", "פתיחות", "התחלות שאלון", "מודלים שנבנו", "הורדות", "שגיאות"]];
+  series.forEach((d) => rows.push([d.d, Object.keys(d.vis || {}).length, tot(d.open), tot(d.wizstart), tot(d.build), tot(d.dl), tot(d.error)]));
+  rows.push([], ["כלי", "פתיחות", "שאלון", "נבנו", "הורדות", "הדפסה הצליחה", "הדפסה נכשלה"]);
+  TOOLS.forEach((t) => rows.push([t, ...["open", "wizstart", "build", "dl", "fbok", "fbbad"].map((g) => sumGroup(series, g)[t] || 0)]));
+  rows.push([], ["מדינה", "מופעים"]);
+  Object.entries(sumGroup(series, "country")).sort((a, b) => b[1] - a[1]).slice(0, 15).forEach((r) => rows.push(r));
+  return "\ufeff" + rows.map((r) => r.map(q).join(",")).join("\r\n");
+}
+export async function audit(me, action, target, detail) {
+  const st = await store();
+  await st.setJSON("a/" + Date.now() + "-" + rid(2), { ts: Date.now(), by: me ? me.email : "?", action, target: String(target || "").slice(0, 80), detail: String(detail || "").slice(0, 200) });
+}
+const BK_PREFIXES = ["u/", "e/", "i/", "h/", "r/", "d/", "m/", "bc/", "a/", "s/", "z/", "p/", "gl/", "ga/", "gt/", "gp/", "pc/", "lb/", "lbaw/"];
+const bkKey = () => crypto.scryptSync(process.env.BACKUP_KEY || process.env.SESSION_SECRET || "", "trip3d-backup", 32);
+export function encryptBackup(obj) {
+  const iv = crypto.randomBytes(12), c = crypto.createCipheriv("aes-256-gcm", bkKey(), iv);
+  const data = Buffer.concat([c.update(JSON.stringify(obj), "utf8"), c.final()]);
+  return { v: 1, iv: iv.toString("base64"), tag: c.getAuthTag().toString("base64"), data: data.toString("base64") };
+}
+export function decryptBackup(b) {
+  const d = crypto.createDecipheriv("aes-256-gcm", bkKey(), Buffer.from(b.iv, "base64"));
+  d.setAuthTag(Buffer.from(b.tag, "base64"));
+  return JSON.parse(Buffer.concat([d.update(Buffer.from(b.data, "base64")), d.final()]).toString("utf8"));
+}
+export async function makeBackup() {
+  const st = await store();
+  const out = { v: 1, ts: Date.now(), settings: await st.get("settings"), items: {} };
+  let size = 0;
+  for (const p of BK_PREFIXES) for (const k of await st.list(p)) {
+    const v = await st.get(k); if (v === null || v === undefined) continue;
+    const n = JSON.stringify(v).length;
+    if (["p/", "gt/", "gp/"].includes(p) && size > 12e6) continue;
+    size += n; out.items[k] = v;
+  }
+  return out;
+}
+export async function restoreBackup(b) {
+  const st = await store();
+  let n = 0;
+  if (b.settings) await st.setJSON("settings", b.settings);
+  for (const [k, v] of Object.entries(b.items || {})) { if (!BK_PREFIXES.some((p) => k.startsWith(p))) continue; await st.setJSON(k, v); n++; }
+  return n;
+}
+export async function saveAutoBackup() {
+  const st = await store();
+  const enc = encryptBackup(await makeBackup()), key = "bk/" + dayKey();
+  await st.setJSON(key, enc);
+  const keys = await st.list("bk/");
+  for (const k of keys.slice(0, Math.max(0, keys.length - 4))) await st.delete(k);
+  return { key, enc };
+}
+
+
+// ---------- התראת שגיאות למייל בלבד ----------
+export async function alertMail(subject, text) {
+  const to = process.env.NOTIFY_EMAIL || process.env.ADMIN_EMAIL;
+  if (!to) return false;
+  return sendMail(to.trim(), subject, text);
+}
+// סופר שגיאות בחלון של שעה; כשעוברים את הסף נשלח מייל אחד (לא יותר מאחד בשעה)
+export async function errorSpike(S, msg, src = "browser") {
+  try {
+    const st = await store(), now = Date.now();
+    let w = (await st.get("n/errwin")) || { start: now, n: 0, sent: 0, samples: [] };
+    if (now - w.start > 3600e3) w = { start: now, n: 0, sent: 0, samples: [] };
+    w.n++;
+    if (w.samples.length < 5) w.samples.push(src + ": " + String(msg || "").slice(0, 200));
+    const limit = Math.max(1, +S.errThreshold || 5);
+    const send = !!S.errAlert && w.n >= limit && !w.sent;
+    if (send) w.sent = now;
+    await st.setJSON("n/errwin", w);
+    if (send) {
+      await alertMail(`⚠️ ${w.n} שגיאות באתר בשעה האחרונה`, `זוהו ${w.n} שגיאות מאז ${new Date(w.start).toISOString()}.\n\nדוגמאות:\n- ${w.samples.join("\n- ")}\n\nלפרטים: לוח הבקרה ← סקירה ← שגיאות אחרונות.\n(המייל הזה נשלח פעם אחת בשעה לכל היותר. אפשר לשנות את הסף או לכבות בהגדרות.)`);
+    }
+  } catch (e) { console.error("errorSpike", e); }
+}
+
+// ---------- משפך ----------
+export function funnelOf(series) {
+  const t = (g) => series.reduce((n, s) => n + Object.values(s[g] || {}).reduce((a, b) => a + (+b || 0), 0), 0);
+  const vis = series.reduce((n, s) => n + Object.keys(s.vis || {}).length, 0);
+  const steps = [
+    ["מבקרים", vis], ["פתחו כלי", t("open")], ["התחילו שאלון", t("wizstart")], ["נבנה מודל", t("build")],
+    ["לחצו הורדה", t("dlclick")], ["נדרשו להתחבר", t("authview")], ["נרשמו", t("reg")], ["הורדו", t("dl")], ["שלחו משוב", t("fbok") + t("fbbad")],
+  ];
+  return steps;
+}
+
+
+// ---------- חסימות זמניות (כלים / מקומות / פעולות) ----------
+export const BLOCK_FEATURES = ["download", "gallery", "register", "ai"];
+export const activeBlocks = (S) => (Array.isArray(S.blocks) ? S.blocks : []).filter((b) => !b.until || b.until > Date.now());
+export const findBlock = (S, type, key) => {
+  const k = String(key || "").trim().toLowerCase();
+  return activeBlocks(S).find((b) => b.type === type && String(b.key).trim().toLowerCase() === k) || null;
+};
+
+
+// ---------- גיבוי לאחסון חיצוני (Dropbox ו/או Webhook) ----------
+export const extTargets = () => ({ dropbox: !!(process.env.DROPBOX_REFRESH_TOKEN && process.env.DROPBOX_APP_KEY && process.env.DROPBOX_APP_SECRET), webhook: !!process.env.BACKUP_WEBHOOK_URL });
+export async function externalBackup(enc, key) {
+  const name = "trip3d-" + String(key).replace(/^bk\//, "") + ".json.enc", body = typeof enc === "string" ? enc : JSON.stringify(enc), res = {}, e = process.env;
+  if (globalThis.__extHook) { res.hook = await globalThis.__extHook(name, body); return res; }
+  if (extTargets().dropbox) {
+    try {
+      const tr = await fetch("https://api.dropbox.com/oauth2/token", { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded", authorization: "Basic " + Buffer.from(e.DROPBOX_APP_KEY + ":" + e.DROPBOX_APP_SECRET).toString("base64") }, body: new URLSearchParams({ grant_type: "refresh_token", refresh_token: e.DROPBOX_REFRESH_TOKEN }) });
+      const tj = await tr.json();
+      if (!tj.access_token) throw new Error("token: " + (tj.error_description || tj.error || tr.status));
+      const ur = await fetch("https://content.dropboxapi.com/2/files/upload", { method: "POST", headers: { authorization: "Bearer " + tj.access_token, "content-type": "application/octet-stream", "dropbox-api-arg": JSON.stringify({ path: "/trip3d-backups/" + name, mode: "overwrite", mute: true }) }, body });
+      if (!ur.ok) throw new Error("upload: " + ur.status + " " + (await ur.text()).slice(0, 150));
+      res.dropbox = "ok";
+    } catch (x) { res.dropbox = "error: " + String((x && x.message) || x).slice(0, 200); }
+  }
+  if (extTargets().webhook) {
+    try {
+      const r = await fetch(e.BACKUP_WEBHOOK_URL, { method: "POST", headers: { "content-type": "application/json", "x-filename": name }, body: JSON.stringify({ filename: name, data: body }) });
+      res.webhook = r.ok ? "ok" : "error: " + r.status;
+    } catch (x) { res.webhook = "error: " + String((x && x.message) || x).slice(0, 200); }
+  }
+  return res;
+}
+
+
+// ---------- הטבות, תגים ומובילי החודש ----------
+export const PERK_TYPES = ["daily", "credits", "unlimited", "ai", "early", "projects", "gallery", "badge"];
+export const VIP_OPTS = ["rim:2", "shape:hex", "shape:oct", "shape:oval", "ps:star", "ps:heart"];
+export const TIMED_PERKS = ["daily", "unlimited", "ai", "early", "projects", "gallery"];
+export const BADGES = { founder: ["🌱", "מייסד", "Founder"], top: ["⭐", "מטייל מוביל", "Top traveler"], maker: ["🎨", "יוצר החודש", "Maker of the month"], inviter: ["🤝", "מזמין", "Inviter"], streak: ["🔥", "רצף יצירה", "Creation streak"], publisher: ["🖼️", "מפרסם בגלריה", "Gallery publisher"] };
+export const activePerks = (u, type) => (u.perks || []).filter((p) => (!p.until || p.until > Date.now()) && (!type || p.type === type));
+export const perkSum = (u, type) => activePerks(u, type).reduce((a, p) => a + (+p.n || 0), 0);
+export const hasEarly = (u) => !!u && (u.role === "admin" || u.role === "editor" || activePerks(u, "early").length > 0);
+export function perkText(p) {
+  const when = p.until ? " עד " + new Date(p.until).toLocaleDateString("he-IL") : "";
+  return ({
+    daily: `+${p.n} הורדות ליום${when}`, credits: `${p.n} הורדות נוספות (חד-פעמיות)`, unlimited: `הורדות ללא הגבלה${when}`,
+    ai: `+${p.n} שאלות ליום לעוזר ה-AI${when}`, early: `גישה מוקדמת לכלים חדשים ואלמנטים בלעדיים${when}`, projects: `+${p.n} מקומות לפרויקטים שמורים${when}`,
+    gallery: `+${p.n} יצירות ממתינות בגלריה${when}`, badge: `תג: ${(BADGES[p.key] || ["", p.key])[0]} ${(BADGES[p.key] || ["", p.key])[1]}`,
+  })[p.type] || p.type;
+}
+export async function addInbox(st, uid, subject, body, by = "system") {
+  const mid = Date.now() + "-" + rid(2);
+  await st.setJSON("m/" + uid + "/" + mid, { id: mid, ts: Date.now(), read: false, by, subject, body });
+}
+export async function givePerk(st, u, perk, subject, extra) {
+  if (perk.type === "credits") u.credits = (u.credits || 0) + perk.n;
+  else if (perk.type === "badge") { u.badges = Array.from(new Set([...(u.badges || []), perk.key])); }
+  else u.perks = activePerks(u).concat([{ id: rid(3), type: perk.type, n: perk.n, key: perk.key || "", until: perk.until || 0, note: perk.note || "", ts: Date.now() }]).slice(-30);
+  await st.setJSON("u/" + u.uid, u);
+  await addInbox(st, u.uid, subject || "קיבלת הטבה 🎁", `${perkText(perk)}${perk.note ? "\n" + perk.note : ""}${extra ? "\n" + extra : ""}`);
+}
+// מעניק תג; מחזיר true אם התג חדש
+export async function awardBadge(st, u, id, silent) {
+  if (!BADGES[id] || (u.badges || []).includes(id)) return false;
+  u.badges = (u.badges || []).concat([id]);
+  await st.setJSON("u/" + u.uid, u);
+  if (!silent) await addInbox(st, u.uid, `קיבלת תג חדש ${BADGES[id][0]}`, `התג "${BADGES[id][1]}" נוסף לפרופיל שלך ומופיע ליד שמך בגלריה.`);
+  return true;
+}
+export const monthKey = (t = Date.now()) => dayKey(t).slice(0, 7);
+export const lbScore = (e) => (e.v || 0) + 3 * (e.o || 0);
+export async function leaderboard(month) {
+  const st = await store(), doc = (await st.get("lb/" + month)) || {};
+  return Object.entries(doc).map(([uid, e]) => ({ uid, name: e.n || "", v: e.v || 0, o: e.o || 0, score: lbScore(e) })).filter((x) => x.score >= 5).sort((a, b) => b.score - a.score);
+}
+const LB_PRIZES = [5, 3, 2];
+// מחלק פרסים לשלושת המובילים של חודש שהסתיים (פעם אחת לחודש)
+export async function awardMonthly(month, force) {
+  const st = await store();
+  if (!force && (await st.get("lbaw/" + month))) return { done: false, reason: "already" };
+  const top = (await leaderboard(month)).slice(0, 3), out = [];
+  for (let i = 0; i < top.length; i++) {
+    const u = await st.get("u/" + top[i].uid); if (!u || u.blocked) continue;
+    u.credits = (u.credits || 0) + LB_PRIZES[i]; await st.setJSON("u/" + u.uid, u);
+    await addInbox(st, u.uid, `🏆 מקום ${i + 1} במובילי החודש!`, `היצירות שלך בגלריה זכו לתשומת הלב הרבה ביותר ב-${month}. קיבלת ${LB_PRIZES[i]} הורדות נוספות${i === 0 ? " ותג \"יוצר החודש\"" : ""}.`);
+    if (i === 0) await awardBadge(st, u, "maker", true);
+    out.push({ uid: u.uid, place: i + 1, credits: LB_PRIZES[i] });
+  }
+  await st.setJSON("lbaw/" + month, { ts: Date.now(), winners: out });
+  return { done: true, winners: out };
+}

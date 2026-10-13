@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>גלריית הקהילה</title>
+<meta name="description" content="יצירות תלת-ממד מהטיולים של הקהילה – מזכרות, מחזיקי מפתחות, פאזלים ועוד.">
+<link rel="canonical" href="%%SITE%%/gallery.html"><meta property="og:type" content="website"><meta property="og:title" content="גלריית הקהילה – סטודיו המזכרות"><meta property="og:description" content="יצירות תלת-ממד מהטיולים של הקהילה. צרו מזכרת משלכם!"><meta property="og:image" content="%%SITE%%/og.png"><meta name="twitter:card" content="summary_large_image">
+<style>
+:root{--bg:#f6f5f1;--card:#fff;--tx:#1d1d1b;--mu:#5f5e58;--ac:#c2410c;--bd:#dcdad2}
+@media(prefers-color-scheme:dark){:root{--bg:#171716;--card:#232321;--tx:#eeede8;--mu:#b0afa8;--ac:#fb923c;--bd:#3a3a36}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.6 system-ui,"Segoe UI",Arial,sans-serif}
+header{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:12px 18px;flex-wrap:wrap}
+header h1{margin:0;font-size:22px}a{color:var(--ac)}main{max-width:1100px;margin:auto;padding:0 18px 50px}
+button,.btn{font:inherit;padding:8px 16px;border-radius:99px;border:1px solid var(--bd);background:var(--card);color:var(--tx);cursor:pointer;text-decoration:none;display:inline-block}
+.btn.pri{background:var(--ac);color:#fff;border-color:var(--ac)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px}
+.it{background:var(--card);border:1px solid var(--bd);border-radius:14px;overflow:hidden;cursor:pointer;text-align:start;padding:0;display:block;width:100%}
+.it img{width:100%;aspect-ratio:1;object-fit:cover;display:block;background:#0f172a}.it div{padding:8px 12px}.it b{display:block}.it span{color:var(--mu);font-size:13px}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:16px;z-index:10}.ov.on{display:flex}
+.bx{background:var(--card);border-radius:18px;max-width:440px;width:100%;padding:18px;max-height:92vh;overflow:auto}.bx img{width:100%;border-radius:12px;background:#0f172a}
+.bd{display:inline-block;margin-inline-end:4px;font-size:13px}.feat{color:var(--ac);font-weight:700}
+.top{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 16px;padding:10px 14px;border:1px solid var(--bd);border-radius:14px;background:var(--card)}.top b{margin-inline-end:6px}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.mu{color:var(--mu)}:focus-visible{outline:3px solid #f59e0b;outline-offset:2px}
+</style></head><body>
+<header><h1 data-l="he">🖼️ גלריית הקהילה</h1><h1 data-l="en">🖼️ Community gallery</h1><div><a class="btn pri" href="/"><span data-l="he">← ליצירה משלכם</span><span data-l="en">← Make your own</span></a> <button id="lb" type="button">English</button></div></header>
+<main>
+<p class="mu" data-l="he">יצירות שהקהילה שיתפה. כל יצירה עוברת אישור לפני פרסום. רוצים להופיע כאן? בעורך לחצו על "🌍 פרסום בגלריית הקהילה".</p>
+<p class="mu" data-l="en">Creations shared by the community. Each one is reviewed before it's published. Want to appear here? In the editor click "🌍 Publish to community gallery".</p>
+<div class="top" id="top" style="display:none" aria-label="top"></div>
+<div class="grid" id="grid" role="list"></div>
+<p id="empty" class="mu" style="display:none"><span data-l="he">עדיין אין יצירות בגלריה. תהיו הראשונים!</span><span data-l="en">No creations yet. Be the first!</span></p>
+<p><button id="more" type="button" style="display:none"><span data-l="he">עוד</span><span data-l="en">More</span></button></p>
+</main>
+<div class="ov" id="ov" role="dialog" aria-modal="true" aria-labelledby="dn"><div class="bx"><img id="di" alt=""><h2 id="dn"></h2><p class="mu" id="dm"></p>
+<div class="row"><a class="btn pri" id="dopen" href="#" style="display:none"><span data-l="he">פתיחה בעורך</span><span data-l="en">Open in editor</span></a><button id="dcopy" type="button"><span data-l="he">🔗 העתקת קישור</span><span data-l="en">🔗 Copy link</span></button><button id="dx" type="button"><span data-l="he">סגירה</span><span data-l="en">Close</span></button></div></div></div>
+<script>
+const $=id=>document.getElementById(id);let L="he";try{L=localStorage.getItem("trip3d_l")||"he"}catch(e){}
+const TN={he:{stand:"מזכרת",multi:"מכמה מדינות",key:"מחזיק מפתחות",magnet:"מגנט",orn:"קישוט",puzzle:"פאזל",holder:"מעמד לטלפון"},en:{stand:"Souvenir",multi:"Multi-country",key:"Keychain",magnet:"Magnet",orn:"Ornament",puzzle:"Puzzle",holder:"Phone stand"}};
+function setL(l){L=l;try{localStorage.setItem("trip3d_l",l)}catch(e){}document.documentElement.lang=l;document.documentElement.dir=l=="en"?"ltr":"rtl";document.querySelectorAll("[data-l]").forEach(e=>{e.style.display=e.dataset.l==l?(e.tagName=="SPAN"?"inline":""):"none"});$("lb").textContent=l=="en"?"עברית":"English";document.title=l=="en"?"Community gallery":"גלריית הקהילה";render()}
+$("lb").onclick=()=>setL(L=="en"?"he":"en");
+let ITEMS=[],OFF=0;const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const BD={founder:["🌱","מייסד","Founder"],top:["⭐","מטייל מוביל","Top traveler"],maker:["🎨","יוצר החודש","Maker of the month"],inviter:["🤝","מזמין","Inviter"],streak:["🔥","רצף יצירה","Creation streak"],publisher:["🖼️","מפרסם בגלריה","Gallery publisher"]};
+const bdg=g=>(g.bd||[]).filter(x=>BD[x]).map(x=>`<span class="bd" title="${BD[x][L=="en"?2:1]}">${BD[x][0]}</span>`).join("");
+function meta(g){return [TN[L][g.tool]||"",g.country,g.author?(L=="en"?"by ":"מאת ")+g.author:""].filter(Boolean).join(" · ")}
+async function loadTop(){try{const r=await (await fetch("/api/gallery/top")).json();const t=$("top");if(!r.on||!r.items.length){t.style.display="none";return}t.style.display="flex";t.innerHTML=`<b>🏆 ${L=="en"?"Top creators this month":"מובילי החודש"}</b>`+r.items.slice(0,3).map(x=>`<span>${["🥇","🥈","🥉"][x.place-1]} ${esc(x.name)}</span>`).join("")}catch(e){}}
+function render(){$("grid").innerHTML=ITEMS.map((g,i)=>`<button class="it" type="button" role="listitem" data-i="${i}"><img loading="lazy" src="/api/gallery/thumb?id=${esc(g.id)}" alt="${esc(g.name)}"><div><b>${g.feat?'<span class="feat">⭐ </span>':""}${esc(g.name)}</b><span>${bdg(g)} ${esc(meta(g))}</span></div></button>`).join("");$("empty").style.display=ITEMS.length?"none":"";document.querySelectorAll("[data-l]").forEach(e=>{e.style.display=e.dataset.l==L?(e.tagName=="SPAN"?"inline":""):"none"});if(!ITEMS.length)$("empty").style.display=""}
+function show(g,push){try{fetch("/api/gallery/seen",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({id:g.id,kind:"view"})})}catch(e){}$("di").src="/api/gallery/thumb?id="+encodeURIComponent(g.id);$("di").alt=g.name;$("dn").textContent=g.name;$("dm").innerHTML=bdg(g)+" "+esc(meta(g));const o=$("dopen");o.style.display=g.template?"":"none";o.href="/?g="+encodeURIComponent(g.id);$("ov").classList.add("on");$("dx").focus();$("dcopy").onclick=async()=>{const u=location.origin+"/g/"+g.id;try{await navigator.clipboard.writeText(u);$("dcopy").textContent=L=="en"?"✔ Copied":"✔ הועתק"}catch(e){prompt("",u)}};if(push)try{history.replaceState(null,"","#"+g.id)}catch(e){}}
+function close(){$("ov").classList.remove("on");try{history.replaceState(null,"",location.pathname)}catch(e){}}
+$("dx").onclick=close;$("ov").onclick=e=>{if(e.target==$("ov"))close()};addEventListener("keydown",e=>{if(e.key=="Escape")close()});
+$("grid").onclick=e=>{const b=e.target.closest("[data-i]");if(b)show(ITEMS[+b.dataset.i],true)};
+async function load(){try{const r=await (await fetch("/api/gallery?off="+OFF)).json();ITEMS=ITEMS.concat(r.items||[]);OFF+=36;$("more").style.display=r.more?"":"none";render();const id=location.hash.slice(1);if(id&&!window._h){window._h=1;let g=ITEMS.find(x=>x.id==id);if(!g){try{g=await (await fetch("/api/gallery/item?id="+encodeURIComponent(id))).json();if(g.error)g=null}catch(e){}}if(g)show(g,false)}}catch(e){render()}}
+$("more").onclick=load;setL(L);load();loadTop();
+</script></body></html>
