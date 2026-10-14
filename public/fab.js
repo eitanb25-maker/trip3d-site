@@ -63,7 +63,7 @@
      ברוחב 6 מ״מ אל הקצה עבור הכבל. השכבה העליונה (BH-gd) נשארת מלאה, כך שהאור עובר דרכה כשמדפיסים בחומר שקוף. */
   function ledPatch(P) {
     F.ledNote = "";
-    if (!F.led || TOOL != "stand") return P;
+    if (!F.led || TOOL != "stand" || (window.mechApi && mechApi.tilted())) return P;
     var bp = P.filter(function (p) { return p.name == "1_base"; })[0];
     if (!bp || bp.geoms.length != 1) return P;
     var BH = +$("bh").value, gd = Math.min(3, BH - 1.2);
@@ -91,10 +91,12 @@
   /* חותך רשת משולשים (מערך מיקומים) במישור ושומר את הצד nx*x+ny*y<=d. סוגר את החתך בכיסוי. מחזיר מערך מיקומים או null */
   function clipHalf(pos, nx, ny, d) {
     var ln = Math.hypot(nx, ny); nx /= ln; ny /= ln; d /= ln;
-    var out = [], segs = [], EPS = 1e-7, i, k;
+    var out = [], segs = [], EPS = 1e-5, i, k;
     var less = function (a, b) { return a[0] != b[0] ? a[0] < b[0] : a[1] != b[1] ? a[1] < b[1] : a[2] < b[2]; };
     function isect(a, sa, b, sb) {   // סדר קנוני של הקצוות, כדי ששני משולשים שכנים יחשבו בדיוק אותה נקודה
       if (!less(a, b)) { var t = a; a = b; b = t; t = sa; sa = sb; sb = t; }
+      if (Math.abs(sa) <= EPS * 10) return a;   // נקודה כמעט על המישור: מצמידים לקודקוד כדי לא ליצור קצוות זעירים
+      if (Math.abs(sb) <= EPS * 10) return b;
       var u = sa / (sa - sb);
       return [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u, a[2] + (b[2] - a[2]) * u];
     }
@@ -110,7 +112,7 @@
       }
       for (k = 1; k + 1 < poly.length; k++) {
         var A = poly[0], B = poly[k], Cc = poly[k + 1], ux = B[0] - A[0], uy = B[1] - A[1], uz = B[2] - A[2], vx = Cc[0] - A[0], vy = Cc[1] - A[1], vz = Cc[2] - A[2];
-        var same = function (X, Y) { return Math.abs(X[0] - Y[0]) + Math.abs(X[1] - Y[1]) + Math.abs(X[2] - Y[2]) < 1e-9; };
+        var same = function (X, Y) { return Math.abs(X[0] - Y[0]) + Math.abs(X[1] - Y[1]) + Math.abs(X[2] - Y[2]) < 1e-6; };
         if (same(A, B) || same(B, Cc) || same(A, Cc)) continue;   // משולש עם קודקודים חופפים; משולש על קו ישר נשמר כי הוא משמר את הטופולוגיה
         out.push(A[0], A[1], A[2], B[0], B[1], B[2], Cc[0], Cc[1], Cc[2]);
       }
@@ -120,6 +122,7 @@
     return cap(out, segs, nx, ny);
   }
   function cap(out, segs, nx, ny) {
+    var start0 = out.length;
     var key = function (p) { return Math.round(p[0] * 2e3) + "," + Math.round(p[1] * 2e3) + "," + Math.round(p[2] * 2e3); }, start = new Map(), used = [], loops = [], i;
     for (i = 0; i < segs.length; i += 2) { var kk = key(segs[i]); if (!start.has(kk)) start.set(kk, []); start.get(kk).push(i); }
     for (i = 0; i < segs.length; i += 2) {
@@ -152,14 +155,48 @@
         var A = pts3[f[0]], B = pts3[f[1]], C = pts3[f[2]]; if (!A || !B || !C) return;
         var cx = (B[1] - A[1]) * (C[2] - A[2]) - (B[2] - A[2]) * (C[1] - A[1]), cy = (B[2] - A[2]) * (C[0] - A[0]) - (B[0] - A[0]) * (C[2] - A[2]), cz = (B[0] - A[0]) * (C[1] - A[1]) - (B[1] - A[1]) * (C[0] - A[0]);
         var dir = 0;
-        if (Math.hypot(cx, cy, cz) < 1e-7) {   // משולש מנוון (נקודות על קו ישר): הכיוון נקבע לפי כיוון שפת הלולאה
+        if (Math.hypot(cx, cy, cz) < 2e-3) {   // משולש מנוון (נקודות על קו ישר): הכיוון נקבע לפי כיוון שפת הלולאה
           [[f[0], f[1]], [f[1], f[2]], [f[2], f[0]]].forEach(function (e) { if (de.has(e[0] + "|" + e[1])) dir++; else if (de.has(e[1] + "|" + e[0])) dir--; });
-          tri.push({ t: [A, B, C], deg: dir < 0 ? -1 : 1 });
-        } else { sum += cx * nx + cy * ny; tri.push({ t: [A, B, C], deg: 0 }); }
+          tri.push({ t: [A, B, C], f: f, deg: dir < 0 ? -1 : 1, dec: dir != 0 });
+        } else { sum += cx * nx + cy * ny; tri.push({ t: [A, B, C], f: f, deg: 0 }); }
       });
-      tri.forEach(function (o) { var t = o.t, flip = o.deg ? o.deg < 0 : sum < 0; if (!flip) out.push(t[0][0], t[0][1], t[0][2], t[1][0], t[1][1], t[1][2], t[2][0], t[2][1], t[2][2]); else out.push(t[0][0], t[0][1], t[0][2], t[2][0], t[2][1], t[2][2], t[1][0], t[1][1], t[1][2]); });
+      // משולש מנוון שהכיוון שלו לא נקבע מהלולאה: מתאימים אותו לשכנים (קצה זהה בכיוון זהה אצל שכן = צריך להפוך)
+      var ne = new Set();
+      tri.forEach(function (o) { if (o.deg) return; var fl = sum < 0, f = o.f, v = fl ? [f[0], f[2], f[1]] : f; ne.add(v[0] + "|" + v[1]); ne.add(v[1] + "|" + v[2]); ne.add(v[2] + "|" + v[0]); });
+      tri.forEach(function (o) {
+        if (o.deg && !o.dec) { var sc = 0, f = o.f; [[f[0], f[1]], [f[1], f[2]], [f[2], f[0]]].forEach(function (e) { if (ne.has(e[1] + "|" + e[0])) sc++; else if (ne.has(e[0] + "|" + e[1])) sc--; }); if (sc) o.deg = sc < 0 ? -1 : 1; }
+        var t = o.t, flip = o.deg ? o.deg < 0 : sum < 0; if (!flip) out.push(t[0][0], t[0][1], t[0][2], t[1][0], t[1][1], t[1][2], t[2][0], t[2][1], t[2][2]); else out.push(t[0][0], t[0][1], t[0][2], t[2][0], t[2][1], t[2][2], t[1][0], t[1][1], t[1][2]); });
     });
+    fixSlivers(out, start0);
     return out;
+  }
+  /* משולשי כיסוי מנוונים (נקודות על קו ישר) מקבלים כיוון לפי שאר הרשת: קצה זהה בכיוון זהה אצל משולש אחר פירושו שצריך להפוך */
+  function fixSlivers(out, from) {
+    var k = function (i) { return Math.round(out[i] * 1e3) + "," + Math.round(out[i + 1] * 1e3) + "," + Math.round(out[i + 2] * 1e3); }, deg = [], i, e, cnt = null;
+    for (i = from; i < out.length; i += 9) {
+      var ux = out[i + 3] - out[i], uy = out[i + 4] - out[i + 1], uz = out[i + 5] - out[i + 2], vx = out[i + 6] - out[i], vy = out[i + 7] - out[i + 1], vz = out[i + 8] - out[i + 2];
+      if (Math.hypot(uy * vz - uz * vy, uz * vx - ux * vz, ux * vy - uy * vx) < 2e-3) deg.push(i);
+    }
+    if (!deg.length) return;
+    cnt = new Map();
+    for (i = 0; i < out.length; i += 9) for (e = 0; e < 3; e++) { var key = k(i + e * 3) + ">" + k(i + ((e + 1) % 3) * 3); cnt.set(key, (cnt.get(key) || 0) + 1); }
+    var drop = [];
+    deg.forEach(function (i) {   // בוחרים בין להשאיר / להפוך / להסיר לפי מספר הקצוות שאינם מאוזנים (כניסה ויציאה) בשלושת הקצוות שלו
+      var ks = [k(i), k(i + 3), k(i + 6)], bal = function (a, b, d) { return (cnt.get(a + ">" + b) || 0) - (cnt.get(b + ">" + a) || 0) + d; };
+      var score = function (mode) {   // mode 0 = להשאיר, 1 = להפוך, 2 = להסיר
+        var n = 0;
+        for (var e = 0; e < 3; e++) {
+          var a = ks[e], b = ks[(e + 1) % 3]; if (a == b) continue;
+          var d = mode == 0 ? 0 : mode == 1 ? -2 : -1;   // הפיכה מזיזה שני צעדים (מ-a>b ל-b>a), הסרה צעד אחד
+          if (bal(a, b, d) != 0) n++;
+        }
+        return n;
+      };
+      var s0 = score(0), s1 = score(1), s2 = score(2);
+      if (s1 < s0 && s1 <= s2) { for (var t = 0; t < 3; t++) { var tmp = out[i + 3 + t]; out[i + 3 + t] = out[i + 6 + t]; out[i + 6 + t] = tmp; } }
+      else if (s2 < s0) drop.push(i);
+    });
+    for (var d = drop.length - 1; d >= 0; d--) out.splice(drop[d], 9);
   }
   /* חיתוך לפי רשימת חצאי-מישורים [a,b,d] במערכת (s,l) סביב נקודה O עם כיוונים dir ו-lat */
   function clipRegion(geoms, sp, planes) {
@@ -170,7 +207,7 @@
         var a = planes[i][0], b = planes[i][1], nx = a * sp.dir[0] + b * sp.lat[0], ny = a * sp.dir[1] + b * sp.lat[1];
         pos = clipHalf(pos, nx, ny, planes[i][2] + nx * sp.O[0] + ny * sp.O[1]);
       }
-      if (pos && pos.length >= 9) res.push(mk(pos));
+      if (pos && pos.length >= 9) { fixSlivers(pos, 0); if (pos.length >= 9) res.push(mk(pos)); }
     });
     return res;
   }
@@ -495,7 +532,7 @@
     [hookBuild, hookScale, hookExport, hookRender, hookProj, buildUI].forEach(function (f) { try { f(); } catch (e) { console.warn("fab", f.name, e); } });
     try { new MutationObserver(function () { setTimeout(paint, 50); }).observe(document.documentElement, { attributes: true, attributeFilter: ["lang", "dir"] }); } catch (e) {}
     try { setInterval(function () { paint(); }, 2500); } catch (e) {}
-    window.fabApi = { F: F, analyse: analyse, runCheck: runCheck, clipHalf: clipHalf, splitGeoms: splitGeoms, cutAll: cutAll, planFor: planFor, ledPatch: ledPatch, inset: inset, bounds: bounds };
+    window.fabApi = { fixSlivers: fixSlivers, F: F, analyse: analyse, runCheck: runCheck, clipHalf: clipHalf, splitGeoms: splitGeoms, cutAll: cutAll, planFor: planFor, ledPatch: ledPatch, inset: inset, bounds: bounds };
   }
   if (document.readyState == "loading") document.addEventListener("DOMContentLoaded", init); else init();
 })();
