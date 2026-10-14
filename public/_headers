@@ -48,3 +48,7 @@
   Cache-Control: no-cache
 /litho.js
   Cache-Control: no-cache
+/spin.js
+  Cache-Control: no-cache
+/trips.js
+  Cache-Control: no-cache
