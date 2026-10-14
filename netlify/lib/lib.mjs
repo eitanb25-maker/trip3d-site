@@ -371,6 +371,21 @@ export async function alertMail(subject, text) {
   if (!to) return false;
   return sendMail(to.trim(), subject, text);
 }
+// פותח Issue בגיטהאב עם התווית auto-fault (מפעיל את workflow התיקון). פעיל רק אם הוגדרו GITHUB_FAULT_TOKEN ו-GITHUB_REPO
+export async function openFaultIssue(title, body) {
+  const e = process.env;
+  if (!e.GITHUB_FAULT_TOKEN || !/^[\w.-]+\/[\w.-]+$/.test(e.GITHUB_REPO || "")) return "";
+  try {
+    const r = await fetch(`https://api.github.com/repos/${e.GITHUB_REPO}/issues`, {
+      method: "POST",
+      headers: { authorization: "Bearer " + e.GITHUB_FAULT_TOKEN, accept: "application/vnd.github+json", "content-type": "application/json", "user-agent": "trip3d-site" },
+      body: JSON.stringify({ title: title.slice(0, 120), body: body.slice(0, 6000), labels: ["auto-fault"] }),
+    });
+    if (!r.ok) return "";
+    const j = await r.json();
+    return String(j.html_url || "");
+  } catch { return ""; }
+}
 // סופר שגיאות בחלון של שעה; כשעוברים את הסף נשלח מייל אחד (לא יותר מאחד בשעה)
 export async function errorSpike(S, msg, src = "browser") {
   try {
@@ -385,7 +400,9 @@ export async function errorSpike(S, msg, src = "browser") {
     await st.setJSON("n/errwin", w);
     if (send) {
       await alertMail(`⚠️ ${w.n} שגיאות באתר בשעה האחרונה`, `זוהו ${w.n} שגיאות מאז ${new Date(w.start).toISOString()}.\n\nדוגמאות:\n- ${w.samples.join("\n- ")}\n\nלפרטים: לוח הבקרה ← סקירה ← שגיאות אחרונות.\n(המייל הזה נשלח פעם אחת בשעה לכל היותר. אפשר לשנות את הסף או לכבות בהגדרות.)`);
-      await notify(`🚨 תקלה באתר: ${w.n} שגיאות בשעה האחרונה\n${w.samples.slice(0, 3).join("\n")}\n(לוח בקרה ← סקירה ← שגיאות אחרונות)`, undefined, { noMail: true });
+      const body = `זוהו ${w.n} שגיאות בשעה האחרונה (מאז ${new Date(w.start).toISOString()}).\n\nדוגמאות:\n- ${w.samples.join("\n- ")}`;
+      const issue = await openFaultIssue(`🚨 תקלה באתר: ${w.n} שגיאות בשעה`, body);
+      await notify(`🚨 תקלה באתר: ${w.n} שגיאות בשעה האחרונה\n${w.samples.slice(0, 3).join("\n")}\n(לוח בקרה ← סקירה ← שגיאות אחרונות)` + (issue ? `\n🛠️ נפתחה משימת תיקון ל-Claude: ${issue}` : ""), undefined, { noMail: true });
     }
   } catch (e) { console.error("errorSpike", e); }
 }

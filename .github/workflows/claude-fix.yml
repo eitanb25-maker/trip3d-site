@@ -1,0 +1,31 @@
+# כשהאתר מזהה חריגת שגיאות הוא פותח Issue עם התווית auto-fault.
+# ה-workflow הזה מפעיל את Claude, שמכין תיקון ופותח Pull Request.
+# ה-PR לא עולה לאתר עד שאתם ממזגים אותו (הפריסה היא מ-main בלבד).
+name: claude-fix
+on:
+  issues:
+    types: [labeled]
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  id-token: write
+jobs:
+  fix:
+    if: github.event.label.name == 'auto-fault'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            נפתחה תקלה אוטומטית מהאתר (Issue #${{ github.event.issue.number }}).
+            כותרת: ${{ github.event.issue.title }}
+            קראו את גוף ה-Issue (דוגמאות לשגיאות), מצאו את הסיבה בקוד, תקנו במינימום שינוי,
+            הריצו את הבדיקות הקיימות ופתחו Pull Request עם ההסבר. אל תמזגו ואל תדחפו ל-main.
+            אם אי אפשר לאתר את הסיבה מהמידע, כתבו תגובה ב-Issue מה חסר.
+            הנחיות הפרויקט: CLAUDE.md.
