@@ -8,9 +8,9 @@ export const DEFAULTS = {
   requireVerify: false, notifySecurity: true, autoBackup: true,
   welcomeGift: 2, challengeOn: true, challengeN: 3, challengeReward: 3, annivGift: 3, refPrizeOn: true, goalTarget: 1000, bonusSched: [], texts: {}, subsOn: false, subPlans: [
     { id: "plus", emoji: "🧳", name: "מטייל", price: "19₪ לחודש", days: 30, desc: "לכל מי שיוצר כל שבוע", items: [{ type: "credits", n: 3 }, { type: "daily", n: 5 }, { type: "projects", n: 10 }, { type: "gallery", n: 2 }] },
-    { id: "pro", emoji: "🧭", name: "חוקר", price: "39₪ לחודש", days: 30, hot: true, desc: "הכול פתוח, בלי לספור הורדות", items: [{ type: "badge", n: 1, key: "clubexp" }, { type: "unlimited", n: 0 }, { type: "ai", n: 15 }, { type: "projects", n: 30 }, { type: "gallery", n: 5 }, { type: "early", n: 0 }] },
-    { id: "pro-year", emoji: "🌍", name: "נווד עולמי", price: "349₪ לשנה", days: 365, desc: "כל מה שב'חוקר' + תג 🌍 נווד עולמי בלעדי ועוד שאלות לעוזר, ומחיר של 9 חודשים בערך", items: [{ type: "badge", n: 1, key: "nomad" }, { type: "unlimited", n: 0 }, { type: "ai", n: 40 }, { type: "projects", n: 50 }, { type: "gallery", n: 8 }, { type: "early", n: 0 }] },
-    { id: "biz", emoji: "🏢", name: "עסקים", price: "89₪ לחודש", days: 30, desc: "לעסק שמוכר או מדפיס מזכרות: הכול פתוח, נפח עבודה גדול ותג עסק", items: [{ type: "badge", n: 1, key: "business" }, { type: "unlimited", n: 0 }, { type: "ai", n: 40 }, { type: "projects", n: 100 }, { type: "gallery", n: 15 }, { type: "early", n: 0 }] },
+    { id: "pro", emoji: "🧭", name: "חוקר", price: "39₪ לחודש", days: 30, hot: true, desc: "הכול פתוח, בלי לספור הורדות", items: [{ type: "badge", n: 1, key: "clubexp" }, { type: "unlimited", n: 0 }, { type: "projects", n: 30 }, { type: "gallery", n: 5 }, { type: "early", n: 0 }] },
+    { id: "pro-year", emoji: "🌍", name: "נווד עולמי", price: "349₪ לשנה", days: 365, desc: "כל מה שב'חוקר' + תג 🌍 נווד עולמי בלעדי, ומחיר של 9 חודשים בערך", items: [{ type: "badge", n: 1, key: "nomad" }, { type: "unlimited", n: 0 }, { type: "projects", n: 50 }, { type: "gallery", n: 8 }, { type: "early", n: 0 }] },
+    { id: "biz", emoji: "🏢", name: "עסקים", price: "89₪ לחודש", days: 30, desc: "לעסק שמוכר או מדפיס מזכרות: הכול פתוח, נפח עבודה גדול ותג עסק", items: [{ type: "badge", n: 1, key: "business" }, { type: "unlimited", n: 0 }, { type: "projects", n: 100 }, { type: "gallery", n: 15 }, { type: "early", n: 0 }] },
   ], subPayUrl: "", subPayNote: "", goalBonus: 2, perkVerify: true, thanksReward: 2, cowBonus: 1, weekendBonus: 0, bonusWin: null, hofAuto: true,
 };
 
@@ -131,20 +131,25 @@ export async function getSettings() {
   const st = await store();
   const s = (await st.get("settings")) || {};
   const out = { ...DEFAULTS, ...s };
-  // מיגרציה חד-פעמית (v44): מוסיפים את מסלול 'עסקים' להגדרות שכבר נשמרו
-  if (Array.isArray(s.subPlans) && !s.bizAdded) {
-    if (!s.subPlans.some((p) => p.id === "biz") && s.subPlans.length < 4) out.subPlans = s.subPlans.concat([DEFAULTS.subPlans.find((p) => p.id === "biz")]);
-    out.bizAdded = true; try { await st.setJSON("settings", { ...s, subPlans: out.subPlans, bizAdded: true }); } catch {}
+  // מיגרציות חד-פעמיות על מסלולי מנוי שכבר נשמרו (כל אחת רצה פעם אחת)
+  if (Array.isArray(s.subPlans)) {
+    let plans = s.subPlans, dirty = false;
+    // v42.1: מסלולים עם מתנת ההורדות הישנה (10/40) מקבלים את מתנת התג החדשה
+    plans = plans.map((p) => {
+      const old = { pro: 10, "pro-year": 40 }[p.id], it = Array.isArray(p.items) ? p.items : [];
+      if (old && it.some((i) => i.type === "credits" && i.n === old) && !it.some((i) => i.type === "badge")) {
+        const d = DEFAULTS.subPlans.find((x) => x.id === p.id);
+        if (d) return { ...p, items: d.items, desc: p.desc === "כל מה שב'חוקר' + בונוס, ומחיר של 9 חודשים בערך" ? d.desc : p.desc };
+      }
+      return p;
+    });
+    // v44: מוסיפים את מסלול 'עסקים'
+    if (!s.bizAdded) { if (!plans.some((p) => p.id === "biz") && plans.length < 4) plans = plans.concat([DEFAULTS.subPlans.find((p) => p.id === "biz")]); out.bizAdded = true; dirty = true; }
+    // v45: מסירים את הטבת 'שאלות AI' ממסלולי חוקר, נווד עולמי ועסקים (ביטול תוכנית ה-AI)
+    if (!s.aiPlanOff) { plans = plans.map((p) => (["pro", "pro-year", "biz"].includes(p.id) && Array.isArray(p.items) ? { ...p, items: p.items.filter((i) => i.type !== "ai"), desc: String(p.desc || "").replace(" ועוד שאלות לעוזר", "") } : p)); out.aiPlanOff = true; dirty = true; }
+    out.subPlans = plans;
+    if (dirty) { try { await st.setJSON("settings", { ...s, subPlans: plans, bizAdded: true, aiPlanOff: true }); } catch {} }
   }
-  // מיגרציה חד-פעמית (v42.1): מסלולים שנשמרו עם מתנת ההורדות הישנה (10/40) מקבלים את ברירת המחדל החדשה
-  if (Array.isArray(s.subPlans)) out.subPlans = out.subPlans.map((p) => {
-    const old = { pro: 10, "pro-year": 40 }[p.id], it = Array.isArray(p.items) ? p.items : [];
-    if (old && it.some((i) => i.type === "credits" && i.n === old) && !it.some((i) => i.type === "badge")) {
-      const d = DEFAULTS.subPlans.find((x) => x.id === p.id);
-      if (d) return { ...p, items: d.items, desc: p.desc === "כל מה שב'חוקר' + בונוס, ומחיר של 9 חודשים בערך" ? d.desc : p.desc };
-    }
-    return p;
-  });
   return out;
 }
 
