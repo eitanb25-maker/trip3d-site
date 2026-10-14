@@ -116,7 +116,7 @@
     build = function () {
       var P = ob.apply(this, arguments);
       if (TOOL != "stand") return P;
-      try { if (M.arm.on) arm(P); if (M.tilt) tilt(P, M.tilt); } catch (e) { console.warn("mech", e); }
+      try { if (M.arm.on && !(window.lithoApi && lithoApi.on())) arm(P); if (M.tilt) tilt(P, M.tilt); } catch (e) { console.warn("mech", e); }
       return P;
     };
   }

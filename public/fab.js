@@ -63,7 +63,7 @@
      ברוחב 6 מ״מ אל הקצה עבור הכבל. השכבה העליונה (BH-gd) נשארת מלאה, כך שהאור עובר דרכה כשמדפיסים בחומר שקוף. */
   function ledPatch(P) {
     F.ledNote = "";
-    if (!F.led || TOOL != "stand" || (window.mechApi && mechApi.tilted())) return P;
+    if (!F.led || TOOL != "stand" || (window.mechApi && mechApi.tilted()) || (window.lithoApi && lithoApi.on())) return P;
     var bp = P.filter(function (p) { return p.name == "1_base"; })[0];
     if (!bp || bp.geoms.length != 1) return P;
     var BH = +$("bh").value, gd = Math.min(3, BH - 1.2);

@@ -46,3 +46,5 @@
   Cache-Control: no-cache
 /mech.js
   Cache-Control: no-cache
+/litho.js
+  Cache-Control: no-cache
