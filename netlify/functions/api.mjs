@@ -282,7 +282,7 @@ const inner = async (req) => {
       const rl = (globalThis.__rl ||= new Map()), now = Date.now(), kk = ipHash(req) + (m === "GET" ? "r" : "w"), cur = rl.get(kk);
       if (rl.size > 5000) rl.clear();
       if (!cur || now - cur.t > 60e3) rl.set(kk, { t: now, n: 1 });
-      else if (++cur.n > (m === "GET" ? 3000 : 900)) return E(429, "יותר מדי בקשות. נסו שוב בעוד דקה", { "retry-after": 60 });
+      else if (++cur.n > (m === "GET" ? 3000 : 900)) return J({ error: "יותר מדי בקשות. נסו שוב בעוד דקה" }, 429, { "retry-after": "60" });
     }
     const st = await store();
     const S = await getSettings();

@@ -182,7 +182,7 @@
     var rgx = $("rgx"); if (!rgx || $("cfb")) return;
     var mk = function (id, t, hide) { var b = document.createElement("button"); b.type = "button"; b.id = id; b.textContent = t; if (hide) b.style.display = "none"; return b; };
     var b1 = mk("cfb", Lx("✏️ חיתוך חופשי", "✏️ Freehand crop")), b2 = mk("cfdone", Lx("✔ סיום", "✔ Done"), 1), b3 = mk("cfcancel", Lx("✕ ביטול ציור", "✕ Cancel drawing"), 1);
-    rgx.parentNode.append(b1, b2, b3);
+    rgx.parentNode.style.flexWrap = "wrap"; rgx.parentNode.append(b1, b2, b3);
     b1.onclick = start; b2.onclick = finish; b3.onclick = stop;
     mc.addEventListener("pointerdown", onDown, true); mc.addEventListener("pointermove", onMove, true); mc.addEventListener("pointerup", onUp, true); mc.addEventListener("dblclick", onDbl, true);
     document.addEventListener("keydown", onKey);

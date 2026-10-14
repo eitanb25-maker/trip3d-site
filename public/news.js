@@ -14,7 +14,7 @@
       var t = document.createElement("div"); t.textContent = txt; body.appendChild(t);
       function done() { try { localStorage.setItem("trip3d_news", id); } catch (e) {} el.remove(); }
       if (n.link && /^\/[^\/\\]/.test(String(n.link))) { var a = document.createElement("a"); a.href = n.link; a.textContent = l === "en" ? "See more →" : "לפרטים ←"; a.style.cssText = "color:#fdba74;font-weight:600;display:inline-block;margin-top:4px"; a.onclick = function () { try { localStorage.setItem("trip3d_news", id); } catch (e) {} }; body.appendChild(a); }
-      var x = document.createElement("button"); x.type = "button"; x.textContent = "✕"; x.setAttribute("aria-label", l === "en" ? "Close" : "סגירה"); x.style.cssText = "border:0;background:transparent;color:#fff;font:inherit;cursor:pointer;padding:0 4px!important;width:auto!important;margin:0!important;display:inline-block!important;flex:none;box-shadow:none"; x.onclick = done;
+      var x = document.createElement("button"); x.type = "button"; x.textContent = "✕"; x.setAttribute("aria-label", l === "en" ? "Close" : "סגירה"); x.style.cssText = "border:0;background:transparent;color:#fff;font:inherit;cursor:pointer;padding:0 10px!important;min-width:36px;min-height:36px;width:auto!important;margin:0!important;display:inline-block!important;flex:none;box-shadow:none"; x.onclick = done;
       el.appendChild(body); el.appendChild(x);
       setTimeout(function () { var e2 = document.getElementById("newsbar"); if (e2) e2.remove(); }, 22000);
       setTimeout(function () {
