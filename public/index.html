@@ -28,7 +28,7 @@
 <script src="/litho.js" defer></script>
 <script src="/mech.js" defer></script>
 <script src="/fab.js" defer></script>
-<script src="/spin.js" defer></script>
+<script src="/spin.js" defer></script><script src="/undo.js" defer></script><script src="/assemble.js" defer></script><script src="/postcard.js" defer></script><script src="/mobile.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/1.6.19/topojson.min.js"></script>
@@ -551,6 +551,9 @@ function build(){if(TOOL=="holder")return holderFinal();const small=TOOL!="stand
   const mg=small&&TOOL=="magnet"?magnetSpot():null,scT=TARGET.magnet/70,mr=(+$("mgs").value/2+.15)/scT,pd=2.3/scT;
   const landG=r=>{const pts=r.map(([x,y])=>new THREE.Vector2(x,y+OY));if(mg&&pipR(mg.x,mg.y,r)){const s1=new THREE.Shape(pts),h=new THREE.Path();h.absarc(mg.x,mg.y,mr,0,Math.PI*2,true);s1.holes.push(h);
     return[new THREE.ExtrudeGeometry(s1,{depth:pd,bevelEnabled:false}),new THREE.ExtrudeGeometry(new THREE.Shape(pts),{depth:LH-pd,bevelEnabled:false}).translate(0,0,pd)]}
+    const pg=window.pegApi&&!small?pegApi.holes(r):[];/* שקעים עיוורים לפינים (assemble.js): שכבה תחתונה עם חורים ושכבה עליונה מלאה */
+    if(pg.length){const s2=new THREE.Shape(pts),sd=Math.max(.8,LH-.7);pg.forEach(([x,y,rd])=>{const h=new THREE.Path();h.absarc(x,y+OY,rd,0,Math.PI*2,true);s2.holes.push(h)});
+      return[new THREE.ExtrudeGeometry(s2,{depth:sd,bevelEnabled:false}).translate(0,0,BH+GP),new THREE.ExtrudeGeometry(new THREE.Shape(pts),{depth:LH-sd,bevelEnabled:false}).translate(0,0,BH+GP+sd)]}
     return[new THREE.ExtrudeGeometry(new THREE.Shape(pts),{depth:LH,bevelEnabled:false}).translate(0,0,BH+GP)]};
   let G=PR.gr&&PR.gr.length>1?PR.gr:[PR.rings||[]];if(puz)G=puzzlePieces(+$("pcs").value);
   G.forEach((rs,gi)=>{const land=[];rs.forEach(r=>{if(r.length<3)return;land.push(...landG(r))});parts.push({name:"2_country"+(G.length>1?"_"+(gi+1):""),color:$("c_land").value,geoms:land})});

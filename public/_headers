@@ -52,3 +52,11 @@
   Cache-Control: no-cache
 /trips.js
   Cache-Control: no-cache
+/undo.js
+  Cache-Control: no-cache
+/assemble.js
+  Cache-Control: no-cache
+/postcard.js
+  Cache-Control: no-cache
+/mobile.js
+  Cache-Control: no-cache
