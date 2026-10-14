@@ -165,6 +165,7 @@ export async function bump(items) {
   await st.setJSON(k, s);
 }
 
+const URGENT_RE = /^(\[בדיקה\] )?(🚨|🛡️|🩺|⚠️|✅ התקלה)/;
 export async function notify(text, file, opt = {}) {
   if (!isProd()) text = "[בדיקה] " + text;
   const tasks = [];
@@ -183,6 +184,9 @@ export async function notify(text, file, opt = {}) {
     tasks.push(fetch(e.DISCORD_WEBHOOK_URL, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ content: text.slice(0, 1900) }) }));
   if (e.SLACK_WEBHOOK_URL)
     tasks.push(fetch(e.SLACK_WEBHOOK_URL, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text: text.slice(0, 3000) }) }));
+  // וואטסאפ (דרך CallMeBot): רק לתקלות והתראות דחופות, כדי שלא יציפו את הטלפון
+  if (e.WHATSAPP_PHONE && e.WHATSAPP_APIKEY && (opt.urgent || URGENT_RE.test(text)))
+    tasks.push(fetch(`https://api.callmebot.com/whatsapp.php?phone=${encodeURIComponent("+" + e.WHATSAPP_PHONE)}&text=${encodeURIComponent(text.slice(0, 900))}&apikey=${encodeURIComponent(e.WHATSAPP_APIKEY)}`, { signal: AbortSignal.timeout(8000) }));
   if (e.RESEND_API_KEY && e.NOTIFY_EMAIL && !opt.noMail)
     tasks.push(fetch("https://api.resend.com/emails", {
       method: "POST",
