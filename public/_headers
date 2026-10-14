@@ -19,6 +19,8 @@
   Cache-Control: no-cache
 /content.js
   Cache-Control: no-cache
+/prod.js
+  Cache-Control: no-cache
 /botengine.js
   Cache-Control: no-cache
 /botstudio.html
