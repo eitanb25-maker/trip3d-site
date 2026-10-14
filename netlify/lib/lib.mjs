@@ -10,6 +10,7 @@ export const DEFAULTS = {
     { id: "plus", emoji: "🧳", name: "מטייל", price: "19₪ לחודש", days: 30, desc: "לכל מי שיוצר כל שבוע", items: [{ type: "credits", n: 3 }, { type: "daily", n: 5 }, { type: "projects", n: 10 }, { type: "gallery", n: 2 }] },
     { id: "pro", emoji: "🧭", name: "חוקר", price: "39₪ לחודש", days: 30, hot: true, desc: "הכול פתוח, בלי לספור הורדות", items: [{ type: "badge", n: 1, key: "clubexp" }, { type: "unlimited", n: 0 }, { type: "ai", n: 15 }, { type: "projects", n: 30 }, { type: "gallery", n: 5 }, { type: "early", n: 0 }] },
     { id: "pro-year", emoji: "🌍", name: "נווד עולמי", price: "349₪ לשנה", days: 365, desc: "כל מה שב'חוקר' + תג 🌍 נווד עולמי בלעדי ועוד שאלות לעוזר, ומחיר של 9 חודשים בערך", items: [{ type: "badge", n: 1, key: "nomad" }, { type: "unlimited", n: 0 }, { type: "ai", n: 40 }, { type: "projects", n: 50 }, { type: "gallery", n: 8 }, { type: "early", n: 0 }] },
+    { id: "biz", emoji: "🏢", name: "עסקים", price: "89₪ לחודש", days: 30, desc: "לעסק שמוכר או מדפיס מזכרות: הכול פתוח, נפח עבודה גדול ותג עסק", items: [{ type: "badge", n: 1, key: "business" }, { type: "unlimited", n: 0 }, { type: "ai", n: 40 }, { type: "projects", n: 100 }, { type: "gallery", n: 15 }, { type: "early", n: 0 }] },
   ], subPayUrl: "", subPayNote: "", goalBonus: 2, perkVerify: true, thanksReward: 2, cowBonus: 1, weekendBonus: 0, bonusWin: null, hofAuto: true,
 };
 
@@ -130,8 +131,13 @@ export async function getSettings() {
   const st = await store();
   const s = (await st.get("settings")) || {};
   const out = { ...DEFAULTS, ...s };
+  // מיגרציה חד-פעמית (v44): מוסיפים את מסלול 'עסקים' להגדרות שכבר נשמרו
+  if (Array.isArray(s.subPlans) && !s.bizAdded) {
+    if (!s.subPlans.some((p) => p.id === "biz") && s.subPlans.length < 4) out.subPlans = s.subPlans.concat([DEFAULTS.subPlans.find((p) => p.id === "biz")]);
+    out.bizAdded = true; try { await st.setJSON("settings", { ...s, subPlans: out.subPlans, bizAdded: true }); } catch {}
+  }
   // מיגרציה חד-פעמית (v42.1): מסלולים שנשמרו עם מתנת ההורדות הישנה (10/40) מקבלים את ברירת המחדל החדשה
-  if (Array.isArray(s.subPlans)) out.subPlans = s.subPlans.map((p) => {
+  if (Array.isArray(s.subPlans)) out.subPlans = out.subPlans.map((p) => {
     const old = { pro: 10, "pro-year": 40 }[p.id], it = Array.isArray(p.items) ? p.items : [];
     if (old && it.some((i) => i.type === "credits" && i.n === old) && !it.some((i) => i.type === "badge")) {
       const d = DEFAULTS.subPlans.find((x) => x.id === p.id);
@@ -433,7 +439,7 @@ export function planItems(x) {
 export const PERK_TYPES = ["daily", "credits", "unlimited", "ai", "early", "projects", "gallery", "badge"];
 export const VIP_OPTS = ["rim:2", "shape:hex", "shape:oct", "shape:oval", "ps:star", "ps:heart"];
 export const TIMED_PERKS = ["daily", "unlimited", "ai", "early", "projects", "gallery"];
-export const BADGES = { founder: ["🌱", "מייסד", "Founder"], printer: ["🖨️", "מדפיס", "Printer"], printer10: ["🖨️", "מדפיס מנוסה", "Seasoned printer"], member: ["💎", "חבר מועדון", "Club member"], top: ["⭐", "מטייל מוביל", "Top traveler"], maker: ["🎨", "יוצר החודש", "Maker of the month"], inviter: ["🤝", "מזמין", "Inviter"], streak: ["🔥", "רצף יצירה", "Creation streak"], publisher: ["🖼️", "מפרסם בגלריה", "Gallery publisher"], helper: ["💡", "תורם רעיונות", "Helper"], explorer: ["🧭", "חוקר השבוע", "Weekly explorer"], challenger: ["🎯", "מנצח האתגר", "Challenge winner"], countries5: ["🗺️", "חוקר עולם", "World explorer"], dl10: ["🏅", "10 הורדות", "10 downloads"], alltools: ["🛠️", "כל הכלים", "All tools"], refstar: ["👑", "מלך ההזמנות", "Invite champion"], pick: ["🌟", "יצירת השבוע", "Creation of the week"], nomad: ["🌍", "נווד עולמי", "Global nomad"], clubexp: ["🧭", "חוקר המועדון", "Club explorer"], };
+export const BADGES = { founder: ["🌱", "מייסד", "Founder"], printer: ["🖨️", "מדפיס", "Printer"], printer10: ["🖨️", "מדפיס מנוסה", "Seasoned printer"], member: ["💎", "חבר מועדון", "Club member"], top: ["⭐", "מטייל מוביל", "Top traveler"], maker: ["🎨", "יוצר החודש", "Maker of the month"], inviter: ["🤝", "מזמין", "Inviter"], streak: ["🔥", "רצף יצירה", "Creation streak"], publisher: ["🖼️", "מפרסם בגלריה", "Gallery publisher"], helper: ["💡", "תורם רעיונות", "Helper"], explorer: ["🧭", "חוקר השבוע", "Weekly explorer"], challenger: ["🎯", "מנצח האתגר", "Challenge winner"], countries5: ["🗺️", "חוקר עולם", "World explorer"], dl10: ["🏅", "10 הורדות", "10 downloads"], alltools: ["🛠️", "כל הכלים", "All tools"], refstar: ["👑", "מלך ההזמנות", "Invite champion"], pick: ["🌟", "יצירת השבוע", "Creation of the week"], nomad: ["🌍", "נווד עולמי", "Global nomad"], business: ["🏢", "עסק", "Business"], clubexp: ["🧭", "חוקר המועדון", "Club explorer"], };
 export const activePerks = (u, type) => (u.perks || []).filter((p) => (!p.until || p.until > Date.now()) && (!type || p.type === type));
 export const perkSum = (u, type) => activePerks(u, type).reduce((a, p) => a + (+p.n || 0), 0);
 export const hasEarly = (u) => !!u && (u.role === "admin" || u.role === "editor" || activePerks(u, "early").length > 0);
