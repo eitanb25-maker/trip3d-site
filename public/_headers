@@ -42,3 +42,5 @@
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
 /geo.js
   Cache-Control: no-cache
+/fab.js
+  Cache-Control: no-cache
