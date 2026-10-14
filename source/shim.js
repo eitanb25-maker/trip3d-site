@@ -5,7 +5,7 @@ window.API = {
   sid: (() => { try { let s = sessionStorage.getItem("trip3d_sid"); if (!s) { s = Math.random().toString(36).slice(2) + Date.now().toString(36); sessionStorage.setItem("trip3d_sid", s); } return s; } catch (e) { return "x" + Math.random(); } })(),
   async j(method, path, body) {
     let r;
-    try { r = await fetch("/api" + path, { method, headers: { "content-type": "application/json" }, credentials: "same-origin", body: body ? JSON.stringify(body) : undefined }); }
+    try { r = await fetch("/api" + path, { method, headers: { "content-type": "application/json", "x-lang": (typeof LANG !== "undefined" && LANG === "en") ? "en" : "he" }, credentials: "same-origin", body: body ? JSON.stringify(body) : undefined }); }
     catch (e) { throw Object.assign(new Error("אין חיבור לשרת. בדקו את האינטרנט ונסו שוב."), { status: 0 }); }
     const ct = r.headers.get("content-type") || "";
     let d = {}; if (ct.includes("json")) { try { d = await r.json(); } catch (e) {} }
