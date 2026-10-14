@@ -561,7 +561,7 @@ function build(){if(TOOL=="holder")return holderFinal();const small=TOOL!="stand
     parts.push({name:"6_qr_plate",color:$("c_base").value,geoms:[new THREE.BoxGeometry(Wp,Wp,1.6).translate(cx,cy,.8)]},{name:"6_qr",color:$("c_text").value,geoms:mg})}catch(e){}}
   if(TOOL=="key"||TOOL=="orn"){let ty=null,tx=0;for(let j=N-1;j>=0&&ty===null;j--){let i=0;while(i<N){if(LM[j*N+i]){const i0=i;while(i<N&&LM[j*N+i])i++;if((i-i0)>=24){ty=-35+(j+.5)*CS;tx=-35+((i0+i)/2)*CS;break}}else i++}}
     if(ty===null){(PR.rings||[]).forEach(r=>r.forEach(p=>{if(ty===null||p[1]>ty){ty=p[1];tx=p[0]}}))}
-    if(ty!==null){const Ro=TOOL=="key"?8:6.5,ri=TOOL=="key"?3.4:2.2,cy=ty+Ro-3,sh=new THREE.Shape(),hl=new THREE.Path();sh.absarc(tx,cy,Ro,0,Math.PI*2,false);hl.absarc(tx,cy,ri,0,Math.PI*2,true);sh.holes.push(hl);
+    if(ty!==null){const Ro=TOOL=="key"?8:6.5,ri=TOOL=="key"?3.4:2.2,ovl=c=>{let s=0;for(let j=0;j<N;j++)for(let i=0;i<N;i++)if(LM[j*N+i]){const d=Math.hypot(-35+(i+.5)*CS-tx,-35+(j+.5)*CS-c);if(d<=Ro&&d>=ri)s+=CS*CS}return s},cy=(()=>{let c=ty+Ro-3;for(let k=0;k<10&&ovl(c)<12;k++)c-=.75;return c})(),sh=new THREE.Shape(),hl=new THREE.Path();sh.absarc(tx,cy,Ro,0,Math.PI*2,false);hl.absarc(tx,cy,ri,0,Math.PI*2,true);sh.holes.push(hl);
       parts.push({name:"2a_loop",color:$("c_land").value,geoms:[new THREE.ExtrudeGeometry(sh,{depth:LH,bevelEnabled:false})]})}}
   const nn=NC();parts.forEach(p=>{const k=keyOf(p.name);p.rep=repK(k);if(!(k=="flag"&&nn>=5))p.color=$("c_"+p.rep).value});parts.forEach(p=>{const m=/^2_country_(\d+)$/.exec(p.name);if(m&&nn>=5)p.color=shade(p.color,+m[1]-1,G.length)});return parts}
 function pinGeo(t,x,y,z,k){const G=THREE,st=(h)=>new G.CylinderGeometry(1.1*k,1.1*k,h*k,10).rotateX(Math.PI/2).translate(x,y,z+h*k/2),

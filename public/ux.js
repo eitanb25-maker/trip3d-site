@@ -221,8 +221,15 @@
     if (qp.color && qr.color && lumRatio(qp.color, qr.color) < 3) out.push(Lx("ניגודיות נמוכה בין לוחית ה-QR לקוד (או הדפסה בצבע אחד) – הקוד ייסרק פחות טוב. בחרו צבעי מעמד וכיתוב שונים והדפיסו ב-2 צבעים", "Low contrast between the QR plate and code (or single-color print) – it will scan less reliably. Pick different stand/text colors and print in 2 colors"));
     return out;
   }
+  function puzzleWarn() {
+    var out = [];
+    if (TOOL != "puzzle") return out;
+    var want = +$("pcs").value, got = puzzlePieces(want).length;
+    if (got < want && got > 0) out.push(Lx("התקבלו " + got + " חלקים מתוך " + want + " שביקשתם (המדינה צרה מדי לחלוקה כזו). נסו פחות חלקים", "Got " + got + " pieces instead of the " + want + " you asked for (the country is too narrow for that split). Try fewer pieces"));
+    return out;
+  }
   function extraWarn(P, z) {
-    var ex = textWarn().concat(qrWarn(P, z)), w = $("warn");
+    var ex = textWarn().concat(qrWarn(P, z), puzzleWarn()), w = $("warn");
     if (!ex.length || !w) return;
     var cur = /^✅/.test(w.textContent) ? "" : w.innerHTML;
     w.innerHTML = (cur ? cur + "<br>" : "") + ex.map(function (x) { return "⚠️ " + x; }).join("<br>");
