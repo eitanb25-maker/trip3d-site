@@ -165,7 +165,7 @@ export async function bump(items) {
   await st.setJSON(k, s);
 }
 
-export async function notify(text, file) {
+export async function notify(text, file, opt = {}) {
   if (!isProd()) text = "[בדיקה] " + text;
   const tasks = [];
   const e = process.env;
@@ -183,7 +183,7 @@ export async function notify(text, file) {
     tasks.push(fetch(e.DISCORD_WEBHOOK_URL, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ content: text.slice(0, 1900) }) }));
   if (e.SLACK_WEBHOOK_URL)
     tasks.push(fetch(e.SLACK_WEBHOOK_URL, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text: text.slice(0, 3000) }) }));
-  if (e.RESEND_API_KEY && e.NOTIFY_EMAIL)
+  if (e.RESEND_API_KEY && e.NOTIFY_EMAIL && !opt.noMail)
     tasks.push(fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { "content-type": "application/json", authorization: "Bearer " + e.RESEND_API_KEY },
@@ -385,6 +385,7 @@ export async function errorSpike(S, msg, src = "browser") {
     await st.setJSON("n/errwin", w);
     if (send) {
       await alertMail(`⚠️ ${w.n} שגיאות באתר בשעה האחרונה`, `זוהו ${w.n} שגיאות מאז ${new Date(w.start).toISOString()}.\n\nדוגמאות:\n- ${w.samples.join("\n- ")}\n\nלפרטים: לוח הבקרה ← סקירה ← שגיאות אחרונות.\n(המייל הזה נשלח פעם אחת בשעה לכל היותר. אפשר לשנות את הסף או לכבות בהגדרות.)`);
+      await notify(`🚨 תקלה באתר: ${w.n} שגיאות בשעה האחרונה\n${w.samples.slice(0, 3).join("\n")}\n(לוח בקרה ← סקירה ← שגיאות אחרונות)`, undefined, { noMail: true });
     }
   } catch (e) { console.error("errorSpike", e); }
 }

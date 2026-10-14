@@ -1364,6 +1364,15 @@ const inner = async (req) => {
         await audit(me, "notify:test", "", res.map((x) => x.name + ":" + (x.ok ? "ok" : "fail")).join(","));
         return J({ ok: res.length > 0 && res.every((x) => x.ok), results: res, none: res.length === 0 });
       }
+      if (R === "POST admin/sim-fault") {
+        if (await rateHit("sf:" + me.uid, 3, 600e3)) return E(429, "אפשר עד 3 הדמיות ב-10 דקות");
+        const t = () => new Date().toLocaleString("he-IL", { timeZone: "Asia/Jerusalem" });
+        await notify(`🚨 תקלה (הדמיה מכוונת מלוח הבקרה)\nשגיאות בשעה האחרונה: סף חריגה מדומה. אין תקלה אמיתית באתר. (${t()})`, undefined, { noMail: true });
+        await new Promise((r) => setTimeout(r, 3000));
+        await notify(`✅ התקלה תוקנה (סוף ההדמיה)\nהאתר תקין. (${t()})`, undefined, { noMail: true });
+        await audit(me, "notify:simfault", "", "");
+        return J({ ok: true });
+      }
       if (R === "GET admin/perk-log") {
         const only = clean(url.searchParams.get("uid") || "", 20);
         let items = (await st.scan("pg/", { desc: true, limit: 150 })).map((x) => x.v).filter(Boolean);
