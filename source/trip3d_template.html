@@ -513,6 +513,8 @@ function holderParts(){const k=.58,oy=-27,bz=5,tilt=.21,parts=[],bb=(a,b,c)=>new
   const pg=[];pins.forEach(p=>{const [x,y]=toMM(p.lon,p.lat);if(Math.abs(x)>36||Math.abs(y)>36)return;pg.push(new THREE.SphereGeometry(p.fav?2.4:1.7,12,10).translate(x*k,y*k+oy,bz+2.4))});
   parts.push({name:"3_pins",geoms:pg});return parts}
 function holderFinal(){const parts=holderParts();parts.forEach(p=>{const k=keyOf(p.name);p.rep=repK(k);p.color=$("c_"+p.rep).value});return parts}
+// טקסט ל-QR: תווים שאינם ASCII (עברית, אימוג'י) מקודדים באחוזים כדי שהקוד ייסרק נכון; דומיין בלי https:// מקבל https://
+const qrText=u=>{u=(u||"").trim();try{u=u.replace(/[^\x00-\x7F]+/g,s=>encodeURIComponent(s))}catch(e){}if(!/^[a-z][a-z0-9+.-]*:/i.test(u)&&/^[\w-]+(\.[\w-]+)+(\/|$|\?|#)/.test(u))u="https://"+u;return u};
 function build(){if(TOOL=="holder")return holderFinal();const small=TOOL!="stand",BH=small?0:+$("bh").value,LH=small?(TOOL=="magnet"?5.4:TOOL=="puzzle"?3:4):+$("lh").value,GP=small?0:+$("gap").value,OY=small?0:14,parts=[],puz=TOOL=="puzzle";const geo=(ge)=>ge;
   let base=null;if(!small){base=new THREE.ExtrudeGeometry(new THREE.Shape(outline($("shape").value).map(p=>new THREE.Vector2(...p))),{depth:BH,bevelEnabled:false});
   parts.push({name:"1_base",color:$("c_base").value,geoms:[base]});}
@@ -554,7 +556,7 @@ function build(){if(TOOL=="holder")return holderFinal();const small=TOOL!="stand
   const rt=$("route").value;if(!puz&&rt!="0"&&pins.length>1){const rg2=[];for(let i=1;i<pins.length;i++){const a=toMM(pins[i-1].lon,pins[i-1].lat),b=toMM(pins[i].lon,pins[i].lat),L=Math.hypot(b[0]-a[0],b[1]-a[1]),n=Math.max(1,Math.ceil(L/1.5));
     for(let j=0;j<n;j++){if(rt=="2"&&j%2)continue;const p0=[a[0]+(b[0]-a[0])*j/n,a[1]+(b[1]-a[1])*j/n],p1=[a[0]+(b[0]-a[0])*(j+1)/n,a[1]+(b[1]-a[1])*(j+1)/n],z=Math.max(relAt(p0[0],p0[1]),relAt(p1[0],p1[1]))+BH+GP+LH,dx=p1[0]-p0[0],dy=p1[1]-p0[1],l=Math.hypot(dx,dy);
       rg2.push(new THREE.BoxGeometry(l+.3,1.2,.8).rotateZ(Math.atan2(dy,dx)).translate((p0[0]+p1[0])/2,(p0[1]+p1[1])/2+OY,z+.2))}}parts.push({name:"3b_route",color:$("c_pin").value,geoms:rg2})}
-  if(!small&&$("qron").checked&&$("qrurl").value.trim()&&typeof qrcode!="undefined"){try{const q=qrcode(0,"M");q.addData($("qrurl").value.trim());q.make();const n=q.getModuleCount(),m=1.1,Wp=n*m+6;base.computeBoundingBox();
+  if(!small&&$("qron").checked&&$("qrurl").value.trim()&&typeof qrcode!="undefined"){try{const q=qrcode(0,"M");q.addData(qrText($("qrurl").value));q.make();const n=q.getModuleCount(),m=1.1,Wp=n*m+6;base.computeBoundingBox();
     const cx=base.boundingBox.max.x+Wp/2+8,cy=-6,mg=[];for(let r=0;r<n;r++){let c=0;while(c<n){if(q.isDark(r,c)){const c0=c;while(c<n&&q.isDark(r,c))c++;mg.push(new THREE.BoxGeometry((c-c0)*m,m,.8).translate(cx-n*m/2+(c0+c)/2*m,cy+n*m/2-(r+.5)*m,2))}else c++}}
     parts.push({name:"6_qr_plate",color:$("c_base").value,geoms:[new THREE.BoxGeometry(Wp,Wp,1.6).translate(cx,cy,.8)]},{name:"6_qr",color:$("c_text").value,geoms:mg})}catch(e){}}
   if(TOOL=="key"||TOOL=="orn"){let ty=null,tx=0;for(let j=N-1;j>=0&&ty===null;j--){let i=0;while(i<N){if(LM[j*N+i]){const i0=i;while(i<N&&LM[j*N+i])i++;if((i-i0)>=24){ty=-35+(j+.5)*CS;tx=-35+((i0+i)/2)*CS;break}}else i++}}

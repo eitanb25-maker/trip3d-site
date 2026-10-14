@@ -170,6 +170,63 @@
   }
   var FILL = 0.5 /* חלק מהנפח שבפועל מודפס (קירות + מילוי 15%) */, RHO = 1.24 /* PLA, גר׳/סמ״ק */, GPH = 11 /* גרם בשעה, הערכה גסה */;
   function fmtH(h) { return h < 1 ? Math.max(5, Math.round(h * 60)) + " " + Lx("דק׳", "min") : h.toFixed(1) + " " + Lx("שע׳", "h"); }
+
+  /* ---------- אזהרות כיתוב ו-QR (משלימות את אזהרות האתר) ---------- */
+  function lumRatio(h1, h2) {
+    var L = function (h) { return [1, 3, 5].map(function (i) { var v = parseInt(h.substr(i, 2), 16) / 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }); };
+    var lum = function (h) { var c = L(h); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; }, a = lum(h1), b = lum(h2);
+    return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+  }
+  function textWarn() {
+    var out = [];
+    if (TOOL != "stand") return out;
+    var W = 180, c = document.createElement("canvas"), g = c.getContext("2d"), fs = 26, title = $("trip").value || " ";
+    do { g.font = "bold " + fs + "px " + FF(); fs--; } while (g.measureText(title).width > W - 8 && fs > 10);
+    if (g.measureText(title).width > W) out.push(Lx("שם הטיול ארוך מדי ויחתך בקצוות – קצרו אותו", "The trip name is too long and will be cut off at the edges – shorten it"));
+    var sub = [dt(), $("tsub").value.trim()].filter(Boolean).join(" · ");
+    if (sub) {
+      var f2 = 12; do { g.font = "bold " + f2 + "px " + FF(); f2--; } while (g.measureText(sub).width > W - 8 && f2 > 7);
+      if (g.measureText(sub).width > W) out.push(Lx("השורה הנוספת/התאריכים ארוכים מדי ויחתכו – קצרו אותם", "The extra line/dates are too long and will be cut off – shorten them"));
+      else if (f2 + 1 < 9) out.push(Lx("השורה הנוספת קטנה מאוד (קשה לקריאה) – קצרו אותה", "The extra line is very small (hard to read) – shorten it"));
+    }
+    if ($("shownames").checked) {
+      var names = pins.map(function (p, i) { return $("numpins").checked && p.name ? (i + 1) + ". " + p.name : p.name; }).filter(Boolean);
+      if (names.length) {
+        g.font = "bold 13px " + FF();
+        var lines = [], cur = [], wide = 0;
+        names.forEach(function (n) {
+          if (g.measureText(n).width > W) wide++;
+          var t = cur.length ? cur.join(" · ") + " · " + n : n;
+          if (g.measureText(t).width > W - 8 && cur.length) { lines.push(cur); cur = [n]; } else cur.push(n);
+        });
+        if (cur.length) lines.push(cur);
+        var shown = lines.slice(0, sub ? 2 : 3).reduce(function (a, l) { return a + l.length; }, 0);
+        if (shown < names.length) out.push(Lx((names.length - shown) + " שמות מקומות לא נכנסים על המעמד ולא יודפסו – בטלו 'הצג שמות' או הפחיתו מקומות", (names.length - shown) + " place names do not fit on the stand and won’t be printed – turn off 'show names' or use fewer places"));
+        if (wide) out.push(Lx("שם מקום ארוך מדי ויחתך", "A place name is too long and will be cut off"));
+      }
+    }
+    return out;
+  }
+  function qrWarn(P, z) {
+    var out = [];
+    if (TOOL != "stand" || !$("qron") || !$("qron").checked) return out;
+    var url = $("qrurl").value.trim();
+    if (!url) { out.push(Lx("סימנתם תגית QR אבל לא הוזן קישור", "QR tag is on but no link was entered")); return out; }
+    var qp = null, qr = null;
+    P.forEach(function (p) { if (p.name == "6_qr_plate") qp = p; if (p.name == "6_qr") qr = p; });
+    if (!qp || !qp.geoms.length || !qr || !qr.geoms.length) { out.push(Lx("לא ניתן ליצור קוד QR מהקישור (ארוך מדי?). נסו קישור קצר", "Couldn’t build a QR code from the link (too long?). Try a short link")); return out; }
+    var bb = new THREE.Box3(); qp.geoms.forEach(function (g) { g.computeBoundingBox(); bb.union(g.boundingBox); });
+    var mod = 1.1 * z.sc;
+    if (mod < 0.8) out.push(Lx("מודול ה-QR קטן (" + mod.toFixed(2) + " מ״מ) וקשה להדפסה ולסריקה – קצרו את הקישור או הגדילו את משטח ההדפסה", "The QR modules are small (" + mod.toFixed(2) + " mm) – hard to print and scan. Shorten the link or use a larger bed"));
+    if (qp.color && qr.color && lumRatio(qp.color, qr.color) < 3) out.push(Lx("ניגודיות נמוכה בין לוחית ה-QR לקוד (או הדפסה בצבע אחד) – הקוד ייסרק פחות טוב. בחרו צבעי מעמד וכיתוב שונים והדפיסו ב-2 צבעים", "Low contrast between the QR plate and code (or single-color print) – it will scan less reliably. Pick different stand/text colors and print in 2 colors"));
+    return out;
+  }
+  function extraWarn(P, z) {
+    var ex = textWarn().concat(qrWarn(P, z)), w = $("warn");
+    if (!ex.length || !w) return;
+    var cur = /^✅/.test(w.textContent) ? "" : w.innerHTML;
+    w.innerHTML = (cur ? cur + "<br>" : "") + ex.map(function (x) { return "⚠️ " + x; }).join("<br>");
+  }
   function hookSize() {
     if (typeof window.showSize !== "function" || window.showSize.__ux) return;
     var orig = window.showSize;
@@ -196,6 +253,7 @@
           + "<table>" + rows.map(function (r) { return "<tr><td>" + r[0] + "</td><td>" + Math.round(r[1]) + " " + Lx("גר׳", "g") + "</td></tr>"; }).join("") + "</table>"
           + '<span class="hint">' + Lx("הערכה לפי מילוי 15% וגובה שכבה 0.2 מ״מ. הזמן והמשקל האמיתיים תלויים במדפסת ובהגדרות הסלייסר.", "Based on 15% infill and 0.2 mm layers. Real time and weight depend on your printer and slicer settings.") + "</span>";
       } catch (e) { /* הערכה היא בונוס – לא שוברים את התצוגה */ }
+      try { extraWarn(P, scaleFor(P)); } catch (e) { /* אזהרות הן בונוס */ }
     };
     w.__ux = 1; window.showSize = w;
     try { if (typeof update === "function") update(); } catch (e) { }
