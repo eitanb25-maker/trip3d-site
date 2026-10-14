@@ -83,10 +83,11 @@
     if (s.max != null) o += " · " + Lx("שיא ", "peak ") + Math.round(s.max).toLocaleString("en-US") + " " + Lx("מ׳", "m");
     return o;
   }
-  function importTrack(text, fromTrkInput) {
+  function importTrack(text, fromTrkInput, over) {
     var t;
     try { t = parseTrack(text); } catch (e) { if (fromTrkInput) msg(Lx("לא נמצא מסלול בקובץ (צריך קובץ GPX עם נקודות מסלול)", "No track found (needs a GPX file with track points)")); return false; }
     var st = stats(t.segs);
+    if (over) for (var ok in over) st[ok] = over[ok]; /* נתונים רשמיים של תבנית מוכנה (לא של הקו המקורב) */
     TRK = { n: t.n, segs: thin(t.segs, 1500), st: st, w: TRK ? TRK.w : "1.2", on: true, ins: TRK ? TRK.ins : "" };
     paint();
     var warn = "";
@@ -146,7 +147,7 @@
     var s = TRK.st;
     info.innerHTML = "<b>" + (TRK.n ? TRK.n + " · " : "") + Lx("סטטיסטיקת מסלול", "Track stats") + "</b><br>"
       + "📏 " + s.km.toFixed(2) + " " + Lx("ק״מ", "km") + " · " + s.n.toLocaleString("en-US") + " " + Lx("נקודות", "points") + "<br>"
-      + (s.max != null ? "⛰ " + Lx("שיא גובה: ", "Peak: ") + Math.round(s.max).toLocaleString("en-US") + " " + Lx("מ׳", "m") + " · " + Lx("נמוך: ", "low: ") + Math.round(s.min).toLocaleString("en-US") + " " + Lx("מ׳", "m") + " · " + Lx("עלייה מצטברת: ", "gain: ") + Math.round(s.gain).toLocaleString("en-US") + " " + Lx("מ׳", "m") + "<br>" : "<span class='hint'>" + Lx("אין נתוני גובה בקובץ", "No elevation data in the file") + "</span><br>")
+      + (s.max != null ? "⛰ " + Lx("שיא גובה: ", "Peak: ") + Math.round(s.max).toLocaleString("en-US") + " " + Lx("מ׳", "m") + (s.min != null ? " · " + Lx("נמוך: ", "low: ") + Math.round(s.min).toLocaleString("en-US") + " " + Lx("מ׳", "m") : "") + (s.gain != null ? " · " + Lx("עלייה מצטברת: ", "gain: ") + Math.round(s.gain).toLocaleString("en-US") + " " + Lx("מ׳", "m") : "") + "<br>" : "<span class='hint'>" + Lx("אין נתוני גובה בקובץ", "No elevation data in the file") + "</span><br>")
       + (s.hrs != null ? "⏱ " + (s.hrs < 1 ? Math.round(s.hrs * 60) + " " + Lx("דק׳", "min") : s.hrs.toFixed(1) + " " + Lx("שע׳", "h")) : "");
     $("trkw").value = TRK.w; $("trkon").checked = TRK.on !== false; $("trkst").checked = !!TRK.ins;
   }

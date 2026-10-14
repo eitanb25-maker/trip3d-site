@@ -17,6 +17,8 @@
   Cache-Control: no-cache
 /viz.js
   Cache-Control: no-cache
+/content.js
+  Cache-Control: no-cache
 /botengine.js
   Cache-Control: no-cache
 /botstudio.html
