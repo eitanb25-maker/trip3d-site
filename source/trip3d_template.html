@@ -262,9 +262,11 @@ let TPLSRC=null,LANG="he",grp=null,multiNames=[],MULTI=false,TOOL="stand",crop=n
 const L_=(he,en)=>LANG=="en"?en:he;
 const TARGET={key:55,magnet:62,orn:70,puzzle:130,holder:100};
 let water={lakes:[],rivers:[]},countries={},raw=[],PR={cx:0,cy:0,k:1,s:1},pins=[],flagGrid=null;
+// מדינות שחוצות את קו התאריך (פיג'י, רוסיה): מאחדים את הרכיבים בצד המזרחי כדי שלא יימתחו על פני כל העולם
+function fixAM(n,rs){if(n=="Antarctica")return rs;const wide=rs.some(r=>{let a=1e9,b=-1e9;r.forEach(p=>{a=Math.min(a,p[0]);b=Math.max(b,p[0])});return b-a>180});return wide?rs.map(r=>r.map(p=>p[0]<0?[p[0]+360,p[1]]:p)):rs}
 // load countries from datamaps topology
 try{const T=Datamap.prototype.worldTopo,o=Object.values(T.objects)[0],fc=topojson.feature(T,o);
-  fc.features.forEach(f=>{const g=f.geometry;if(!g)return;const rs=g.type=="Polygon"?[g.coordinates[0]]:g.type=="MultiPolygon"?g.coordinates.map(p=>p[0]):[];if(rs.length)countries[f.properties.name]=rs})}catch(e){}
+  fc.features.forEach(f=>{const g=f.geometry;if(!g)return;const rs=g.type=="Polygon"?[g.coordinates[0]]:g.type=="MultiPolygon"?g.coordinates.map(p=>p[0]):[];if(rs.length)countries[f.properties.name]=fixAM(f.properties.name,rs)})}catch(e){}
 let fromLib=Object.keys(countries).length>0;
 if(!fromLib){for(const k in FB)countries[k]=[FB[k]];$("msg").textContent="לא הצלחתי לטעון את רשימת המדינות המלאה – מוצגות שתי מדינות בלבד. אפשר להעלות GeoJSON."}
 const ALIAS={"United States of America":"United States","Democratic Republic of the Congo":"Congo - Kinshasa","Republic of the Congo":"Congo - Brazzaville","Ivory Coast":"Côte d’Ivoire","Republic of Serbia":"Serbia","United Republic of Tanzania":"Tanzania","Czech Republic":"Czechia","Swaziland":"Eswatini","East Timor":"Timor-Leste","Macedonia":"North Macedonia","Myanmar":"Myanmar (Burma)","The Bahamas":"Bahamas","Guinea Bissau":"Guinea-Bissau","Cape Verde":"Cabo Verde","Palestine":"Palestinian Territories","Falkland Islands":"Falkland Islands","Vatican":"Vatican City","Hong Kong":"Hong Kong SAR China","Macau":"Macao SAR China","Republic of Korea":"South Korea","Bosnia and Herzegovina":"Bosnia & Herzegovina","Trinidad and Tobago":"Trinidad & Tobago","Antigua and Barbuda":"Antigua & Barbuda","Saint Kitts and Nevis":"St. Kitts & Nevis","Saint Vincent and the Grenadines":"St. Vincent & Grenadines","Sao Tome and Principe":"São Tomé & Príncipe","Saint Lucia":"St. Lucia"},HE={};
@@ -286,7 +288,7 @@ function fit(){const rs=pick(raw);let a=1e9,b=-1e9,c=1e9,d=-1e9;rs.forEach(r=>{c
   const cy=(c+d)/2,k=Math.cos(cy*Math.PI/180);PR={cx:(a+b)/2,cy,k,s:70/Math.max((b-a)*k,d-c)};PR.rings=rs.map(r=>r.map(([x,y])=>toMM(x,y)));PR.gr=grp?grp.map(g=>(crop?clipAll(pickOne(g)):pickOne(g)).map(r=>r.map(([x,y])=>toMM(x,y)))):null;PR.w=(b-a)*k*PR.s;PR.h=(d-c)*PR.s;
   {const eps=window.meshEps?meshEps():(LOWQ?.35:.1),simp=r=>{if(r.length<12)return r;const o=[r[0]];for(let i=1;i<r.length-1;i++){const q=o[o.length-1];if(Math.hypot(r[i][0]-q[0],r[i][1]-q[1])>=eps)o.push(r[i])}o.push(r[r.length-1]);return o.length>=6?o:r};PR.rings=PR.rings.map(simp);if(PR.gr)PR.gr=PR.gr.map(g=>g.map(simp))}
   LM=new Uint8Array(N*N);for(let j=0;j<N;j++)for(let i=0;i<N;i++){const x=-35+(i+.5)*CS,y=-35+(j+.5)*CS;LM[j*N+i]=PR.rings.some(r=>{let c=false;for(let p=0,q=r.length-1;p<r.length;q=p++){const u=r[p],v=r[q];if((u[1]>y)!=(v[1]>y)&&x<(v[0]-u[0])*(y-u[1])/(v[1]-u[1])+u[0])c=!c}return c})?1:0}}
-const toMM=(lo,la)=>[(lo-PR.cx)*PR.k*PR.s,(la-PR.cy)*PR.s],fromMM=(x,y)=>[x/(PR.k*PR.s)+PR.cx,y/PR.s+PR.cy];
+const toMM=(lo,la)=>{let d=lo-PR.cx;if(d>180)d-=360;else if(d<-180)d+=360;return[d*PR.k*PR.s,(la-PR.cy)*PR.s]},fromMM=(x,y)=>[x/(PR.k*PR.s)+PR.cx,y/PR.s+PR.cy];
 $("rg").onclick=()=>{draw={mode:"region",pts:[]};$("rg").style.outline="2px solid var(--ac)";$("msg").textContent="גררו מלבן על המפה כדי לבחור את האזור"};
 $("rgx").onclick=()=>{crop=null;fit();update()};
 $("cin").onchange=()=>{const n=findC($("cin").value);if(n)setCountry(countries[n])};
