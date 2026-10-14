@@ -279,7 +279,7 @@ const area=r=>{let a=0;for(let i=0;i<r.length;i++){const p=r[i],q=r[(i+1)%r.leng
 const bb=r=>{let a=1e9,b=-1e9,c=1e9,d=-1e9;r.forEach(([x,y])=>{a=Math.min(a,x);b=Math.max(b,x);c=Math.min(c,y);d=Math.max(d,y)});return[a,b,c,d]};
 function clipRing(r,[x0,y0,x1,y1]){let o=r;const E=[[p=>p[0]>=x0,(a,b)=>[x0,a[1]+(b[1]-a[1])*(x0-a[0])/(b[0]-a[0])]],[p=>p[0]<=x1,(a,b)=>[x1,a[1]+(b[1]-a[1])*(x1-a[0])/(b[0]-a[0])]],[p=>p[1]>=y0,(a,b)=>[a[0]+(b[0]-a[0])*(y0-a[1])/(b[1]-a[1]),y0]],[p=>p[1]<=y1,(a,b)=>[a[0]+(b[0]-a[0])*(y1-a[1])/(b[1]-a[1]),y1]]];
   for(const [inn,ix] of E){const i=o;o=[];for(let k=0;k<i.length;k++){const a=i[k],b=i[(k+1)%i.length];if(inn(b)){if(!inn(a))o.push(ix(a,b));o.push(b)}else if(inn(a))o.push(ix(a,b))}if(!o.length)break}return o}
-const clipAll=rs=>rs.map(r=>clipRing(r,crop)).filter(r=>r.length>=3);
+const clipAll=rs=>{const a=rs.map(r=>clipRing(r,crop)).filter(r=>r.length>=3);return window.polyCrop?polyCrop(a):a};
 function pick(rs){const b=grp?grp.flatMap(pickOne):pickOne(rs);return crop?clipAll(b):b}
 function pickOne(rs){if($("far").checked||rs.length<2)return rs;const A=rs.map(area),m=A.indexOf(Math.max(...A)),[a,b,c,d]=bb(rs[m]),mx=(a+b)/2,my=(c+d)/2,lim=.6*Math.max(b-a,d-c)+2;
   return rs.filter((r,i)=>{if(i==m)return true;if(A[i]<A[m]*5e-4)return false;const [p,q,s,t]=bb(r);return Math.hypot((p+q)/2-mx,(s+t)/2-my)<=lim})}

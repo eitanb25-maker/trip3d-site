@@ -21,6 +21,10 @@
   Cache-Control: no-cache
 /prod.js
   Cache-Control: no-cache
+/terrain.js
+  Cache-Control: no-cache
+/cropfree.js
+  Cache-Control: no-cache
 /botengine.js
   Cache-Control: no-cache
 /botstudio.html
