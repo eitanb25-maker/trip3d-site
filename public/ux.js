@@ -148,12 +148,16 @@
       b.addEventListener("blur", hideTip);
       lab.appendChild(b);
     });
-    document.addEventListener("click", hideTip); addEventListener("scroll", hideTip, true);
-    document.addEventListener("keydown", function (e) { if (e.key == "Escape") hideTip(); });
+    if (!addTips.done) {
+      addTips.done = 1;
+      document.addEventListener("click", hideTip); addEventListener("scroll", hideTip, true);
+      document.addEventListener("keydown", function (e) { if (e.key == "Escape") hideTip(); });
+    }
   }
+  window.uxAddTips = function (map) { Object.keys(map).forEach(function (k) { TIPS[k] = map[k]; }); addTips(); };
 
   /* ---------- מידות, משקל וזמן הדפסה (הערכה) ---------- */
-  var GROUP = [["base", "מעמד", "Stand", /^(1_|6_qr)/], ["map", "מפה והרים", "Map & relief", /^(2_country|2a_|2c_|2d_|2f_)/], ["water", "מים", "Water", /^2b_/], ["text", "כיתוב ודגל", "Text & flag", /^(4_|5_flag)/], ["pins", "סיכות ומסלול", "Pins & route", /^(3_|3b_)/]];
+  var GROUP = [["base", "מעמד", "Stand", /^(1_|6_qr)/], ["map", "מפה והרים", "Map & relief", /^(2_country|2a_|2c_|2d_|2f_)/], ["water", "מים", "Water", /^2b_/], ["text", "כיתוב ודגל", "Text & flag", /^(4_|5_flag)/], ["pins", "סיכות ומסלול", "Pins & route", /^(3_|3b_|3c_)/]];
   function volMm3(geoms) {
     var v = 0;
     geoms.forEach(function (ge) {
@@ -177,7 +181,8 @@
         var hz = (bb.max.z - bb.min.z) * z.sc / 10;
         var sz = $("sz");
         if (sz && isFinite(hz) && hz > 0) sz.textContent = Lx("גודל בהדפסה: ", "Print size: ") + z.w.toFixed(1) + "×" + z.h.toFixed(1) + "×" + hz.toFixed(1) + " " + Lx("ס״מ (ר×ע×ג)", "cm (W×D×H)") + (z.sc < 1 && TOOL == "stand" ? Lx(" (הוקטן להתאים למשטח)", " (scaled to fit the bed)") : "");
-        var rows = [], tot = 0;
+        var rows = [], tot = 0, tris = 0;
+        P.forEach(function (p) { p.geoms.forEach(function (g) { tris += g.index ? g.index.array.length / 3 : g.attributes.position.array.length / 9; }); });
         GROUP.forEach(function (gr) {
           var gs = []; P.forEach(function (p) { if (gr[3].test(p.name)) gs.push.apply(gs, p.geoms); });
           if (!gs.length) return;
@@ -186,6 +191,7 @@
         var s = $("uxsum"); if (!s) return;
         s.innerHTML = "<b>" + Lx("סיכום להדפסה (הערכה)", "Print summary (estimate)") + "</b><br>"
           + "📐 " + z.w.toFixed(1) + "×" + z.h.toFixed(1) + "×" + hz.toFixed(1) + " " + Lx("ס״מ (אורך × רוחב × גובה)", "cm (L × W × H)") + "<br>"
+          + "🔺 " + Math.round(tris).toLocaleString() + " " + Lx("משולשים", "triangles") + "<br>"
           + "⚖️ " + Lx("כ-", "≈ ") + Math.round(tot) + " " + Lx("גרם PLA", "g PLA") + " · ⏱ " + Lx("כ-", "≈ ") + fmtH(tot / GPH)
           + "<table>" + rows.map(function (r) { return "<tr><td>" + r[0] + "</td><td>" + Math.round(r[1]) + " " + Lx("גר׳", "g") + "</td></tr>"; }).join("") + "</table>"
           + '<span class="hint">' + Lx("הערכה לפי מילוי 15% וגובה שכבה 0.2 מ״מ. הזמן והמשקל האמיתיים תלויים במדפסת ובהגדרות הסלייסר.", "Based on 15% infill and 0.2 mm layers. Real time and weight depend on your printer and slicer settings.") + "</span>";

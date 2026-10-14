@@ -71,7 +71,7 @@ function acctOpen(){const s=API.session;if(!s){authOpen("login");return}const q=
   $("ac_out").onclick=async()=>{await API.j("POST","/auth/logout");await API.refresh();authClose();updateAcct();renderGallery()};if($("ac_adm"))$("ac_adm").onclick=()=>location.href="/admin.html";
   $("ac_pg").onclick=async()=>{const m=$("ac_pm");try{const r=await API.j("POST","/me/redeem",{code:$("ac_pc").value});m.textContent="🎁 "+r.text;m.style.color="#16a34a";await API.refresh();updateAcct()}catch(e){m.textContent=e.message;m.style.color="#dc2626"}};
   {const ch=API.me.challenge,el=$("ac_ch");if(el&&API.me.perkOk===false)el.textContent="✉️ "+L_("אמתו את כתובת המייל כדי לקבל הטבות, מתנות ולהגיב בגלריה","Verify your email to receive perks and gifts and to comment in the gallery");else if(el&&ch)el.textContent="🎯 "+L_("אתגר השבוע: מזכרות מ-"+ch.n+" מדינות שונות","Weekly challenge: souvenirs from "+ch.n+" different countries")+" – "+(ch.done?L_("הושלם ✔","done ✔"):ch.have+"/"+ch.n+" (+"+ch.reward+" "+L_("הורדות","downloads")+")")}
-  try{drawMap()}catch(e){}
+  try{drawAcMap()}catch(e){}
   try{subBox()}catch(e){}try{window.chatBtn&&window.chatBtn()}catch(e){}
   try{printsBox()}catch(e){}
   API.j("GET","/ref/top").then(r=>{const el=$("ac_rt");if(el&&r.items&&r.items.length)el.textContent="👑 "+L_("מזמינים מובילים החודש","Top inviters this month")+": "+r.items.slice(0,3).map(x=>["🥇","🥈","🥉"][x.place-1]+" "+x.name+" ("+x.n+")").join("  ")}).catch(()=>{});
@@ -342,7 +342,7 @@ function perkBar(){applyTexts();const home=document.querySelector("#home .box");
 try{perkBar()}catch(e){}
 
 // ---------- מפת המדינות האישית ----------
-function drawMap(){const cv=$("ac_map");if(!cv||typeof countries=="undefined")return;
+function drawAcMap(){const cv=$("ac_map");if(!cv||typeof countries=="undefined")return;
   const vis=new Set(((API.me&&API.me.countries)||[]).flatMap(n=>String(n).split("+")).map(n=>findC(n)).filter(Boolean)),rs=getComputedStyle(document.documentElement),ac=(rs.getPropertyValue("--ac")||"").trim()||"#d97706",bd=(rs.getPropertyValue("--bd")||"").trim()||"#94a3b8",W=cv.width,H=cv.height,c=cv.getContext("2d");
   c.clearRect(0,0,W,H);const X=lo=>(lo+180)/360*W,Y=la=>(82-la)/(82+58)*H;
   const paint=(name,fill,stroke)=>{c.fillStyle=fill;c.strokeStyle=stroke;c.lineWidth=.6;for(const ring of countries[name]||[]){if(!ring||ring.length<3)continue;c.beginPath();ring.forEach((p,i)=>i?c.lineTo(X(p[0]),Y(p[1])):c.moveTo(X(p[0]),Y(p[1])));c.closePath();c.fill();c.stroke()}};

@@ -13,6 +13,8 @@
   Cache-Control: no-cache
 /ux.js
   Cache-Control: no-cache
+/adv.js
+  Cache-Control: no-cache
 /botengine.js
   Cache-Control: no-cache
 /botstudio.html
