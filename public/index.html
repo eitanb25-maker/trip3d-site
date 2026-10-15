@@ -301,6 +301,8 @@ const ALIAS={"United States of America":"United States","Democratic Republic of 
 try{const en=new Intl.DisplayNames("en",{type:"region"}),he=new Intl.DisplayNames("he",{type:"region"}),A="ABCDEFGHIJKLMNOPQRSTUVWXYZ",by={};
   for(const a of A)for(const b of A){const c=a+b,n=en.of(c);if(n&&n!=c)by[n.toLowerCase()]=he.of(c)}
   Object.keys(countries).forEach(k=>{const h=by[(ALIAS[k]||k).toLowerCase()];if(h)HE[k]=h})}catch(e){}
+/* שמות בעברית שהדפדפן לא מספק (שם חדש כמו Türkiye, או שטחים שאינם מדינה ב-ICU) */
+Object.entries({"Turkey":"טורקיה","Northern Cyprus":"צפון קפריסין","Falkland Islands":"איי פוקלנד","Somaliland":"סומלילנד","West Bank":"הגדה המערבית","French Southern and Antarctic Lands":"הטריטוריות הדרומיות והאנטארקטיות של צרפת"}).forEach(([k,h])=>{if(countries[k]&&!HE[k])HE[k]=h});
 const norm=x=>(x||"").trim().toLowerCase(),findC=v=>{v=norm(v);if(!v)return undefined;const k=Object.keys(countries).find(k=>norm(k)==v||norm(HE[k])==v);return k&&window.cBlocked&&window.cBlocked(k)?undefined:k},cname=k=>LANG=="en"?k:(HE[k]||k);
 Object.keys(countries).sort().forEach(k=>{$("cl").append(new Option(k));if(HE[k])$("cl").append(new Option(HE[k]))});
 const area=r=>{let a=0;for(let i=0;i<r.length;i++){const p=r[i],q=r[(i+1)%r.length];a+=p[0]*q[1]-q[0]*p[1]}return Math.abs(a/2)};
