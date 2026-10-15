@@ -7,7 +7,7 @@ export default async () => {
   try { const n = await subReminders(); if (n) console.log("sub reminders", n); } catch (e) { console.error("sub reminders failed", e); }
   try {
     const st1 = await store(), set1 = (await st1.get("settings")) || {};
-    if (set1.dailyCheck !== false) { const bad = await dailyHealth(); if (bad.length) await notify("🩺 בדיקת בריאות יומית: נמצאו בעיות\n• " + bad.join("\n• ") + "\n\nפרטים בלוח הבקרה ← בדיקות."); }
+    if (set1.dailyCheck !== false) { const bad = await dailyHealth(); if (bad.length) await notify("🩺 בדיקת בריאות יומית: נמצאו בעיות\n• " + bad.join("\n• ") + "\n\nפרטים בלוח הבקרה ← בדיקות."); else await notify("✅ סריקת בריאות יומית הסתיימה: הכול תקין", undefined, { noMail: true }); }
   } catch (e) { console.error("daily health failed", e); }
   try {
     // ביום הראשון בחודש: פרסים אוטומטיים למובילי החודש שהסתיים

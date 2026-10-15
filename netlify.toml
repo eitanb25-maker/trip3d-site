@@ -32,3 +32,7 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
     X-Frame-Options = "SAMEORIGIN"
+
+# הודעה לדיסקורד אחרי כל עדכון (ראו netlify/plugins/discord-deploy)
+[[plugins]]
+  package = "./netlify/plugins/discord-deploy"

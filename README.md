@@ -32,7 +32,7 @@
 | `GOOGLE_CLIENT_ID` | אופציונלי | להתחברות עם Google (ראו למטה) |
 | `VAPID_PUBLIC`, `VAPID_PRIVATE` | אופציונלי | התראות דחיפה לדפדפן (זוג מפתחות ES256 בפורמט base64url; בלעדיהם הכפתור 🔔 לא מופיע) |
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | אופציונלי | התראות בטלגרם |
-| `DISCORD_WEBHOOK_URL` | אופציונלי | התראות בדיסקורד |
+| `DISCORD_WEBHOOK_URL` | אופציונלי | התראות בדיסקורד: תקלות, דיווחים, הצעות, סריקת בריאות יומית והודעה אחרי כל עדכון (תוסף `netlify/plugins/discord-deploy`) |
 | `WHATSAPP_PHONE` + `WHATSAPP_APIKEY` | אופציונלי | התראות תקלה בוואטסאפ (CallMeBot). נשלחות רק הודעות תקלה ואבטחה |
 | `NOTIFY_EMAIL` | אופציונלי | כתובת שמקבלת התראות מנהל במייל (דורש גם `RESEND_API_KEY`) |
 
