@@ -60,3 +60,5 @@
   Cache-Control: no-cache
 /mobile.js
   Cache-Control: no-cache
+/colors.js
+  Cache-Control: no-cache

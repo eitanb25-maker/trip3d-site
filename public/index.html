@@ -28,7 +28,7 @@
 <script src="/litho.js" defer></script>
 <script src="/mech.js" defer></script>
 <script src="/fab.js" defer></script>
-<script src="/spin.js" defer></script><script src="/undo.js" defer></script><script src="/assemble.js" defer></script><script src="/postcard.js" defer></script><script src="/mobile.js" defer></script>
+<script src="/spin.js" defer></script><script src="/undo.js" defer></script><script src="/assemble.js" defer></script><script src="/postcard.js" defer></script><script src="/mobile.js" defer></script><script src="/colors.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/1.6.19/topojson.min.js"></script>
@@ -778,7 +778,12 @@ const STY={classic:{n:"קלאסי",c:{base:"#d8d3c4",land:"#6aa05a",water:"#2f80
 beach:{n:"חוף וים",c:{base:"#f2e3b8",land:"#e9c46a",water:"#2a9d8f",relief:"#c8963e",pin:"#e76f51",text:"#264653"}},
 alpine:{n:"הרים ושלג",c:{base:"#e5e9ee",land:"#7fa38b",water:"#4ea8de",relief:"#6b7280",pin:"#ef4444",text:"#1f2937"}},
 night:{n:"לילה",c:{base:"#1f2937",land:"#3b4a63",water:"#38bdf8",relief:"#64748b",pin:"#fbbf24",text:"#e5e7eb"}},
-minimal:{n:"מינימליסטי",c:{base:"#f5f5f4",land:"#a8a29e",water:"#93c5fd",relief:"#78716c",pin:"#111827",text:"#111827"}}};
+minimal:{n:"מינימליסטי",c:{base:"#f5f5f4",land:"#a8a29e",water:"#93c5fd",relief:"#78716c",pin:"#111827",text:"#111827"}},
+pastel:{n:"פסטל",c:{base:"#fdf2e9",land:"#b7d3a8",water:"#a5d8ff",relief:"#d4b896",pin:"#f08080",text:"#5b5b5b"}},
+forest:{n:"יער עמוק",c:{base:"#2d3a2e",land:"#4f7942",water:"#3b82a0",relief:"#8a7a5a",pin:"#f59e0b",text:"#e8efe0"}},
+desert:{n:"מדבר",c:{base:"#e8d5b5",land:"#d9a066",water:"#5fa8a0",relief:"#a0522d",pin:"#7c2d12",text:"#3b2a1a"}},
+contrast:{n:"ניגודיות גבוהה",c:{base:"#ffffff",land:"#111827",water:"#60a5fa",relief:"#6b7280",pin:"#ef4444",text:"#111827"}},
+violet:{n:"סגול",c:{base:"#ede9fe",land:"#8b5cf6",water:"#38bdf8",relief:"#6d28d9",pin:"#f59e0b",text:"#3b0764"}}};
 const EM=e=>`<div class="em">${e}</div>`,SWt=c=>`<div class="sw">${Object.values(c).map(v=>`<i style="background:${v}"></i>`).join("")}</div>`;
 const SHN={circle:"עיגול",square:"ריבוע",round:"ריבוע מעוגל",hex:"משושה",oct:"מתומן",oval:"אליפסה"},PNN={ball:["כדור","🔴"],cone:["סיכה","📍"],col:["עמוד","🗼"],cube:["קובייה","🧊"],star:["כוכב","⭐"],heart:["לב","❤️"]},FLN={none:["בלי דגל","🚫"],lib:["דגל המדינה (אוטומטי)","🏴"],h3:["פסים אופקיים","☰"],v3:["פסים אנכיים","⫼"],img:["תמונת דגל","🖼️"]};
 const STALL=[{k:"loc",t:"איפה הייתם? 🌍",type:"text"},
@@ -931,7 +936,7 @@ const X={"⚡ מצב מהיר":"⚡ Fast mode","✨ איכות מלאה":"✨ Fu
 "נסמן אותו בלב גדול.":"We'll mark it with a big heart.","לא הוזנו מקומות, אפשר לדלג.":"No places entered, you can skip.","אין מועדף":"No favorite",
 "הדביקו קישור לאלבום התמונות של הטיול ונבנה תגית QR קטנה להדבקה. אפשר לדלג.":"Paste a link to the trip photo album and we'll build a small QR tag to attach. You can skip.","קישור (לא חובה)":"Link (optional)",
 "נתאים את הגודל והקבצים למדפסת שלכם.":"We'll adapt the size and files to your printer.","דגם (לא חובה)":"Model (optional)","גודל משטח ההדפסה":"Print bed size","ככה נבנה את המודל. אפשר לשנות הכול אחר כך.":"This is how we'll build the model. You can change everything later.",
-"קלאסי":"Classic","חוף וים":"Beach & sea","הרים ושלג":"Mountains & snow","לילה":"Night","מינימליסטי":"Minimal","עיגול":"Circle","ריבוע":"Square","ריבוע מעוגל":"Rounded square","משושה":"Hexagon","מתומן":"Octagon","אליפסה":"Ellipse",
+"פסטל":"Pastel","יער עמוק":"Deep forest","מדבר":"Desert","ניגודיות גבוהה":"High contrast","סגול":"Violet","קלאסי":"Classic","חוף וים":"Beach & sea","הרים ושלג":"Mountains & snow","לילה":"Night","מינימליסטי":"Minimal","עיגול":"Circle","ריבוע":"Square","ריבוע מעוגל":"Rounded square","משושה":"Hexagon","מתומן":"Octagon","אליפסה":"Ellipse",
 "כדור":"Ball","סיכה":"Pin","עמוד":"Column","קובייה":"Cube","כוכב":"Star","לב":"Heart","בלי דגל":"No flag","דגל המדינה (אוטומטי)":"Country flag (automatic)","פסים אופקיים":"Horizontal stripes","פסים אנכיים":"Vertical stripes","תמונת דגל":"Flag image",
 "ים וחופים":"Sea & beaches","הרים וטבע":"Mountains & nature","עיר ותרבות":"City & culture","טיול משפחתי":"Family trip","רומנטי":"Romantic","קטן":"Small","בינוני":"Medium","גדול":"Large","כן, עם השמות":"Yes, with names","רק שם הטיול":"Trip name only","בלי קו":"No line","קו רציף":"Solid line","קו מקווקו":"Dashed line",
 "רגיל":"Regular","עגול ועבה":"Round & bold","חלק":"Smooth","דק":"Thin","עבה":"Thick","שטוח":"Flat","מוגבה":"Raised","צמוד למעמד":"Flush with the stand","מוגבה טיפה":"Slightly raised","מוגבה יותר":"Raised more","מסגרת דקה":"Thin frame","מסגרת עבה":"Thick frame",
