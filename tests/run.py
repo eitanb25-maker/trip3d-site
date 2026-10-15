@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """הרצת כל בדיקות האתר: בדיקות סטטיות, התראות השרת, וחבילות הדפדפן (Playwright) מול שרת מקומי.
-הרצה:  python3 tests/run.py [שם_חבילה ...]     (בלי שמות: הכול)
+הרצה:  python3 tests/run.py [שם_חבילה ...]     (בלי שמות: הכול)    |    python3 tests/run.py --slow   (בדיקות איטיות: מפת אור, מכניקה, כל הכלים x מדינות)
 דרישות: node, pip install playwright && playwright install chromium, npm i --no-save three@0.128.0 (או THREE_JS=נתיב ל-three.min.js).
 חבילה נכשלת אם הסקריפט קרס, אם נמצא Traceback, או אם הודפסה רשימת שגיאות שאינה ריקה (errs [...]).
 שגיאות רשת חיצוניות (ERR_TUNNEL / ERR_NAME / ERR_INTERNET / 404 של משאבים חיצוניים) אינן נחשבות כשל. הפלט המלא נשמר ב-tests/out/."""
@@ -34,16 +34,16 @@ def notify():
     r = subprocess.run(["node", os.path.join(T, "notify.mjs")], capture_output=True, text=True, cwd=T)
     step("התראות שגיאה (נשלחות, מסוננות כפילויות, ניתנות לכיבוי)", r.returncode == 0 and "2 [" in r.stdout and "after off 2" in r.stdout, (r.stdout + r.stderr)[-300:])
 
-def suites(only):
+def suites(only, slow=False):
     srv = subprocess.Popen(["node", os.path.join(T, "serve.mjs")], cwd=T, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     try:
         for _ in range(40):
             try: urllib.request.urlopen("http://localhost:8099/", timeout=1); break
             except Exception: time.sleep(0.25)
-        for f in sorted(glob.glob(T + "/suites/*.py")):
+        for f in sorted(glob.glob(T + ("/slow/*.py" if slow else "/suites/*.py"))):
             n = os.path.basename(f)[:-3]
             if only and n not in only: continue
-            try: r = subprocess.run([sys.executable, f], capture_output=True, text=True, cwd=T + "/suites", timeout=240)
+            try: r = subprocess.run([sys.executable, f], capture_output=True, text=True, cwd=T + "/suites", timeout=900 if slow else 240)
             except subprocess.TimeoutExpired: step("דפדפן: " + n, False, "חריגת זמן"); continue
             out = r.stdout + "\n" + r.stderr
             open(os.path.join(OUT, n + ".log"), "w", encoding="utf8").write(out)
@@ -59,8 +59,8 @@ def suites(only):
         srv.terminate()
 
 if __name__ == "__main__":
-    only = sys.argv[1:]
-    if not only: static(); notify()
-    suites(only)
+    args = sys.argv[1:]; slow = "--slow" in args; only = [a for a in args if a != "--slow"]
+    if not only and not slow: static(); notify()
+    suites(only, slow)
     print("\n%d נכשלו" % len(fails) if fails else "\nהכול עבר")
     sys.exit(1 if fails else 0)
