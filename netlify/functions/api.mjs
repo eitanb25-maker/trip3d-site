@@ -444,7 +444,7 @@ const inner = async (req) => {
       const u = { uid: rid(8), email, name, salt, hash, role: isAdminSetup ? "admin" : "viewer", created: Date.now(), dlTotal: 0, dls: [], verified: isAdminSetup, agreed: Date.now() };
       await attachRef(u, b.ref, req);
       await st.setJSON("e/" + email, u.uid);
-      await bump([["reg", "all"]]); await feed("👤 נרשם: " + u.name);
+      await bump([["reg", "all"]]); await feed("👤 נרשם: " + u.name); if (S.notifyReport) await notify(`👤 משתמש חדש נרשם\n${u.name} (${u.email})`, undefined, { noMail: true });
       if (isAdminSetup) await secEvent("admin_created", email, S);
       else if (mailEnabled()) await sendVerify(req, u);
       return startSession(req, u);
@@ -487,7 +487,7 @@ const inner = async (req) => {
         u = { uid: rid(8), email, name: clean(t.name || email.split("@")[0], 40), role: email === adminMail ? "admin" : "viewer", created: Date.now(), dlTotal: 0, dls: [], google: true, verified: true, agreed: Date.now() };
         await attachRef(u, b.ref, req);
         await st.setJSON("e/" + email, u.uid);
-        await bump([["reg", "all"]]); await feed("👤 נרשם: " + u.name);
+        await bump([["reg", "all"]]); await feed("👤 נרשם: " + u.name); if (S.notifyReport) await notify(`👤 משתמש חדש נרשם\n${u.name} (${u.email})`, undefined, { noMail: true });
       } else if (email === ADMIN_MAIL() && u.role !== "admin") u.role = "admin";
       if (u.blocked) return E(403, "החשבון חסום");
       return startSession(req, u);
@@ -731,7 +731,7 @@ const inner = async (req) => {
         }
         u = { uid: rid(8), email: t.email, name: t.name || t.email.split("@")[0], role: "viewer", created: Date.now(), dlTotal: 0, dls: [], verified: true, agreed: Date.now(), magic: true };
         await st.setJSON("e/" + t.email, u.uid);
-        await bump([["reg", "all"]]); await feed("👤 נרשם: " + u.name);
+        await bump([["reg", "all"]]); await feed("👤 נרשם: " + u.name); if (S.notifyReport) await notify(`👤 משתמש חדש נרשם\n${u.name} (${u.email})`, undefined, { noMail: true });
       } else u.verified = true;
       if (u.blocked) return back(3);
       if (u.totp) return back(4);
@@ -931,6 +931,7 @@ const inner = async (req) => {
       d.fb = { ok: !!b.ok, note: clean(b.note, 300), printer: clean(b.printer, 40), material: clean(b.material, 20), slicer: clean(b.slicer, 20), ts: Date.now() };
       await st.setJSON("d/" + d.id, d);
       await bump([[b.ok ? "fbok" : "fbbad", d.tool]]);
+      if (S.notifyReport) await notify(`${b.ok ? "👍 משוב חיובי על הדפסה" : "👎 משוב שלילי על הדפסה"}\n${me.name} (${me.email})\nכלי: ${d.tool}${d.fb.printer ? " · מדפסת: " + d.fb.printer : ""}${d.fb.material ? " · חומר: " + d.fb.material : ""}${d.fb.note ? "\n" + d.fb.note : ""}`);
       return J({ ok: true });
     }
     if (R === "POST sub/request") {
@@ -953,7 +954,7 @@ const inner = async (req) => {
       if (await rateHit("rp:" + me.uid, 5, 3600e3)) return E(429, "אפשר לשלוח עד 5 דיווחים בשעה");
       const id = Date.now() + "-" + rid(3);
       await st.setJSON("r/" + id, { id, uid: me.uid, name: me.name, email: me.email, ts: Date.now(), message: msg, tool: TOOLS.includes(b.tool) ? b.tool : "", country: clean(b.country, 40), code: String(b.code || "").slice(0, 40000), status: "open" });
-      if (S.notifyReport) await notify(`🐞 דיווח על בעיה\n${me.name} (${me.email})\n${msg.slice(0, 300)}`);
+      if (S.notifyReport) await notify(`🐞 דיווח על בעיה\n${me.name} (${me.email})${b.tool ? "\nכלי: " + clean(b.tool, 20) : ""}${b.country ? " · " + clean(b.country, 40) : ""}\n${msg.slice(0, 1200)}`);
       return J({ ok: true });
     }
 
@@ -967,7 +968,7 @@ const inner = async (req) => {
       const id = Date.now() + "-" + rid(3), name = me ? me.name : "אורח";
       await st.setJSON("r/" + id, { id, uid: me ? me.uid : "", name, email: em, ts: Date.now(), message: msg, tool: "", type: "suggest", page: clean(b.page, 40), status: "open" });
       await feed("💡 " + (msg.startsWith("[שאלה מהעוזר]") ? "שאלה מהבוט" : msg.startsWith("[בקשת שפה]") ? "בקשת שפה" : "הצעה חדשה") + ": " + msg.slice(0, 60));
-      if (S.notifyReport) await notify(`💡 הצעה לשיפור\n${name}${em ? " (" + em + ")" : ""}\n${msg.slice(0, 300)}`);
+      if (S.notifyReport) await notify(`💡 הצעה לשיפור\n${name}${em ? " (" + em + ")" : ""}${b.page ? "\nעמוד: " + clean(b.page, 40) : ""}\n${msg.slice(0, 1200)}`);
       return J({ ok: true });
     }
 
@@ -1623,7 +1624,7 @@ const inner = async (req) => {
         if (Array.isArray(b.early)) next.early = b.early.filter((t) => TOOLS.includes(t));
         if (Array.isArray(b.vip)) next.vip = b.vip.filter((t) => VIP_OPTS.includes(t));
         if ("galReward" in b) next.galReward = Math.max(0, Math.min(10, Math.floor(+b.galReward) || 0));
-        for (const k of ["streakOn", "lbOn", "bannerOn", "maint", "inviteOnly", "notifyDownload", "notifyReport", "errAlert", "aiOn", "extBackup", "requireVerify", "notifySecurity", "autoBackup"]) if (k in b) next[k] = !!b[k];
+        for (const k of ["streakOn", "lbOn", "bannerOn", "maint", "inviteOnly", "notifyDownload", "notifyReport", "errAlert", "errEach", "aiOn", "extBackup", "requireVerify", "notifySecurity", "autoBackup"]) if (k in b) next[k] = !!b[k];
         if ("banner" in b) next.banner = clean(b.banner, 300);
         if (["he", "en"].includes(b.lang)) next.lang = b.lang;
         if ("errThreshold" in b) next.errThreshold = Math.max(1, Math.min(500, Math.floor(+b.errThreshold) || 5));

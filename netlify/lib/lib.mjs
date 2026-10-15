@@ -4,7 +4,7 @@ import crypto from "node:crypto";
 export const TOOLS = ["stand", "multi", "key", "magnet", "orn", "puzzle", "holder"];
 export const DEFAULTS = {
   tools: {}, banner: "", bannerOn: false, maint: false, lang: "he",
-  inviteOnly: false, dlLimit: 5, notifyDownload: true, notifyReport: true, errAlert: true, errThreshold: 5, blocks: [], abuseDl: 20, refBonus: 1, refMax: 5, extBackup: true, aiOn: false, aiLimit: 10, aiGlobal: 300, early: [], vip: [], galReward: 1, streakOn: true, lbOn: true,
+  inviteOnly: false, dlLimit: 5, notifyDownload: true, notifyReport: true, errAlert: true, errEach: true, errThreshold: 5, blocks: [], abuseDl: 20, refBonus: 1, refMax: 5, extBackup: true, aiOn: false, aiLimit: 10, aiGlobal: 300, early: [], vip: [], galReward: 1, streakOn: true, lbOn: true,
   requireVerify: false, notifySecurity: true, autoBackup: true,
   welcomeGift: 2, challengeOn: true, challengeN: 3, challengeReward: 3, annivGift: 3, refPrizeOn: true, goalTarget: 1000, bonusSched: [], texts: {}, subsOn: false, subPlans: [
     { id: "plus", emoji: "🧳", name: "מטייל", price: "19₪ לחודש", days: 30, desc: "לכל מי שיוצר כל שבוע", items: [{ type: "credits", n: 3 }, { type: "daily", n: 5 }, { type: "projects", n: 10 }, { type: "gallery", n: 2 }] },
@@ -401,7 +401,15 @@ export async function errorSpike(S, msg, src = "browser") {
     const limit = Math.max(1, +S.errThreshold || 5);
     const send = !!S.errAlert && w.n >= limit && !w.sent;
     if (send) w.sent = now;
+    // התראה על כל שגיאה (דיסקורד / טלגרם), בלי מייל ובלי וואטסאפ; אותה שגיאה לא נשלחת שוב תוך 10 דקות, ולכל היותר 30 בשעה
+    let each = false;
+    if (S.errEach !== false) {
+      const key = String(src + ":" + String(msg || "").slice(0, 80)), seen = w.seen || (w.seen = {});
+      w.each = w.each || 0;
+      if (w.each < 30 && !(seen[key] && now - seen[key] < 600e3)) { seen[key] = now; w.each++; each = true; }
+    }
     await st.setJSON("n/errwin", w);
+    if (each) await notify(`🐛 שגיאה באתר (${src === "server" ? "שרת" : "דפדפן"})\n${String(msg || "").slice(0, 600)}\n(${w.n} שגיאות בשעה האחרונה)`, undefined, { noMail: true });
     if (send) {
       await alertMail(`⚠️ ${w.n} שגיאות באתר בשעה האחרונה`, `זוהו ${w.n} שגיאות מאז ${new Date(w.start).toISOString()}.\n\nדוגמאות:\n- ${w.samples.join("\n- ")}\n\nלפרטים: לוח הבקרה ← סקירה ← שגיאות אחרונות.\n(המייל הזה נשלח פעם אחת בשעה לכל היותר. אפשר לשנות את הסף או לכבות בהגדרות.)`);
       const body = `זוהו ${w.n} שגיאות בשעה האחרונה (מאז ${new Date(w.start).toISOString()}).\n\nדוגמאות:\n- ${w.samples.join("\n- ")}`;
