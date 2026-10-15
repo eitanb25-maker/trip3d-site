@@ -40,6 +40,10 @@ def bot():
     r = subprocess.run(["node", os.path.join(T, "bot.mjs")], capture_output=True, text=True, cwd=T)
     step("הבוט: שאלות ← תשובות צפויות (tests/bot_cases.json)", r.returncode == 0, (r.stdout + r.stderr)[-400:])
 
+def discord():
+    r = subprocess.run(["node", os.path.join(T, "discord.mjs")], capture_output=True, text=True, cwd=T)
+    step("דיסקורד: הודעות פריסה (הצלחה/כישלון/כתובת לא תקינה)", r.returncode == 0, (r.stdout + r.stderr)[-300:])
+
 def suites(only, slow=False):
     srv = subprocess.Popen(["node", os.path.join(T, "serve.mjs")], cwd=T, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     try:
@@ -66,7 +70,7 @@ def suites(only, slow=False):
 
 if __name__ == "__main__":
     args = sys.argv[1:]; slow = "--slow" in args; only = [a for a in args if a != "--slow"]
-    if not only and not slow: static(); notify(); bot()
+    if not only and not slow: static(); notify(); bot(); discord()
     suites(only, slow)
     json.dump({"passed": sum(r["ok"] for r in results), "total": len(results), "results": results}, open(os.path.join(OUT, "summary.json"), "w", encoding="utf8"), ensure_ascii=False)
     print("\n%d נכשלו" % len(fails) if fails else "\nהכול עבר")

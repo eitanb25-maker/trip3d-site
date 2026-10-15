@@ -1192,7 +1192,7 @@
   ["רווח בין החלקים,רווח,מרווח,טולרנס,הדוק,רפוי,לא מתאים,החלקים לא מתאימים,החלקים לא נכנסים,gap,tolerance,too tight,too loose,parts dont fit,fit","המרווח (Gap) בין חלקים קובע כמה הם הדוקים: 0.2–0.3 מ״מ מתאים לרוב המדפסות. אם החלקים לא נכנסים הגדילו את המרווח, ואם רפויים הקטינו. מדפסות שונות מסתבכות אחרת, אז כדאי חלק בדיקה קטן.","The gap between parts sets how tight they fit: 0.2–0.3 mm suits most printers. If parts don't fit, increase the gap; if loose, decrease it. Printers differ, so test with a small piece first.","",""],
   ["bambu,בומבו,פרוסה,prusa,קריאליטי,creality,אנדר,ender,אלגו,elegoo,anycubic,אניקיוב,סוג מדפסת,איזו מדפסת,my printer,which printer","האתר מתאים לכל מדפסת FDM: Bambu Lab, Prusa, Creality (Ender), Elegoo, Anycubic ועוד. בשאלון בוחרים את גודל המשטח, ואז פותחים את ה-3MF/STL בסלייסר שלכם. הגדרות מומלצות: דיזה 0.4, שכבה 0.2, 3 קירות, בלי תמיכות.","The site suits any FDM printer: Bambu Lab, Prusa, Creality (Ender), Elegoo, Anycubic and more. Choose your bed size in the wizard, then open the 3MF/STL in your slicer. Recommended: 0.4 nozzle, 0.2 layer, 3 walls, no supports.","",""],
   ["להדפיס בעץ,הדפסה מעץ,הדפסה בעץ,גימור שיש,אפקט שיש,אפקט עץ,פילמנט שיש,פילמנט עץ,איך עושים שיש,הדפסה בעץ,marble effect,wood effect,marble filament,wood filament","אפקט שיש או עץ נוצר מהפילמנט עצמו (פילמנט 'marble' או 'wood-fill'): טוענים אותו במדפסת. באתר מרקם שיש/עץ הוא רק תצוגה מקדימה במחשב, והקבצים נשארים זהים.","Marble or wood looks come from the filament itself ('marble' or wood-fill filament): load it in the printer. The site's marble/wood texture is only a desktop preview; the files stay the same.","",""],
-  ["אין לי איי אם אס,מחליפים פילמנט באמצע,להחליף פילמנט באמצע הדפסה,בלי איי אם אס,בלי ams,מדפסת בצבע אחד,החלפת צבע ידנית,להחליף פילמנט באמצע,צבע אחד,בלי מולטי קולור,no ams,single color printer,manual color change,swap filament","בלי AMS יש שתי דרכים: (1) לפצל מעמד ומפה ולהדפיס כל חלק בצבע אחר (פיצול המעמד בלשונית 4), או (2) תוכנית החלפת צבעים ב'מדריך ההדפסה': הסלייסר עוצר בשכבה מסוימת ואתם מחליפים פילמנט ידנית.","Without an AMS: (1) split the stand and map and print each in its own color (Split the stand, tab 4), or (2) use the manual color-change plan in the 'Print guide': the slicer pauses at a given layer and you swap the filament by hand.","",""],
+  ["אין לי איי אם אס,בכמה צבעים בלי איי אם אס,מדפיסים בכמה צבעים בלי,צבעים בלי איי אם אס,צבעים בלי ams,מחליפים פילמנט באמצע,להחליף פילמנט באמצע הדפסה,בלי איי אם אס,בלי ams,מדפסת בצבע אחד,החלפת צבע ידנית,להחליף פילמנט באמצע,צבע אחד,בלי מולטי קולור,no ams,single color printer,manual color change,swap filament","בלי AMS יש שתי דרכים: (1) לפצל מעמד ומפה ולהדפיס כל חלק בצבע אחר (פיצול המעמד בלשונית 4), או (2) תוכנית החלפת צבעים ב'מדריך ההדפסה': הסלייסר עוצר בשכבה מסוימת ואתם מחליפים פילמנט ידנית.","Without an AMS: (1) split the stand and map and print each in its own color (Split the stand, tab 4), or (2) use the manual color-change plan in the 'Print guide': the slicer pauses at a given layer and you swap the filament by hand.","",""],
   ["שמירה בענן,לשמור פרויקט,איך שומרים פרויקט,שומרים פרויקט,פרויקטים שלי,איפה הפרויקטים,פרויקט שנשמר,שמרתי,איפה שמרתי,my projects,where are my projects,saved project","פרויקטים נשמרים אוטומטית בדפדפן כטיוטה, ובחשבון (אחרי התחברות) אפשר לשמור בכמה משבצות ולטעון אותן מכפתור 'טעינה'. אפשר גם לשתף קישור לפרויקט.","Projects autosave as a draft in your browser; signed-in users can keep several slots and load them from 'Load'. You can also share a link to the project.","",""],
   ["נייד,טלפון,מובייל,סמארטפון,תצוגה בטלפון,התצוגה נעלמת,תצוגה קבועה,נעוץ,לנעוץ,mobile,phone,pinned preview,sticky preview","בטלפון בעמידה התצוגה התלת-ממדית נשארת קבועה למעלה והבקרים נגללים מתחתיה. הכפתור 📌 מבטל את הקיבוע אם אתם רוצים יותר מקום.","On a phone held upright the 3D preview stays fixed at the top while the controls scroll below. The 📌 button unpins it if you want more room.","",""],
   ["תקלה,דיווח,שגיאה,לא עובד,לא נטען,מסך לבן,לא רואה את התצוגה,התצוגה לא נטענת,התלת מימד לא נטען,webgl,3d not loading,blank,white screen,preview not loading","אם התצוגה התלת-ממדית לא מופיעה: רעננו את העמוד, ודאו שהדפדפן מעודכן ושהאצת חומרה (WebGL) פעילה, ונסו דפדפן אחר. אם זה נמשך, לחצו '🐞 דיווח על בעיה' – הדיווח יגיע אלינו עם פרטי הדפדפן והפרויקט.","If the 3D preview doesn't appear: refresh, make sure your browser is up to date with hardware acceleration (WebGL) on, and try another browser. If it persists, press '🐞 Report a problem' – it reaches us with your browser details and project.","",""],
@@ -1272,7 +1272,8 @@
   const ui = (lang) => UI[lang] || UI.en;
 
 
-  const norm = (t) => String(t).toLowerCase().normalize("NFD").replace(/[̀-ًͯ-ٰٟـ]/g, "").replace(/[أإآٱ]/g, "ا").replace(/ى/g, "ي").replace(/ة/g, "ه").replace(/ё/g, "е").replace(/ß/g, "ss").replace(/[׳'"?!.,،؟;:¿¡()«»]/g, " ").split(/\s+/).map((w) => w.replace(/^ה+(?=.{3})/, "").replace(/^ال(?=.{3})/, "")).join(" ");
+  const FIN = { ך: "כ", ם: "מ", ן: "נ", ף: "פ", ץ: "צ" };
+  const norm = (t) => String(t).toLowerCase().normalize("NFD").replace(/[̀-ًͯ-ٰٟـ]/g, "").replace(/[أإآٱ]/g, "ا").replace(/ى/g, "ي").replace(/ة/g, "ه").replace(/ё/g, "е").replace(/ß/g, "ss").replace(/[ךםןףץ]/g, (c) => FIN[c]).replace(/[ڪكﮎ]/g, "ك").replace(/[یيۍ]/g, "ي").replace(/[ؤئ]/g, (c) => (c === "ؤ" ? "و" : "ي")).replace(/[٠-٩]/g, (c) => String(c.charCodeAt(0) - 1632)).replace(/[۰-۹]/g, (c) => String(c.charCodeAt(0) - 1776)).replace(/[іїє]/g, (c) => ({ і: "и", ї: "и", є: "е" })[c]).replace(/ґ/g, "г").replace(/æ/g, "ae").replace(/œ/g, "oe").replace(/ø/g, "o").replace(/đ/g, "d").replace(/ł/g, "l").replace(/ı/g, "i").replace(/[׳'"?!.,،؟;:¿¡()«»]/g, " ").split(/\s+/).map((w) => w.replace(/^ה+(?=.{3})/, "").replace(/^ال(?=.{3})/, "")).join(" ");
   let LKB = [], SYNN = null, CSYN = [], VOC = null;
   const synInit = () => { SYNN = SYN.concat(CSYN).map(([c, vs]) => [norm(c).trim(), vs.split(",").map((v) => norm(v).trim()).filter(Boolean)]); };
   const kwOf = (k) => { const w = k.charAt(0) === "="; const nk = norm(w ? k.slice(1) : k).trim(); return { w, nk }; };
@@ -1293,14 +1294,17 @@
   };
 
   // כל המועמדים עם ציון (למסך הבדיקה בסטודיו), ואת הטוב ביותר כמו תמיד
+  const DEFQ = /^(?:מה זה|מהו|מהי|מה הכוונה ב|מה פירוש|מה המשמעות של|מה ההבדל בין|what is|what s|what are|whats|define|meaning of|explain) /;
   const scoreAll = (t) => {
     let best = null, bs = 0; const list = [];
+    const core = t.trim().replace(DEFQ, "").replace(/^(?:ה|ב|ל)(?=.{3})/, "").trim();
     for (const e of KB) {
       let sc = 0;
       for (const k of e[0].split(",")) {
         const { w, nk } = kwOf(k);
         if (!nk) continue;
         if (w ? t.includes(" " + nk + " ") : t.includes(nk)) sc += (k.length >= 4 ? 2 : 1) + (nk.includes(" ") ? 2 : 0) + (w ? 1 : 0);
+        if (core && (nk === core || nk === t.trim().replace(DEFQ, "").trim()) && t.trim() !== nk) sc += 3;
       }
       if (sc > 0) list.push({ src: "kb", sc, e });
       if (sc > bs) { bs = sc; best = e; }
@@ -1361,6 +1365,28 @@
     return changed ? " " + out.join(" ") + " " : t;
   };
 
+
+  // ---- תיקון מקלדת בשפה לא נכונה (למשל "akh" במקום "שלום", או "руддщ" במקום "hello") ----
+  const LAY = (() => {
+    const en = "qwertyuiop[]asdfghjkl;'zxcvbnm,./";
+    const maps = {
+      he: "/'קראטוןםפ][שדגכעיחלךף,זסבהנמצתץ.",
+      ru: "йцукенгшщзхъфывапролджэячсмитьбю.",
+      ar: "ضصثقفغعهخحجدشسيبلاتنمكطئءؤرلاىةوز",
+    };
+    const o = {};
+    for (const k of Object.keys(maps)) { const a = [...maps[k]], f = {}, r = {}; for (let i = 0; i < en.length && i < a.length; i++) { f[en[i]] = a[i]; r[a[i]] = en[i]; } o[k] = { f, r }; }
+    return o;
+  })();
+  const layoutAlts = (q) => {
+    const s = String(q || "").trim().toLowerCase(), out = [];
+    if (!s || s.length > 120) return out;
+    const conv = (m) => [...s].map((c) => (m[c] !== undefined ? m[c] : c)).join("");
+    const latin = /^[a-z0-9 \[\];',./]+$/.test(s), nonlat = /[֐-׿؀-ۿЀ-ӿ]/.test(s);
+    if (latin) { for (const k of ["he", "ru", "ar"]) out.push(conv(LAY[k].f)); }
+    else if (nonlat) { for (const k of ["he", "ru", "ar"]) { const c = conv(LAY[k].r); if (c !== s && /^[a-z0-9 \[\];',./]+$/.test(c)) out.push(c); } }
+    return out;
+  };
   // התאמה מלאה: ישיר ← מילים נרדפות ← תיקון כתיב ← הקשר השיחה הקודמת
   const match = (q, prev) => {
     const t0 = " " + norm(q) + " ";
@@ -1369,6 +1395,12 @@
     if (x.r.bs < 4) {
       const c = correct(t0);
       if (c !== t0) { const y = tryText(c); if (y.r.bs >= 2 && y.r.bs > x.r.bs) { x = y; via = "typo"; used = y.t; corrected = c.trim(); } }
+    }
+    if (x.r.bs < 2) {
+      for (const alt of layoutAlts(q)) {
+        const ta = " " + norm(alt) + " ", y = tryText(ta);
+        if (y.r.bs >= 2 && y.r.bs > x.r.bs) { x = y; via = "layout"; used = y.t; corrected = alt; break; }
+      }
     }
     if (x.r.bs < 2 && prev && t0.trim().split(" ").length <= 4) {
       const tp = " " + norm(prev) + " " + t0.trim() + " ";
@@ -1385,6 +1417,8 @@
 
   window.BotEngine = {
     KB, SYN, norm, match, detect, reply, ui, LANGREQ, ML, faq, topic, hints, expand, correct,
+    addLex(l) { l = l || {}; if (Array.isArray(l.kb)) for (const e of l.kb) if (Array.isArray(e) && e[0] && e[1]) KB.push(e.length >= 5 ? e : [e[0], e[1], e[2] || e[1], e[3] || "", e[4] || ""]); if (Array.isArray(l.syn)) for (const e of l.syn) if (Array.isArray(e) && e[0] && e[1]) SYN.push([String(e[0]), String(e[1])]); SYNN = null; VOC = null; },
+    layoutAlts,
     setCustom(items) { LKB = Array.isArray(items) ? items.filter((x) => x && x.k && x.a) : []; VOC = null; },
     setSyn(list) { CSYN = (Array.isArray(list) ? list : []).filter((x) => Array.isArray(x) && x[0] && x[1]).map((x) => [String(x[0]), String(x[1])]); SYNN = null; VOC = null; },
     counts() { return { kb: KB.length, syn: SYN.length + CSYN.length, custom: LKB.length, vocab: vocab().size }; },

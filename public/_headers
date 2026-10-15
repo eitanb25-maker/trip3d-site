@@ -27,6 +27,8 @@
   Cache-Control: no-cache
 /botengine.js
   Cache-Control: no-cache
+/botlex.js
+  Cache-Control: no-cache
 /botstudio.html
   Cache-Control: no-cache
 /guidetab.js
