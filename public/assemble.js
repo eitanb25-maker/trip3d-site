@@ -13,10 +13,13 @@
   var span = function (he, en) { return '<span data-he="' + he + '" data-en="' + en + '">' + Lx(he, en) + "</span>"; };
 
   var PEG_R = 1.5, CLR = 0.2;                     // רדיוס הפין והמרווח בשקע (מ״מ)
-  var A = { pegs: false, key: false, only: -1, exporting: false, pos: null, zc: null, msg: "" };
+  var A = { pegs: false, key: false, split: false, only: -1, exporting: false, pos: null, zc: null, msg: "" };
 
   var stand = function () { return TOOL == "stand" && !(window.mechApi && mechApi.tilted()) && !(window.lithoApi && lithoApi.on()); };
   var pegsOn = function () { return A.pegs && stand() && !(window.fabApi && fabApi.F && fabApi.F.cut); };
+  var splitOn = function () { return A.split && stand() && !(window.fabApi && fabApi.F && fabApi.F.cut); };
+  /* ייצוא כשני חלקים: עם פינים (kit) או רק פיצול בלי פינים (part) */
+  var kitOn = function () { return (pegsOn() && A.good && A.good.length > 1) || splitOn(); };
   var keyOn = function () { return A.key && stand(); };
   var sockDepth = function (LH) { return Math.max(0.8, LH - 0.7); };
 
@@ -122,7 +125,7 @@
         if (pegsOn()) pegsPatch(P);
         if (keyOn()) keyPatch(P);
       } catch (e) { console.warn("assemble", e); }
-      if (A.exporting && A.only >= 0 && pegsOn() && A.good && A.good.length > 1) {
+      if (A.exporting && A.only >= 0 && kitOn()) {
         if (A.zc == null) A.zc = A.scaleOrig(P);
         var want = A.only == 1, BH = +$("bh").value, GP = +$("gap").value;
         var Q = P.filter(function (p) { return isCountryPart(p.name) == want; });
@@ -144,8 +147,8 @@
   function hookExport() {
     var op = prepareFiles;
     prepareFiles = async function () {
-      if (!pegsOn() || !(A.good && A.good.length > 1)) return op.apply(this, arguments);
-      var files = [], first = null, chk = null, nm = [Lx("מעמד עם פינים", "Stand with pegs"), Lx("מפה עם שקעים", "Map with sockets")];
+      if (!kitOn()) return op.apply(this, arguments);
+      var files = [], first = null, chk = null, pg = pegsOn() && A.good && A.good.length > 1, pre = pg ? "kit" : "part", nm = pg ? [Lx("מעמד עם פינים", "Stand with pegs"), Lx("מפה עם שקעים", "Map with sockets")] : [Lx("מעמד", "Stand"), Lx("מדינה וסיכות", "Country and pins")];
       A.exporting = true; A.zc = null;
       try {
         for (var k = 0; k < 2; k++) {
@@ -153,7 +156,7 @@
           var r = await op.apply(this, arguments);
           if (!first) first = r;
           chk = mergeChk(chk, r.chk || {});
-          r.files.forEach(function (f) { f.name = "kit" + (k + 1) + "_" + (k ? "map" : "stand") + "_" + f.name; f.desc = Lx("חלק " + (k + 1) + " מתוך 2 (" + nm[k] + ") – ", "Part " + (k + 1) + " of 2 (" + nm[k] + ") – ") + f.desc; files.push(f); });
+          r.files.forEach(function (f) { f.name = pre + (k + 1) + "_" + (k ? "map" : "stand") + "_" + f.name; f.desc = Lx("חלק " + (k + 1) + " מתוך 2 (" + nm[k] + ") – ", "Part " + (k + 1) + " of 2 (" + nm[k] + ") – ") + f.desc; files.push(f); });
         }
       } finally { A.exporting = false; A.only = -1; A.zc = null; }
       first.files = files; first.chk = chk || first.chk;
@@ -182,10 +185,10 @@
   }
   function hookProj() {
     var og = getProj, op = putProj;
-    getProj = function () { var o = og.apply(this, arguments); if (A.pegs || A.key) o.asm = { pegs: !!A.pegs, key: !!A.key }; return o; };
+    getProj = function () { var o = og.apply(this, arguments); if (A.pegs || A.key || A.split) o.asm = { pegs: !!A.pegs, key: !!A.key, split: !!A.split }; return o; };
     putProj = function (o) {
       var r = op.apply(this, arguments);
-      try { var a = o && o.asm; A.pegs = !!(a && a.pegs); A.key = !!(a && a.key); paint(); } catch (e) {}
+      try { var a = o && o.asm; A.pegs = !!(a && a.pegs); A.key = !!(a && a.key); A.split = !!(a && a.split); paint(); } catch (e) {}
       return r;
     };
   }
@@ -194,11 +197,11 @@
   function paint() {
     var b = $("asmbox"); if (!b) return;
     var ok = stand(), cut = !!(window.fabApi && fabApi.F && fabApi.F.cut);
-    $("asmpegs").checked = A.pegs; $("asmkey").checked = A.key;
+    $("asmpegs").checked = A.pegs; $("asmkey").checked = A.key; $("asmsplit").checked = A.split; $("asmsplit").disabled = !ok || cut;
     $("asmpegs").disabled = !ok || cut; $("asmkey").disabled = !ok;
     $("asmnote").textContent = !ok ? Lx("זמין במעמד שאינו מוטה ובלי מצב מפת אור.", "Available for the flat stand, without lithophane mode.")
       : cut ? Lx("פינים אינם זמינים יחד עם חיתוך לחלקים. כבו את החיתוך.", "Pegs are not available with the puzzle cut. Turn the cut off.")
-      : A.pegs ? Lx("הייצוא יוציא שני חלקים: kit1 (מעמד עם פינים) ו-kit2 (מפה עם שקעים, מונחת שטוחה). אפשר להוסיף טיפת דבק.", "Export gives two parts: kit1 (stand with pegs) and kit2 (map with sockets, laid flat). A drop of glue helps.") : "";
+      : A.split && !(A.pegs && A.good && A.good.length > 1) ? Lx("הייצוא יוציא שני חלקים: part1 (מעמד) ו-part2 (מדינה וסיכות, מונחת שטוחה).", "Export gives two parts: part1 (stand) and part2 (country and pins, laid flat).") : A.pegs ? Lx("הייצוא יוציא שני חלקים: kit1 (מעמד עם פינים) ו-kit2 (מפה עם שקעים, מונחת שטוחה). אפשר להוסיף טיפת דבק.", "Export gives two parts: kit1 (stand with pegs) and kit2 (map with sockets, laid flat). A drop of glue helps.") : "";
     b.querySelectorAll("[data-he]").forEach(function (e) { e.textContent = isEn() ? e.dataset.en : e.dataset.he; });
   }
   function buildUI() {
@@ -207,10 +210,12 @@
     var cb = function (id, he, en, info) { return '<label style="display:flex;gap:6px;align-items:center;margin-top:8px"><input type="checkbox" id="' + id + '"> ' + span(he, en) + "</label>" + (info ? '<div class="hint">' + span(info[0], info[1]) + "</div>" : ""); };
     d.innerHTML = "<b>" + span("🧩 הרכבה ותלייה", "🧩 Assembly and hanging") + "</b>"
       + cb("asmpegs", "פינים ושקעים: מעמד ומפה כשני חלקים נפרדים", "Pegs and sockets: stand and map as two separate parts", ["מתאים למדפסת בצבע אחד. כל חלק מודפס לבד ומחברים ביד.", "For single-color printers. Print each part alone and snap them together."])
+      + cb("asmsplit", "פיצול: המעמד בנפרד מהמדינה והסיכות", "Split: stand separate from the country and pins", ["שני קבצים להדפסה: המעמד, והמדינה עם הסיכות והמים מונחים שטוחים. בלי פינים (אפשר לשלב עם פינים).", "Two print files: the stand, and the country with pins and water laid flat. No pegs needed (can be combined with pegs)."])
       + cb("asmkey", "מגרעת תלייה (Keyhole) בגב המעמד", "Keyhole slot on the back of the stand", ["אוזן עם חור לתלייה על בורג בקיר (ראש בורג עד 8 מ״מ).", "A tab with a keyhole for hanging on a wall screw (head up to 8 mm)."])
       + '<div id="asmnote" class="hint" role="status"></div>';
     host.insertBefore(d, nav || null);
     $("asmpegs").onchange = function () { A.pegs = this.checked; paint(); update(); };
+    $("asmsplit").onchange = function () { A.split = this.checked; paint(); update(); };
     $("asmkey").onchange = function () { A.key = this.checked; paint(); update(); };
     paint();
   }

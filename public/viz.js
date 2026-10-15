@@ -241,7 +241,8 @@
     $("vdrag").onchange = function () { ST.drag = this.checked; };
     $("vplay").onclick = togglePlay;
     var saved = store.get("trip3d_vmat"); if (saved && MATS[saved]) { ST.mat = saved; $("vmat").value = saved; }
-    if (low) { $("vmat").disabled = true; $("vmat").title = Lx("במצב מהיר הגימורים כבויים", "Finishes are off in fast mode"); ST.mat = "matte"; $("vmat").value = "matte"; }
+    /* במצב מהיר (טלפונים ומכשירים חלשים) הגימורים נשארים זמינים: רק מרקמי שיש ועץ כבדים, ולכן הם מוסתרים שם */
+    if (low) { ["marble", "wood"].forEach(function (k) { var o = $("vmat").querySelector('option[value="' + k + '"]'); if (o) o.remove(); }); if (ST.mat == "marble" || ST.mat == "wood") { ST.mat = "matte"; $("vmat").value = "matte"; } }
     var vc = $("view"); vc.addEventListener("pointerdown", onDown, true); vc.addEventListener("pointermove", onMove, true); vc.addEventListener("pointerup", onUp, true); vc.addEventListener("pointercancel", onUp, true);
     paintLayerLabel();
   }

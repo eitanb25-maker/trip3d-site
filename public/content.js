@@ -98,7 +98,7 @@
   /* הקווים מקורבים: קו ישר בין נקודות ציון ידועות (עם החלקה), לא מסלול GPS. מספרי ק״מ וגובה הם הנתונים המקובלים של המסלול.
      פורמט נקודה: [lon, lat, שם בעברית, שם באנגלית, אייקון, גובה במ׳] */
   var PRESETS = [
-    { id: "int", he: "שביל ישראל", en: "Israel National Trail", sub_he: "מדן עד אילת", sub_en: "Dan to Eilat", countries: ["Israel"], crop: null, km: 1000, loop: false,
+    { id: "int", he: "שביל ישראל", en: "Israel National Trail", sub_he: "מדן עד אילת", sub_en: "Dan to Eilat", countries: ["Israel"], crop: null, km: 1000, loop: false, psz: 0.6,
       pts: [[35.652, 33.248, "דן", "Dan", "flag", 200], [35.41, 32.99, "הר מירון", "Mt Meron", "peak", 1208], [35.55, 32.80, "הכנרת", "Sea of Galilee", "camera", -210], [35.39, 32.69, "הר תבור", "Mt Tabor", "peak", 588],
         [35.03, 32.74, "הכרמל", "Carmel", "tent", 400], [35.21, 31.78, "ירושלים", "Jerusalem", "heart", 780], [34.90, 31.61, "בית גוברין", "Beit Guvrin", "tent", 280], [35.21, 31.26, "ערד", "Arad", "tent", 600],
         [34.80, 30.61, "מצפה רמון", "Mitzpe Ramon", "peak", 850], [34.95, 29.55, "אילת", "Eilat", "flag", 0]] },
@@ -143,6 +143,7 @@
     if (P.crop) { crop = P.crop.slice(); fit(); }
     pins = P.pts.map(function (p) { return { lon: p[0], lat: p[1], name: isEn() ? p[3] : p[2], icon: p[4] }; });
     renderPins();
+    if (P.psz && $("psz")) $("psz").value = P.psz;   // מסלול ארוך וצר: סימונים קטנים כדי שלא יחפפו
     if ($("shownames")) $("shownames").checked = false;   // עשרות שמות לא נכנסים על המעמד; הנקודות והאייקונים נשארים
     $("trip").value = isEn() ? P.en : P.he; $("tsub").value = isEn() ? P.sub_en : P.sub_he;
     try { advDebug.importTrack(presetGpx(P), false, { km: P.km, max: Math.max.apply(null, P.pts.map(function (p) { return p[5]; })), gain: null, min: null }); } catch (e) { console.warn("content", e); }   // נתוני המסלול הרשמיים, לא של הקו המקורב
