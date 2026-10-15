@@ -9,9 +9,9 @@
   var isEn = function () { try { return LANG == "en"; } catch (e) { return false; } };
   var Lx = function (he, en) { return isEn() ? en : he; };
 
-  var MAX = 40, DELAY = 600;
+  var MAX = 40, DELAY = 600, MAXWAIT = 2000;
   var H = { stack: [], i: -1, tool: null };
-  var timer = 0, restoring = false, restoreTimer = 0;
+  var timer = 0, restoring = false, restoreTimer = 0, firstPending = 0;
 
   function snap() {
     var o = getProj(false);
@@ -22,7 +22,7 @@
 
   /* שומר מצב חדש אם משהו השתנה. נקרא אחרי השהיה קצרה כדי שגרירה או הקלדה ייחשבו שינוי אחד */
   function capture() {
-    clearTimeout(timer); timer = 0;
+    clearTimeout(timer); timer = 0; firstPending = 0;
     if (restoring) return;
     var s;
     try { s = snap(); } catch (e) { return; }
@@ -92,7 +92,11 @@
       var r = ou.apply(this, arguments);
       try {
         if (restoring) quietRestore(1200);
-        else { clearTimeout(timer); timer = setTimeout(capture, DELAY); paint(); }
+        else {
+          /* עדכונים ברקע (טעינת גופן, רינדור) מאפסים את ההשהיה שוב ושוב; אחרי MAXWAIT שומרים בכל מקרה */
+          var now = Date.now(); if (!timer) firstPending = now;
+          clearTimeout(timer); timer = setTimeout(capture, now - firstPending > MAXWAIT ? 0 : DELAY); paint();
+        }
       } catch (e) {}
       return r;
     };
@@ -100,7 +104,9 @@
   function init() {
     if (typeof update != "function" || typeof getProj != "function" || typeof putProj != "function") return;
     try { hook(); buildUI(); document.addEventListener("keydown", onKey);
-      ["pointerdown", "focusin"].forEach(function (ev) { document.addEventListener(ev, pre, true); }); } catch (e) { console.warn("undo", e); }
+      ["pointerdown", "focusin"].forEach(function (ev) { document.addEventListener(ev, pre, true); });
+      /* בסיום פעולה (שחרור גרירה, סיום עריכת שדה) שומרים מצב גם אם עדיין ממתין עדכון */
+      ["change", "pointerup"].forEach(function (ev) { document.addEventListener(ev, function () { setTimeout(function () { if (!restoring) capture(); }, 250); }, true); }); } catch (e) { console.warn("undo", e); }
     try { new MutationObserver(paint).observe(document.documentElement, { attributes: true, attributeFilter: ["lang"] }); } catch (e) {}
     window.undoApi = { H: H, undo: undo, redo: redo, capture: capture, reset: function () { reset(snap()); } };
   }

@@ -402,14 +402,15 @@ export async function errorSpike(S, msg, src = "browser") {
     const send = !!S.errAlert && w.n >= limit && !w.sent;
     if (send) w.sent = now;
     // התראה על כל שגיאה (דיסקורד / טלגרם), בלי מייל ובלי וואטסאפ; אותה שגיאה לא נשלחת שוב תוך 10 דקות, ולכל היותר 30 בשעה
-    let each = false;
+    let each = false, rep = 0;
     if (S.errEach !== false) {
-      const key = String(src + ":" + String(msg || "").slice(0, 80)), seen = w.seen || (w.seen = {});
+      const key = String(src + ":" + String(msg || "").slice(0, 80)), seen = w.seen || (w.seen = {}), p = seen[key];
       w.each = w.each || 0;
-      if (w.each < 30 && !(seen[key] && now - seen[key] < 600e3)) { seen[key] = now; w.each++; each = true; }
+      if (p && now - p.t < 600e3) p.n++;                                       // אותה שגיאה: סופרים ולא שולחים שוב
+      else if (w.each < 30) { rep = p ? p.n : 0; seen[key] = { t: now, n: 0 }; w.each++; each = true; }
     }
     await st.setJSON("n/errwin", w);
-    if (each) await notify(`🐛 שגיאה באתר (${src === "server" ? "שרת" : "דפדפן"})\n${String(msg || "").slice(0, 600)}\n(${w.n} שגיאות בשעה האחרונה)`, undefined, { noMail: true });
+    if (each) await notify(`🐛 שגיאה באתר (${src === "server" ? "שרת" : "דפדפן"})\n${String(msg || "").slice(0, 600)}${rep ? `\n(חזרה ${rep} פעמים מאז ההודעה הקודמת)` : ""}\n(${w.n} שגיאות בשעה האחרונה)`, undefined, { noMail: true });
     if (send) {
       await alertMail(`⚠️ ${w.n} שגיאות באתר בשעה האחרונה`, `זוהו ${w.n} שגיאות מאז ${new Date(w.start).toISOString()}.\n\nדוגמאות:\n- ${w.samples.join("\n- ")}\n\nלפרטים: לוח הבקרה ← סקירה ← שגיאות אחרונות.\n(המייל הזה נשלח פעם אחת בשעה לכל היותר. אפשר לשנות את הסף או לכבות בהגדרות.)`);
       const body = `זוהו ${w.n} שגיאות בשעה האחרונה (מאז ${new Date(w.start).toISOString()}).\n\nדוגמאות:\n- ${w.samples.join("\n- ")}`;

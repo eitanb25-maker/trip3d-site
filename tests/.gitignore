@@ -1,0 +1,4 @@
+out/
+suites/*.png
+suites/*.svg
+suites/*.log

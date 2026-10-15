@@ -18,6 +18,8 @@
     + ".uxnav button{flex:1;min-height:44px}"
     + ".uxi{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;margin-inline-start:6px;padding:0;border-radius:50%;border:1px solid var(--bd,#999);background:transparent;color:inherit;font:700 12px/1 system-ui;cursor:help;vertical-align:middle}"
     + "@media (pointer:coarse){.uxi{width:28px;height:28px;font-size:14px}}"
+    + "@media (pointer:coarse){.uxi{position:relative}.uxi::after{content:'';position:absolute;inset:-8px}}"   /* אזור מגע של 44px בלי לשנות את הגודל הנראה */
+    + "@media (prefers-color-scheme:dark){:root:not([data-theme='light']) button.go{--ac:#c2410c}}:root[data-theme='dark'] button.go{--ac:#c2410c}"   /* טקסט לבן על כתום בהיר היה בניגודיות 2.3; על כתום כהה 5.2 */
     + "#uxtip{pointer-events:none;position:fixed;z-index:9999;max-width:min(300px,86vw);padding:10px 12px;border-radius:10px;background:#1f2937;color:#fff;font-size:13px;line-height:1.5;box-shadow:0 6px 24px rgba(0,0,0,.35);display:none}"
     + ".uxsum{margin:10px 0;padding:12px;border-radius:12px;border:1px solid var(--bd,#ddd);font-size:14px;line-height:1.7}"
     + ".uxsum table{width:100%;border-collapse:collapse;margin-top:6px;font-size:13px}.uxsum td{padding:2px 4px;border-top:1px solid var(--bd,#e5e5e5)}"

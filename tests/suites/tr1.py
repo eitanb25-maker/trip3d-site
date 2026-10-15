@@ -1,0 +1,28 @@
+import os
+import json
+exec(open("pr1.py").read().split("    pg.goto")[0].replace("with sync_playwright() as p:","p=sync_playwright().start()\nif 1:") )
+pg.goto("http://localhost:8099/?nomaint=1"); pg.wait_for_timeout(1200)
+pg.evaluate("localStorage.setItem('trip3d_q','high')")
+pg.evaluate("openTool(false,'stand');$('intro').style.display='none';$('cin').value='Italy';$('cin').onchange()"); pg.wait_for_timeout(1000)
+pg.evaluate("$('c_base').value='#2f5d8a';$('c_land').value='#e8dcc0';syncPickers();addPin(12.5,41.9,'Rome');addPin(9.2,45.4,'Milan');$('ncol').value='5';update()"); pg.wait_for_timeout(1000)
+pg.evaluate("uxShowTab(2)")
+print("ui",pg.evaluate("[!!$('tripsbox'),!!window.tripsApi]"),errs[:3])
+pg.set_input_files("#tripsadd","trip_a.gpx"); pg.wait_for_timeout(1000)
+pg.set_input_files("#tripsadd","trip_b.gpx"); pg.wait_for_timeout(1000)
+pg.click("#tripspins"); pg.wait_for_timeout(1000)
+print("layers",pg.evaluate("tripsApi.TR().map(t=>[t.name,t.color,t.style,t.lift,t.segs[0].length])"),pg.evaluate("$('tripsmsg').textContent"))
+r=pg.evaluate("()=>{const P=build();const m=meshCheck(P);return {parts:P.filter(p=>p.geoms.length).map(p=>p.name+':'+p.geoms.length).join(' '),open:m.open,deg:m.deg}}"); print(r)
+pg.locator("#map").screenshot(path="tr_map.png")
+pg.evaluate("auto=false;pivot.rotation.x=0.9;pivot.rotation.y=0.2"); pg.wait_for_timeout(800); pg.locator("#view").screenshot(path="tr_3d.png")
+pg.locator("#tripsbox").screenshot(path="tr_panel.png")
+# 4th layer limit + edit
+pg.set_input_files("#tripsadd","trip_a.gpx"); pg.wait_for_timeout(600); pg.set_input_files("#tripsadd","trip_b.gpx"); pg.wait_for_timeout(600); print("max",pg.evaluate("tripsApi.TR().length"),pg.evaluate("$('tripsmsg').textContent||$('msg').textContent"))
+pg.select_option("select.ts[data-i='0']","dash"); pg.fill("input.tn[data-i='0']","Renamed <b>x</b>"); pg.wait_for_timeout(500)
+print("edit",pg.evaluate("[tripsApi.TR()[0].style,tripsApi.TR()[0].name]"))
+# export + roundtrip
+pj=pg.evaluate("JSON.stringify(getProj(false).trips.map(t=>[t.name,t.style,t.segs.length,t.segs[0].length]))"); print("proj",pj)
+pg.evaluate("""()=>{const o=getProj(false);o.trips=o.trips.slice(0,2);o.trips[0].color='javascript:x';putProj(o)}"""); pg.wait_for_timeout(600)
+print("restored",pg.evaluate("tripsApi.TR().map(t=>[t.name,t.color])"))
+r=pg.evaluate("async()=>{const r=await prepareFiles();return {files:r.files.map(f=>f.name),chk:r.chk}}"); print(r)
+pg.evaluate("$('trip').value='x';openTool(false,'magnet')"); pg.wait_for_timeout(600); print("magnet parts",pg.evaluate("build().map(p=>p.name).join()"))
+print("errs",errs[:4])
