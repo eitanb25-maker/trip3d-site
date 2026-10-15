@@ -1274,8 +1274,8 @@
 
   const FIN = { ך: "כ", ם: "מ", ן: "נ", ף: "פ", ץ: "צ" };
   const norm = (t) => String(t).toLowerCase().normalize("NFD").replace(/[̀-ًͯ-ٰٟـ]/g, "").replace(/[أإآٱ]/g, "ا").replace(/ى/g, "ي").replace(/ة/g, "ه").replace(/ё/g, "е").replace(/ß/g, "ss").replace(/[ךםןףץ]/g, (c) => FIN[c]).replace(/[ڪكﮎ]/g, "ك").replace(/[یيۍ]/g, "ي").replace(/[ؤئ]/g, (c) => (c === "ؤ" ? "و" : "ي")).replace(/[٠-٩]/g, (c) => String(c.charCodeAt(0) - 1632)).replace(/[۰-۹]/g, (c) => String(c.charCodeAt(0) - 1776)).replace(/[іїє]/g, (c) => ({ і: "и", ї: "и", є: "е" })[c]).replace(/ґ/g, "г").replace(/æ/g, "ae").replace(/œ/g, "oe").replace(/ø/g, "o").replace(/đ/g, "d").replace(/ł/g, "l").replace(/ı/g, "i").replace(/[׳'"?!.,،؟;:¿¡()«»]/g, " ").split(/\s+/).map((w) => w.replace(/^ה+(?=.{3})/, "").replace(/^ال(?=.{3})/, "")).join(" ");
-  let LKB = [], SYNN = null, CSYN = [], VOC = null;
-  const synInit = () => { SYNN = SYN.concat(CSYN).map(([c, vs]) => [norm(c).trim(), vs.split(",").map((v) => norm(v).trim()).filter(Boolean)]); };
+  let LKB = [], SYNN = null, CSYN = [], VOC = null, SYNX = [], LEXP = null;
+  const synInit = () => { SYNN = SYN.concat(CSYN, SYNX).map(([c, vs]) => [norm(c).trim(), vs.split(",").map((v) => norm(v).trim()).filter(Boolean)]); };
   const kwOf = (k) => { const w = k.charAt(0) === "="; const nk = norm(w ? k.slice(1) : k).trim(); return { w, nk }; };
 
   const expand = (t) => {
@@ -1417,7 +1417,47 @@
 
   window.BotEngine = {
     KB, SYN, norm, match, detect, reply, ui, LANGREQ, ML, faq, topic, hints, expand, correct,
-    addLex(l) { l = l || {}; if (Array.isArray(l.kb)) for (const e of l.kb) if (Array.isArray(e) && e[0] && e[1]) KB.push(e.length >= 5 ? e : [e[0], e[1], e[2] || e[1], e[3] || "", e[4] || ""]); if (Array.isArray(l.syn)) for (const e of l.syn) if (Array.isArray(e) && e[0] && e[1]) SYN.push([String(e[0]), String(e[1])]); SYNN = null; VOC = null; },
+    addLex(l) {
+      l = l || {};
+      if (Array.isArray(l.kb)) for (const e of l.kb) if (Array.isArray(e) && e[0] && e[1]) KB.push(e.length >= 5 ? e : [e[0], e[1], e[2] || e[1], e[3] || "", e[4] || ""]);
+      if (Array.isArray(l.syn)) for (const e of l.syn) if (Array.isArray(e) && e[0] && e[1]) SYN.push([String(e[0]), String(e[1])]);
+      // הרחבות אוטומטיות בזמן ריצה (לא נשמרות בקובץ): קידומות ותוספות סיומת לכל מילה עברית; ביטויים מתבניות
+      const pre = Array.isArray(l.pre) ? l.pre : [], suf = Array.isArray(l.suf) ? l.suf : [];
+      if (l.expand !== false && (pre.length || suf.length) && Array.isArray(l.syn)) {
+        for (const [c, vs] of l.syn) {
+          const out = [];
+          for (const w of String(vs).split(",")) {
+            if (!/^[א-ת]{4,12}$/.test(w)) continue;
+            for (const p of pre) out.push(p + w);
+            for (const x of suf) out.push(w + x);
+            for (let k = 1; k < w.length - 1; k++) if (w.length >= 6 && (w[k] === "ו" || w[k] === "י")) out.push(w.slice(0, k) + w.slice(k + 1));
+            if (/ה$/.test(w)) out.push(w.slice(0, -1) + "ות", w.slice(0, -1) + "ת");
+          }
+          if (out.length) SYNX.push([String(c), out.join(",")]);
+        }
+      }
+      if (Array.isArray(l.tpl) && Array.isArray(l.pt)) {
+        for (const [c, ns] of l.tpl) { const out = []; ns.split(",").forEach((n, i) => { for (let j = 0; j < (l.ptn || 3); j++) out.push(l.pt[(i + j * 3) % l.pt.length].replace("{n}", n)); }); SYNX.push([String(c), out.join(",")]); }
+      }
+      if (Array.isArray(l.tplEn) && Array.isArray(l.ptEn)) {
+        for (const [c, ns] of l.tplEn) { const out = []; ns.split(",").forEach((n, i) => { for (let j = 0; j < (l.ptnEn || 2); j++) out.push(l.ptEn[(i + j * 2) % l.ptEn.length].replace("{n}", n)); }); SYNX.push([String(c), out.join(",")]); }
+      }
+      SYNN = null; VOC = null;
+    },
+    // טעינה עצלה של אוצר המילים הדחוס (gzip) – נקראת כשפותחים את הבוט. מחזירה Promise; בלי DecompressionStream פשוט מדלגת.
+    loadLex(url) {
+      if (LEXP) return LEXP;
+      LEXP = (async () => {
+        try {
+          if (typeof DecompressionStream === "undefined" || typeof fetch === "undefined") return false;
+          const r = await fetch(url || "/botlex.bin"); if (!r.ok) return false;
+          const txt = await new Response(r.body.pipeThrough(new DecompressionStream("gzip"))).text();
+          this.addLex(JSON.parse(txt)); return true;
+        } catch (e) { return false; }
+      })();
+      return LEXP;
+    },
+    lexCounts() { return { synx: SYNX.reduce((n, e) => n + e[1].split(",").length, 0) }; },
     layoutAlts,
     setCustom(items) { LKB = Array.isArray(items) ? items.filter((x) => x && x.k && x.a) : []; VOC = null; },
     setSyn(list) { CSYN = (Array.isArray(list) ? list : []).filter((x) => Array.isArray(x) && x[0] && x[1]).map((x) => [String(x[0]), String(x[1])]); SYNN = null; VOC = null; },

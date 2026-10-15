@@ -92,13 +92,13 @@ textarea,input[type=text],input:not([type]),input[type=search],select{max-width:
 <div id="gate"></div>
 <nav class="stabs" id="stabs" style="display:none" aria-label="לשוניות"></nav>
 <main id="main"></main>
-<script src="/botengine.js"></script><script src="/botlex.js"></script>
+<script src="/botengine.js"></script>
 <script>
 const $=id=>document.getElementById(id);
 const h=(t,a={},...k)=>{const e=document.createElement(t);for(const[x,v]of Object.entries(a)){if(x=="on")Object.entries(v).forEach(([n,f])=>e.addEventListener(n,f));else if(x=="cls")e.className=v;else if(x=="text")e.textContent=v;else if(v!==false&&v!=null)e.setAttribute(x,v===true?"":v)}k.flat().forEach(c=>e.append(c&&c.nodeType?c:document.createTextNode(c??"")));return e};
 async function api(m,p,b){const r=await fetch("/api"+p,{method:m,headers:{"content-type":"application/json"},credentials:"same-origin",body:b?JSON.stringify(b):undefined});let d={};try{d=await r.json()}catch(e){}if(!r.ok)throw Object.assign(new Error(d.error||"שגיאה"),{status:r.status});return d}
 const fmt=t=>t?new Date(t).toLocaleString("he-IL",{dateStyle:"short",timeStyle:"short"}):"—";
-const BE=window.BotEngine;
+const BE=window.BotEngine;try{BE.loadLex&&BE.loadLex()}catch(e){}
 const SRC={kb:["מאגר מובנה",""],custom:["תשובה שלימדת","ok"],ai:["AI",""],miss:["לא ידע","bad"],small:["שיחת חולין",""]};
 const VIA={direct:"התאמה ישירה",syn:"דרך מילים נרדפות",typo:"אחרי תיקון כתיב",context:"לפי השאלה הקודמת",none:"אין התאמה"};
 let ME=null,RO=true,TAB="סקירה",ST={kb:[],misses:[],syn:[]},PREFILL=null,LOGUID="";

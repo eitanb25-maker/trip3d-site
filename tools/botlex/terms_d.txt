@@ -1,0 +1,60 @@
+מכונת הדפסה,3d printer,fdm,מדפסת תלת מימד|מדפסת שבונה חפץ שכבה אחר שכבה מפלסטיק מותך (FDM). האתר מכין קבצים למדפסות כאלה.|A printer that builds an object layer by layer from melted plastic (FDM). The site prepares files for these printers.
+fdm,אף די אם|הדפסה בפלסטיק מותך. הסוג הנפוץ לבית. המזכרות באתר מתוכננות ל-FDM.|Printing with melted plastic. The common home type. The site's souvenirs are designed for FDM.
+שרף,resin,sla,מדפסת שרף|הדפסה בשרף נוזלי שמתקשה באור. פרטים עדינים מאוד אבל מסובכת וריחנית; האתר מכוון ל-FDM.|Printing in liquid resin cured by light. Very fine detail but messy and smelly; the site targets FDM.
+מייקרספייס,makerspace,fab lab|מרחב יצירה עם מדפסות ששוכר או משתף. אפשר להדפיס שם אם אין לכם מדפסת.|A creative space with printers you can rent or share. You can print there if you don't own a printer.
+שירות הדפסה,print service,print shop|חנות שמדפיסה בשבילכם בתשלום. שולחים את ה-STL/3MF וקובעים חומר וצבע.|A shop that prints for you for a fee. Send the STL/3MF and choose material and color.
+ספרייה,library,3d library|ספריות ציבוריות רבות מציעות מדפסות תלת-ממד. שאלו בספרייה המקומית.|Many public libraries offer 3D printers. Ask your local library.
+משקל,weight,grams|משקל מזכרת קטנה כמה גרמים עד כמה עשרות. מדריך ההדפסה מציג הערכת משקל.|A small souvenir weighs a few to a few dozen grams. The print guide shows an estimate.
+עלות חומר,material cost,filament price|גליל ק״ג עולה בערך 60–120 ש״ח, כך שמזכרת קטנה עולה שקלים בודדים.|A 1 kg spool costs roughly 60–120 NIS, so a small souvenir costs only a few shekels.
+עלות חשמל,כמה חשמל,electricity,power use|מדפסת ביתית צורכת בערך 100–200 ואט; הדפסה של כמה שעות עולה אגורות.|A home printer uses about 100–200 W; a few hours of printing costs pennies.
+רעש,noise,loud|מדפסות לא שקטות, בעיקר במהירות גבוהה. מומלץ לא להדפיס בחדר שינה בלילה.|Printers aren't silent, especially at high speeds. Avoid printing in a bedroom at night.
+השגחה,supervision,leave unattended|עדיף להשגיח בשכבות הראשונות. אל תשאירו מדפסת לבד בלילה בלי גלאי עשן וניתוק חירום.|Watch the first layers. Don't leave a printer alone overnight without a smoke detector and emergency cutoff.
+כיבוי אש,fire safety,smoke|מדפסות מחוממות. הציבו על משטח שאינו בוער, ואל תכסו אותן.|Printers get hot. Place them on a non-flammable surface and don't cover them.
+יציבות שולחן,table stability,vibration|שולחן יציב מקטין רטט ופסי שכבות. כדאי לשים מדפסת על משטח כבד.|A stable table reduces vibration and banding. Put the printer on something heavy.
+טמפרטורת חדר,room temperature|טמפרטורה יציבה מתחת ל-30° ובלי רוח מקלה על ההידבקות והעיקום.|A stable temperature below 30° and no drafts help adhesion and warping.
+תחזוקה מדפסת,printer maintenance|שימון מוטות, ניקוי פיה, בדיקת רצועות ומשטח נקי. פעם בכמה חודשים.|Lubricate rods, clean the nozzle, check belts and keep the bed clean. Every few months.
+שימון,lubrication,grease|מעט שמן או גריז על מוטות וברגים מקטין רעש וריטוט.|A little oil or grease on rods and lead screws reduces noise and vibration.
+רצועה,belt,belt tension|רצועות רופפות גורמות להזזת שכבות ולצורה לא מדויקת. בודקים מתיחות.|Loose belts cause layer shifts and inaccuracy. Check tension.
+גלגלות,wheels,v wheels|גלגלי הנעה של הראש או המיטה. אם הם רופפים ההדפסה לא יציבה.|The head or bed's guide wheels. If loose, printing is unstable.
+מוט z,z axis,lead screw|המוט שמעלה ומוריד את הראש. לכלוך או חוסר שימון יוצרים פסי שכבות.|The rod that raises and lowers the head. Dirt or no lubrication creates banding.
+קצה אחיזה,grip,textured plate|משטח עם מרקם נותן הידבקות חזקה ומשטח תחתון עם מראה ממט.|A textured plate gives strong adhesion and a matte-looking underside.
+גזירה,shear,layer adhesion|חוזק בין שכבות. טמפרטורה נמוכה מדי או קירור חזק מדי מחלישים ושוברים בקווי שכבה.|Strength between layers. Too-low temperature or too-strong cooling weakens and breaks along layer lines.
+תכווצות,shrinkage,warp shrink|חומרים מתכווצים בקירור. ABS יותר מ-PLA, ולכן הוא מתעקם.|Materials shrink as they cool. ABS more than PLA, hence it warps.
+חוזק,strength,durable|מזכרות הן דקורטיביות. לחוזק יותר הוסיפו קירות ומילוי ובחרו PETG; חלקים דקים נשארים שבירים.|Souvenirs are decorative. For more strength add walls and infill and choose PETG; thin parts stay fragile.
+שבירות,brittle,fragile|PLA קשיח אך שביר בכפיפה. טבעות דקות במחזיק מפתחות עלולות להישבר, לכן עבו אותן.|PLA is stiff but brittle under bending. Thin keychain loops may snap, so thicken them.
+עמידות לשמש,uv resistance,sun|PLA מתרכך ומחוויר בשמש חזקה וברכב חם. לשימוש בחוץ עדיף ASA או PETG.|PLA softens and fades in strong sun and hot cars. For outdoors prefer ASA or PETG.
+עמידות למים,water resistance,waterproof|PLA לא נמס במים, אבל לא מתאים למדיח או לחום. מטפחים בסדר גמור למזכרת מקרר.|PLA doesn't dissolve in water but isn't dishwasher- or heat-safe. Fine for a fridge souvenir.
+בטיחות מזון,food safe|לא מומלץ להדפיס חפצים למגע עם אוכל. קווי שכבות אוצרים חיידקים והפיה עלולה להכיל מתכות.|Printed objects aren't recommended for food contact. Layer lines harbor bacteria and nozzles may contain metals.
+צעצוע ילדים,kids toy,child safe|מזכרות לא נועדו לתינוקות: חלקים קטנים וסכנת חנק. לילדים גדולים בפיקוח.|Souvenirs aren't meant for infants: small parts and choking risk. For older children under supervision.
+מתנה אישית,personal gift,gift idea|מזכרת עם מדינה, תאריך ושם מקום היא מתנה מצוינת לטיול זוגי, חתונה או סיום שירות.|A souvenir with a country, date and place is a great gift for a couples trip, wedding or end of service.
+אריזה,packaging,gift wrap|ארזו מזכרת בנייר רקמה בקופסה קטנה. הוסיפו כרטיס עם QR לאלבום התמונות.|Wrap the souvenir in tissue in a small box. Add a card with a QR to the photo album.
+משלוח,shipping,send by post|מזכרות קלות ונשלחות בדואר. עטפו היטב בגלל חלקים דקים.|Souvenirs are light and mail well. Wrap carefully because of thin parts.
+מכירה,sell,selling,עסק|לשימוש מסחרי עיינו בתנאי השימוש. ייתכנו הגבלות על מכירה ויש להבחין בין שימוש אישי למסחרי.|For commercial use read the terms. There may be restrictions on selling and personal vs commercial use differ.
+זכויות יוצרים,copyright,ip|המפות מבוססות על נתונים פתוחים. תוכן שתעלו (כמו תמונות) צריך להיות שלכם.|Maps are based on open data. Content you upload (like photos) must be yours.
+נתוני מפה,map data,natural earth|המפות מבוססות על נתונים פתוחים כמו Natural Earth, מפושטים ואינם מדוייקים מדינית.|Maps are based on open data like Natural Earth, simplified and not politically precise.
+גבולות,borders,boundaries|גבולות מפושטים לעיצוב ואינם עמדה מדינית. אם ראיתם טעות ברורה, דווחו לנו.|Borders are simplified for design and aren't a political stance. If you spot a clear error, report it.
+פישוט,simplification,detail level|רמת הפירוט של הרשת: פירוט גבוה = קובץ גדול ופרטים עדינים; נמוך = מהיר וקל.|Mesh detail level: high = large file and fine detail; low = fast and light.
+רמת פירוט,level of detail,mesh detail|בוחרים אוטומטי או ידנית. מכשיר חלש מומלץ ברמה נמוכה.|Choose automatic or manual. A weak device is best at a low level.
+זמן טעינה,loading time,slow load|מדינות מורכבות עם איים רבים לוקחות יותר. מצב מהיר ורמת פירוט נמוכה מקצרים.|Complex countries with many islands take longer. Fast mode and lower detail shorten it.
+זיכרון,memory,ram|מכשיר עם זיכרון נמוך עלול להאט במפות גדולות. סגרו לשוניות אחרות ועברו למצב מהיר.|A low-memory device may slow on large maps. Close other tabs and switch to fast mode.
+סוללה,battery|עריכה תלת-ממדית צורכת סוללה. מצב כהה ומצב מהיר מפחיתים צריכה.|3D editing drains battery. Dark mode and fast mode reduce usage.
+מסך מגע,touchscreen,touch|גוררים באצבע לסיבוב, צובטים להגדלה ולוחצים על כפתורים גדולים של 44 פיקסלים.|Drag with a finger to rotate, pinch to zoom, and tap large 44-pixel buttons.
+סיבוב מסך,orientation lock,landscape|בעמידה התצוגה מקובעת למעלה; במצב אופקי הממשק עובר לפריסה רחבה.|In portrait the preview is pinned on top; in landscape the layout goes wide.
+זום,zoom,pinch|צביטה בשתי אצבעות או גלגלת עכבר מגדילות את התצוגה.|A two-finger pinch or mouse wheel zooms the preview.
+תצוגה מלמעלה,top view|כפתור שמעביר מבט ישר מלמעלה, נוח לבדיקת מיקום סיכות.|A button that switches to a straight top-down view, handy for checking pin positions.
+זווית גילה,angle reset,reset view|כפתור שמחזיר את זווית הצפייה לברירת המחדל אם הלכתם לאיבוד.|A button that restores the default view angle if you get lost.
+צילום מסך,screenshot|כפתור 📸 'תמונה לשיתוף' יוצר תמונה של התצוגה לשיתוף ברשתות.|The 📸 'Share image' button creates a picture of the preview for social sharing.
+שיתוף ברשתות,social sharing,share to instagram|אפשר לשתף תמונה, GIF מסתובב או קישור לפרויקט. אינסטגרם ווואטסאפ מקבלים GIF ותמונה.|You can share an image, spinning GIF or project link. Instagram and WhatsApp accept GIF and images.
+וואטסאפ,whatsapp|אפשר לשלוח את הקישור או התמונה בוואטסאפ מכפתור השיתוף.|You can send the link or image on WhatsApp from the share button.
+אינסטגרם,instagram,סטורי|שתפו GIF מסתובב או תמונת תצוגה בסטורי כדי להראות את המזכרת לפני ההדפסה.|Share a spinning GIF or preview image in a story to show the souvenir before printing.
+מייל,email|להרשמה, לאימות ולאיפוס סיסמה. אם לא הגיע, בדקו ספאם.|For sign-up, verification and password reset. If it didn't arrive check spam.
+ספאם,spam,junk|תיקיית דואר זבל. מיילי אימות לפעמים מגיעים אליה.|The junk folder. Verification emails sometimes land there.
+גוגל,google|אפשר להתחבר בחשבון Google כשהאפשרות מופעלת באתר.|You can sign in with a Google account when enabled on the site.
+כרום,chrome|דפדפן שבו ייצוא וידאו WebM הכי יציב.|The browser where WebM video export is most reliable.
+ספארי,safari|דפדפן אפל. עובד, אך ייצוא וידאו עשוי להיות מוגבל; GIF נתמך.|Apple's browser. It works, but video export may be limited; GIF is supported.
+פיירפוקס,firefox|דפדפן נתמך. אם משהו לא עובד נסו לרענן וללא תוספים.|A supported browser. If something fails refresh and try without extensions.
+אדג',edge|דפדפן של מיקרוסופט מבוסס Chromium ונתמך.|Microsoft's Chromium-based browser, supported.
+תוסף דפדפן,extension,adblock|חוסמי פרסומות או תוספים עלולים לחסום קריאות לשרת. נסו מצב גלישה בסתר.|Ad blockers or extensions may block server calls. Try private browsing.
+גלישה בסתר,incognito,private mode|מצב שבו אין תוספים או נתונים שמורים. טוב לבדיקת בעיות.|A mode without extensions or stored data. Good for diagnosing issues.
+פורט,port,usb|חיבור למחשב לא נדרש; מעבירים קבצים בכרטיס זיכרון או ברשת.|A computer connection isn't required; transfer files by card or network.
+מחשב,computer,pc,לפטופ|עריכה נוחה יותר במחשב: יותר לשוניות ושליטה, אבל גם הנייד עובד.|Editing is easier on a computer: more tabs and control, but mobile works too.

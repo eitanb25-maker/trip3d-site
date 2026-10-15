@@ -1,0 +1,85 @@
+להוריד|the download,my download,download button,the zip file
+מכסה|download limit,daily quota,my remaining downloads
+קופון|promo code,coupon code,redeem a code
+הרשמה|sign up,registration,create an account,my account
+סיסמה|password reset,my password,forgot my password
+צבעים|model colors,color choice,base color,color scheme
+טקסט|text on the stand,title text,lettering size
+גודל|model size,bed size,print size
+כלים|souvenir types,available tools,product types
+מקומות|adding places,marking places,pins on the map
+גלריה|community gallery,my gallery,publish to gallery
+באג|a bug,technical problem,site error
+מחיר|site price,is it free,payment
+אנגלית|english version,change language
+אימות|email verification,verification link
+אפליקציה|install the app,add to home screen
+סלייסר|slicer software,which slicer,open in slicer
+פורמט|file format,3mf file,stl file
+חומר|filament choice,material type,which plastic
+זמן|print time,how many hours
+מדפסת|my printer,printer type,printer compatibility
+עקום|warped print,lifting corners
+מתנה|gift download,send a gift
+פאזל|puzzle pieces,puzzle frame
+פינים|snap fit pegs,pegs and sockets,loose pins
+חריץ תלייה|keyhole slot,wall hanging
+גלויה|postcard export,postcard png,postcard svg
+מפת יבשת|continent map,map of europe,map of africa
+השוואת צבעים|compare colors,color palettes
+קוד qr|qr code,photo album link
+דגל|country flag,add a flag
+גיף|spinning gif,360 video
+הרכבה|assembling parts,gluing parts
+מפת אור|lithophane,light map
+ריליף|relief map,mountain height
+חיתוך חופשי|free cut,crop a region
+נקודות במפה|add a pin,delete a pin,move a pin
+gpx|gpx file,import a route
+שביל ישראל|israel national trail,trail template
+גימור|matte finish,glossy finish,silk finish
+הדפסה נכשלה|print failed,print stopped
+רווח בין החלקים|part gap,loose fit,tight fit
+bambu|bambu printer,bambu lab
+איזו מדפסת|ender printer,prusa printer,creality printer
+שמירה בענן|save project,load project
+מצב מהיר|fast mode,simple mode
+נייד|mobile site,phone editing,iphone site
+תקלה|site problem,something is broken
+תמיכה|contact support,talk to admin
+תנאי שימוש|terms of use,privacy policy,commercial use
+בטל|undo action,redo action
+שם של ילד|name on the souvenir,personal dedication
+מתאים למדפסת|printer bed fit,220 bed
+אין אינטרנט|no internet,offline use
+איזה דפדפן|which browser,safari support
+האתר לא נפתח|site not loading,white screen
+חוטים דקים|stringing problem,plastic strings
+לא נדבק למשטח|first layer problem,not sticking to bed
+הדיזה נסתמה|nozzle clog,clogged nozzle
+ספגטי|spaghetti mess,print fell apart
+שכבות זזו|layer shift,shifted layers
+טמפרטורת הדפסה|nozzle temperature,bed temperature
+מהירות הדפסה|print speed,fast printing
+בטוח לילדים|child safe,kids safety
+כיוון ההדפסה|print orientation,flat side down
+תמיכות|support material,no supports
+מילוי|infill percent,infill density
+גובה שכבה|layer height,print quality
+כמה זמן|how long it takes,approval time
+כמה גרם חומר|grams of filament,material cost
+מדינה לא|country missing,add a country
+רצף|daily streak,streak bonus
+תגים|my badges,earn a badge
+מנוי|travelers club,subscription plan
+להזמין|invite friends,referral link
+שיתוף פרויקט|share link,share project
+מחיקה|delete account,delete project
+פרטיות|my privacy,personal data
+עיר|city map,street map
+מטוס|floating plane,paraglider
+מעמד בזווית|angled stand,tilted stand
+נורה|led strip,light the souvenir
+בדיקת הדפסתיות|printability check,thin walls warning
+מדפסת קטנה|small printer,puzzle cut
+המדינה שטוחה|flat country,no mountains

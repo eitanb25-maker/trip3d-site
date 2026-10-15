@@ -1,7 +1,8 @@
 // בדיקת הבוט: טוען את botengine.js ומוודא שכל שאלה ב-bot_cases.json מחזירה את הנושא הצפוי + שאין שאלות ללא תשובה בסט הרחב
-import fs from "fs"; import vm from "vm"; import path from "path"; import { fileURLToPath } from "url";
+import fs from "fs"; import zlib from "zlib"; import vm from "vm"; import path from "path"; import { fileURLToPath } from "url";
 const D = path.dirname(fileURLToPath(import.meta.url)), ctx = { console, navigator: {}, document: {}, localStorage: {} }; ctx.window = ctx; vm.createContext(ctx);
-for (const f of ["botengine.js", "botlex.js"]) vm.runInContext(fs.readFileSync(D + "/../public/" + f, "utf8"), ctx); const B = ctx.BotEngine;
+vm.runInContext(fs.readFileSync(D + "/../public/botengine.js", "utf8"), ctx); const B = ctx.BotEngine;
+B.addLex(JSON.parse(zlib.gunzipSync(fs.readFileSync(D + "/../public/botlex.bin")).toString())); // אוצר המילים הדחוס (נטען בדפדפן בעצלתיים)
 const bad = []; const cases = JSON.parse(fs.readFileSync(D + "/bot_cases.json", "utf8")).cases;
 for (const [q, want] of cases) { const m = B.match(q); const got = m.hit ? B.topic(m.hit) : "NONE"; if (got !== want) bad.push(`${q} → ${got} (ציפינו ${want})`); }
 const c = B.counts(); console.log(`bot cases ${cases.length - bad.length}/${cases.length} kb ${c.kb} syn ${c.syn} vocab ${c.vocab}`);

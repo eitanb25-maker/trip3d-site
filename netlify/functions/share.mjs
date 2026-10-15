@@ -15,7 +15,7 @@ export default async (req) => {
   const ok = g && g.status === "approved";
   const title = ok ? `${g.name}${g.country ? " · " + g.country : ""} – מזכרות תלת-ממד` : "גלריית מזכרות תלת-ממד";
   const desc = ok ? `${NAMES[g.tool] || "מזכרת"} שנוצרה ב"סטודיו המזכרות"${g.author ? " על ידי " + g.author : ""}. צרו גם אתם ותדפיסו בבית!` : "יצירות תלת-ממד מהטיולים של הקהילה. צרו מזכרת משלכם!";
-  const img = ok ? `${site}/api/gallery/thumb?id=${id}` : `${site}/og.png`;
+  const img = ok ? `${site}/api/gallery/thumb?id=${id}` : `${site}/og.jpg`;
   const dest = ok ? `/gallery.html#${id}` : "/gallery.html";
   const html = `<!doctype html><html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(title)}</title><meta name="description" content="${esc(desc)}">

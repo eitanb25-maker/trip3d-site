@@ -1,0 +1,97 @@
+מעמד,stand,בסיס המזכרת|הבסיס המודפס שעליו עומדת המפה, עם כיתוב ואפשרות לפינים, חריץ תלייה, LED וזווית. זה הכלי הראשי באתר.|The printed base the map stands on, with lettering and options for pegs, keyhole, LED and tilt. It's the site's main tool.
+מזכרת,souvenir,מזכרות|הדגם התלת-ממדי שהאתר יוצר מהמדינה והמקומות שלכם: מעמד, מחזיק מפתחות, מגנט, קישוט, פאזל ועוד.|The 3D model the site creates from your country and places: stand, keychain, magnet, ornament, puzzle and more.
+שאלון,wizard,questionnaire,האשף|סדרת שאלות קצרה שמובילה שלב-שלב ליצירת מזכרת, מותאמת לכל כלי. אפשר לעבור למצב מהיר.|A short series of questions that guides you step by step to a souvenir, tailored to each tool. You can switch to fast mode.
+עורך,editor,טופס עריכה|המסך עם הלשוניות והתצוגה שבו מעצבים את המזכרת בפירוט. כל ההגדרות נשמרות בפרויקט.|The screen with tabs and preview where you design in detail. All settings are saved in the project.
+לשונית,tab,לשוניות|הקטעים של העורך: מדינה ומפה, מקומות ומים, עיצוב ותוכן, תצוגה והורדה ועוד. מחליפים בין לשוניות בלי לאבד שינויים.|The editor's sections: country and map, places and water, design and content, preview and download. Switch without losing changes.
+תצוגה מקדימה,preview,3d preview,תצוגת תלת מימד|הדגם התלת-ממדי בזמן אמת. גוררים לסיבוב, צובטים להגדלה, וצבעי התצוגה לא משנים את קבצי ההדפסה.|The live 3D model. Drag to rotate, pinch to zoom; preview colors don't change print files.
+פרויקט,project,הפרויקט|כל הגדרות המזכרת שלכם: מדינה, מקומות, צבעים וכיתוב. נשמר כטיוטה ואפשר לשמור, לטעון ולשתף.|All your souvenir settings: country, places, colors and text. Saved as a draft; you can save, load and share it.
+טיוטה,draft,autosave draft|עותק אוטומטי של העבודה שנשמר בדפדפן ומוצע בביקור הבא. לא מחליף שמירה לחשבון.|An automatic copy of your work in the browser, offered next visit. Doesn't replace saving to your account.
+קישור שיתוף,share link,שיתוף פרויקט|קישור שמכיל את הפרויקט כדי שמישהו אחר יפתח וימשיך לערוך. הפרויקט עצמו לא נשלח לשרת.|A link containing the project so someone else can open and keep editing. The project itself isn't uploaded.
+גלריית הקהילה,community gallery|אוסף יצירות שמשתמשים פרסמו אחרי אישור מנהל. אפשר ללחוץ ♥, להגיב, לעקוב ולטעון כנקודת פתיחה.|Creations users published after admin approval. You can ♥, comment, follow and load as a starting point.
+שמירה בגלריה,save to gallery,גלריה אישית|שמירה אישית של יצירה לחשבון שלכם, לא פומבית. נגישה מכל מכשיר אחרי התחברות.|A personal save of a creation to your account, not public. Reachable from any device once signed in.
+פרסום בגלריה,publish to gallery|שליחת יצירה לאישור מנהל כדי שתוצג בגלריית הקהילה. מאושרת יצירה מקבלת הורדות במתנה.|Sending a creation for admin approval to appear in the community gallery. Approved works earn gift downloads.
+מועדון המטיילים,travelers club,club,מועדון|מנוי שנותן יותר הורדות ושמירות. מבקשים ב'החשבון שלי'; המנהל מאשר.|A subscription giving more downloads and saves. Request it in 'My account'; the admin approves.
+מנוי,subscription,plan,מסלול|מסלול שמגדיל מכסות. מתחדש בבקשה חדשה, ויש תזכורת 5 ימים לפני הסיום.|A plan that raises quotas. Renewed by a new request, with a reminder 5 days before it ends.
+מכסת הורדות,download quota,daily quota|מספר ההורדות היומי. מתאפסת כל יום בחצות ואפשר להגדיל בקופונים, אתגרים והזמנות.|The daily number of downloads. Resets at midnight and can be raised with coupons, challenges and invites.
+יתרה,balance,הורדות שנותרו|כמה הורדות נשארו היום, מוצג ב'החשבון שלי'.|How many downloads remain today, shown in 'My account'.
+קוד הטבה,promo code,voucher|קוד שמעניק הורדות. מוזנים ב'החשבון שלי' תחת 'יש לי קוד הטבה', לכל קוד תוקף ומספר מימושים.|A code granting downloads. Enter it in 'My account' under 'I have a promo code'; each has an expiry and use limit.
+רצף יצירה,creation streak,streak|ימים רצופים שבהם יצרתם. ככל שהרצף ארוך תקבלו בונוסים ותגים.|Consecutive days you created. Longer streaks bring bonuses and badges.
+תג,badge,badges|פרס על הישג, כמו רצף, יצירה מאושרת או הזמנת חברים. מוצגים בפרופיל.|An award for an achievement such as a streak, approved creation or invited friends. Shown on your profile.
+היכל התהילה,hall of fame|3 המדינות הכי משומשות בשבוע. מדינת השבוע נותנת בונוס למי שיוצר ממנה.|The 3 most-used countries this week. Country of the week gives a bonus to creators from it.
+אתגר שבועי,weekly challenge|משימה חדשה בכל שבוע (למשל מדינה מסוימת) שמעניקה הורדות נוספות.|A new task each week (e.g. a specific country) that grants extra downloads.
+הזמנת חברים,invite friends,referral|קישור אישי ב'החשבון שלי'. על כל חבר שנרשם ומוריד אתם מקבלים הורדות נוספות.|A personal link in 'My account'. For each friend who signs up and downloads you receive extra downloads.
+משוב הדפסה,print feedback|אחרי הורדה אפשר לדרג אם ההדפסה הצליחה (👍/👎) ולכתוב מה קרה. עוזר לנו לשפר.|After a download you can rate whether printing worked (👍/👎) and say what happened. It helps us improve.
+דיווח על בעיה,report a problem,bug report|כפתור 🐞 בפינה שולח למנהל תיאור והפרויקט והדפדפן שלכם. כך אפשר לשחזר ולתקן.|The 🐞 button sends the admin your description, project and browser, so the issue can be reproduced and fixed.
+הצעה לשיפור,suggestion,feature request|כפתור 💡 לשליחת רעיון למנהל. כל הצעה נקראת.|The 💡 button sends an idea to the admin. Every suggestion is read.
+העוזר,assistant,bot,הבוט|העוזר עונה מיד על שאלות על האתר וההדפסה. אם הוא לא יודע, השאלה נשמרת ומנהל מלמד אותו תשובה.|The assistant answers site and printing questions instantly. If it doesn't know, the question is saved and an admin teaches it.
+צ'אט עם מנהל,chat with admin,live chat|אפשר לכתוב למנהל מהצ'אט באתר. התשובה מגיעה בתיבת ההודעות.|You can message the admin from the site chat. Replies arrive in your inbox.
+תיבת הודעות,inbox|הודעות מהמערכת והמנהל (מתנות, אישורים, תשובות). מופיעה בהתחברות.|System and admin messages (gifts, approvals, replies). Shown when you sign in.
+אימות מייל,email verification,verify email|קישור במייל שמאשר שהכתובת שלכם. חלק מההטבות והתגובות דורשים אימות.|A link in an email confirming your address. Some perks and comments require it.
+אימות דו שלבי,2fa,two factor,אימות דו-שלבי|שכבת אבטחה נוספת למנהלים עם קוד מאפליקציה. מגינה על לוח הבקרה.|An extra security layer for admins using an app code. It protects the control panel.
+לוח הבקרה,control panel,admin panel,מרכז בקרה|אזור המנהל: משתמשים, גלריה, דיווחים, הגדרות, התראות, גיבויים וסטודיו הבוט.|The admin area: users, gallery, reports, settings, alerts, backups and the bot studio.
+סטודיו הבוט,bot studio|מסך בלוח הבקרה ללימוד הבוט: בדיקת שאלות, הוספת תשובות ומילים נרדפות וצפייה בשאלות שלא נענו.|A control-panel screen for teaching the bot: test questions, add answers and synonyms, and see unanswered questions.
+סטטוס האתר,status page|דף שמראה אם האתר והשירותים עובדים. שימושי כשמשהו לא נטען.|A page showing whether the site and services work. Handy when something won't load.
+מצב תחזוקה,maintenance mode|מסך זמני בזמן עדכון. מי שכבר באמצע עבודה רואה רק פס ולא נחסם, ושומרים את הפרויקט.|A temporary screen during an update. If you're mid-work you only see a banner and aren't blocked; save your project.
+עדכון גרסה,version update,release|גרסה חדשה של האתר. רשימת השינויים מופיעה ב'מה חדש'.|A new site version. The changes are listed in 'What's new'.
+מה חדש,whats new,changelog|רשימת השינויים בכל גרסה, כולל תכונות חדשות ותיקונים.|The list of changes in each version, including new features and fixes.
+פעולה אחרונה,last action|החצים ↶ ↷ מבטלים ומחזירים את הפעולות האחרונות בעורך.|The ↶ ↷ arrows undo and redo your latest editor actions.
+מצב כהה,dark mode|כפתור 🌙 מחליף למראה כהה שנוח בלילה וחוסך סוללה במסכי OLED.|The 🌙 button switches to a dark look that's easier at night and saves battery on OLED screens.
+מצב מהיר,fast mode,quick mode|תצוגה מצומצמת ומהירה למכשירים חלשים ולמתחילים, שמציגה רק את החשוב.|A reduced, quick view for weak devices and beginners that shows only the essentials.
+התקנת אפליקציה,install app,pwa|מתפריט הדפדפן בוחרים 'התקנה'/'הוספה למסך הבית' והאתר נפתח כמו אפליקציה, גם בחיבור חלש.|From the browser menu choose Install/Add to home screen and the site opens like an app, even on a weak connection.
+נגישות,accessibility,a11y|האתר תומך בניווט מקלדת, ניגודיות במצב כהה, כפתורים גדולים במגע ותיאורי כפתורים לקוראי מסך.|The site supports keyboard navigation, dark-mode contrast, large touch targets and button labels for screen readers.
+קורא מסך,screen reader|תוכנה שמקריאה את המסך. כפתורי האתר מתויגים כך שיוקראו נכון.|Software that reads the screen aloud. The site's buttons are labeled so they read correctly.
+ניווט במקלדת,keyboard navigation,tab key|אפשר לנוע עם Tab, להפעיל עם Enter, ולבטל/לבצע שוב עם Ctrl+Z / Ctrl+Y.|Move with Tab, activate with Enter, and undo/redo with Ctrl+Z / Ctrl+Y.
+שפה,language,שפות|האתר בעברית ובאנגלית; הבוט עונה גם בערבית, רוסית וספרדית. כפתור 🌐 מחליף שפה.|The site is in Hebrew and English; the bot also answers in Arabic, Russian and Spanish. The 🌐 button switches language.
+כיוון כתיבה,rtl,ימין לשמאל|הממשק העברי מוצג מימין לשמאל והאנגלי משמאל לימין. הטקסט על המזכרת מוצג בכיוון השפה שבה כתבתם.|The Hebrew UI is right-to-left and English left-to-right. Text on the souvenir follows the language you typed in.
+גופן,font,typeface|סוג האותיות על המזכרת. אפשר לבחור גופן שתומך בעברית; גופן מסולסל עלול לא להודפס בקטן.|The letter style on the souvenir. Choose a font that supports Hebrew; ornate fonts may not print small.
+כותרת,title,שם הטיול|הכיתוב הראשי על המעמד. עדיף קצר כדי שיהיה גדול וקריא.|The main lettering on the stand. Shorter is better so it's larger and readable.
+תת כותרת,subtitle|שורה נוספת מתחת לכותרת, מתאימה לתאריכים או לשם קבוצה.|An extra line under the title, suited to dates or a group name.
+לוחית,plate,כיתוב לוחית|הלוח שעליו הכיתוב במעמד. אורך הטקסט משפיע על גודל האותיות.|The panel with the lettering on the stand. Text length affects letter size.
+צורת מעמד,stand shape,שלט|צורת הבסיס: מלבן, עגול, צורת המדינה ועוד. בוחרים בלשונית העיצוב.|The base's shape: rectangle, round, country outline and more. Chosen in the design tab.
+קצה מעוגל,rounded edge,rim|גימור שפת המעמד. שפה מוגבהת (Rim) מגינה על הסימונים ונותנת מראה ממוסגר.|The stand's edge finish. A raised rim protects markers and gives a framed look.
+עובי הבסיס,base thickness,base height|עובי המעמד בסנטימטר. בסיס עבה יותר יציב יותר, אבל צורך יותר חומר.|The stand thickness. A thicker base is sturdier but uses more material.
+גובה המדינה,country height,extrusion|כמה המדינה בולטת מעל הבסיס. גבוה יותר נראה דרמטי אך דורש יותר חומר ופרטים תלויים.|How far the country rises above the base. Taller looks dramatic but needs more material.
+סימון מקום,pin marker,marker|עמוד קטן על נקודה במפה, אפשר עם אייקון. גודל וצורה מכווננים.|A small post on a map point, optionally with an icon. Size and shape are adjustable.
+אייקון,icon,pin icon|סמל על הסיכה: אוהל, מטוס, פסגה, מצלמה, לב, דגל, כוכב ועוד.|A symbol on the pin: tent, plane, peak, camera, heart, flag, star and more.
+קו מסלול,route line,trail line|קו שמחבר את המקומות או את קובץ ה-GPX. עובי וצבע מתכווננים, ודק מ-1.5 מ״מ ייתן אזהרה.|A line connecting your places or the GPX file. Width and color are adjustable; thinner than 1.5 mm gives a warning.
+שכבת מסלול,route layer|עד 4 מסלולים בו-זמנית, כל אחד בצבע, סגנון וגובה משלו, וכל אחד בקובץ הדפסה נפרד.|Up to 4 routes at once, each with its own color, style and height, each in its own print file.
+סגנון קו,line style,dashed|רציף, מקווקו או מנוקד לכל מסלול.|Solid, dashed or dotted for each route.
+חיפוש מקום,place search,geocoding|הקלידו שם ובחרו מהתוצאות. החיפוש משתמש בנתוני OpenStreetMap ודורש אינטרנט.|Type a name and pick from the results. Search uses OpenStreetMap data and needs the internet.
+קואורדינטות,coordinates,lat lng,קו רוחב|זוג מספרים (רוחב, אורך) שמסמן נקודה בעולם. אפשר להדביק אותם במקום לחפש שם.|A pair of numbers (latitude, longitude) marking a world point. You can paste them instead of searching a name.
+openstreetmap,osm,אופן סטריט מאפ|מפת עולם פתוחה שמשמשת לשמות מקומות. נתוניה בחינם ונערכים על ידי מתנדבים.|An open world map used for place names. Its data is free and edited by volunteers.
+geojson,גיאוג'ייסון,גאוגייסון|קובץ שמתאר צורות גאוגרפיות. אפשר להעלות אחד כדי להוסיף מדינה או אזור שחסרים.|A file describing geographic shapes. You can upload one to add a missing country or region.
+kml,קיי אם אל|פורמט של גוגל ארץ למקומות ומסלולים. נתמך בייבוא.|Google Earth's format for places and routes. Supported for import.
+kmz,קיי אם זד|קובץ KML דחוס. נתמך בייבוא.|A compressed KML file. Supported for import.
+exif,אקסיף|מידע שמוטמע בתמונות, כולל מיקום וזמן צילום. האתר קורא אותו בדפדפן בלבד ולא מעלה את התמונות.|Metadata inside photos, including location and time. The site reads it in your browser only and never uploads the photos.
+heic,היי איי סי|פורמט תמונה של אייפון. לא נתמך בקריאת מיקום, ולכן ממירים ל-JPEG (בהגדרות המצלמה בחרו 'התאמה מרבית').|The iPhone image format. Not supported for location reading, so convert to JPEG (set the camera to Most Compatible).
+jpeg,ג'יי פי איי ג'י,jpg|פורמט התמונה המומלץ להעלאה לזיהוי מיקום.|The recommended image format for location detection uploads.
+png,פי אן ג'י|פורמט תמונה שמור ללא איבוד איכות. הגלויה מיוצאת בו ברזולוציה גבוהה.|A lossless image format. The postcard exports in it at high resolution.
+svg,אס וי ג'י,וקטור|פורמט וקטורי שנשאר חד בכל הגדלה. הגלויה אפשרית ב-SVG לעריכה בתוכנות עיצוב.|A vector format that stays sharp at any scale. The postcard is available as SVG for design software.
+dpi,די פי איי,רזולוציה|צפיפות פיקסלים להדפסה. 300 DPI נחשב איכות הדפסה טובה; הגלויה A6 מיוצאת בו.|Pixel density for printing. 300 DPI is good print quality; the A6 postcard exports at it.
+a6,a6 גודל|גודל גלויה: 105×148 מ״מ.|Postcard size: 105×148 mm.
+webgl,וובגל|טכנולוגיית הדפדפן שמציירת את התצוגה התלת-ממדית. אם היא כבויה התצוגה לא תופיע.|The browser technology that draws the 3D preview. If it's off the preview won't show.
+האצת חומרה,hardware acceleration|הגדרה בדפדפן שמפעילה את כרטיס המסך. נדרשת ל-WebGL; מפעילים בהגדרות הדפדפן.|A browser setting that enables the graphics card. Required for WebGL; turn it on in browser settings.
+מטמון,cache,נקה מטמון,cache clear|העתק שמור של דפי האתר. אם נראה שהאתר לא התעדכן, רעננו בכוח (Ctrl+F5) או נקו מטמון.|A stored copy of site pages. If the site looks outdated, hard refresh (Ctrl+F5) or clear the cache.
+קוקיז,cookies,עוגיות|קבצים קטנים שנשמרים בדפדפן לצורך התחברות והעדפות. פרטים בדף הפרטיות.|Small files saved in your browser for sign-in and preferences. Details on the privacy page.
+פרטיות,privacy|התמונות לא עולות לשרת, והפרויקט נשמר אצלכם אלא אם שמרתם בחשבון. אפשר לייצא או למחוק נתונים.|Photos don't upload, and projects stay with you unless saved to your account. You can export or delete your data.
+תנאי שימוש,terms|כללי השימוש באתר ובמזכרות, כולל שימוש מסחרי. נמצאים בתחתית האתר.|Rules for using the site and souvenirs, including commercial use. At the bottom of the site.
+גיבוי,backup|המנהל מקבל גיבוי יומי מוצפן של נתוני האתר, כדי לשחזר במקרה תקלה.|The admin receives a daily encrypted backup of site data to restore after a failure.
+התראות מנהל,admin alerts,notifications|הודעות על שגיאות, הצעות, דיווחים והרשמות לערוצי מנהל (דיסקורד/טלגרם/מייל).|Messages about errors, suggestions, reports and sign-ups to admin channels (Discord/Telegram/email).
+דיסקורד,discord,webhook|ערוץ הודעות שאליו מגיעות התראות על שגיאות, דיווחים, הצעות ועדכונים.|A message channel receiving alerts about errors, reports, suggestions and updates.
+בדיקת הדפסתיות,printability|בדיקה אוטומטית שמסמנת קירות דקים, כיתוב קטן ובליטות תלויות לפני הדפסה.|An automatic check that flags thin walls, tiny text and overhangs before printing.
+מפת אור,light map,lithophane|לוח דק שעוביו משתנה לפי גובה וכשמאירים מאחור נראית תמונה טופוגרפית.|A thin plate whose thickness varies with elevation; backlit it shows a topographic image.
+ליתופאן,ליטופאן|תמונה מודפסת בעובי משתנה שנראית כשמאירים אותה מאחור. באתר: מפת אור.|A print with varying thickness that shows an image when backlit. On the site: Light map.
+מפה טופוגרפית,topographic,topo,תבליט|מפה שמראה גבהים. באתר היא נוצרת מנתוני גובה או מקירוב מרחק מהחוף.|A map showing elevation. On the site it's generated from height data or approximated from distance to the coast.
+הקצנה אנכית,vertical exaggeration|הגדלת הגובה ביחס לרוחב כדי שהרים יבלטו. סליידר ×0.25 עד ×3.|Scaling height relative to width so mountains stand out. Slider ×0.25 to ×3.
+שכבת מים,water layer|שכבה של אגמים ונהרות במפה. מוסיפים בבחירת 'מים' במצב מלא.|A layer of lakes and rivers on the map. Added via 'Water' in full mode.
+חיתוך אזור,crop region,cut area|חיתוך המפה לאזור קטן כדי להגדיל פרטים. החיתוך החופשי נעשה בציור על המפה.|Cropping the map to a small area to enlarge detail. Free cut is done by drawing on the map.
+יבשת,continent|אחת משש היבשות שאפשר לבנות: אירופה, אסיה, אפריקה, צפון אמריקה, דרום אמריקה, אוקיאניה.|One of six buildable continents: Europe, Asia, Africa, North America, South America, Oceania.
+אוקיאניה,oceania|יבשת אוקיאניה: אוסטרליה, ניו זילנד ואיי האוקיינוס השקט. זמינה במפת יבשת.|The Oceania continent: Australia, New Zealand and Pacific islands. Available as a continent map.
+איי רחוק,far islands,remote islands switch|מתג שמכליל או מסיר איים רחוקים של מדינה (כמו הוואי) כדי שהמפה תהיה גדולה יותר.|A switch that includes or removes a country's far-flung islands (like Hawaii) so the main map is larger.
+טריטוריה,territory,dependency|שטח שלא מדינה עצמאית (כמו גרינלנד או פוקלנד). חלקם זמינים ברשימה בשמם בעברית.|A non-sovereign area (like Greenland or the Falklands). Many are in the list with Hebrew names.
+שביל,trail,hiking trail|מסלול הליכה. תבניות מוכנות: שביל ישראל, טור דה מונבלאן, אנאפורנה וקמינו.|A hiking route. Ready templates: Israel National Trail, Tour du Mont Blanc, Annapurna and Camino.
+טרק,trek,trekking|טיול רגלי ארוך. אפשר ליצור מזכרת של הטרק עם קו מסלול ונקודות עצירה.|A long hike. You can make a trek souvenir with a route line and stopovers.
+קמינו,camino,camino de santiago|דרך עלייה לרגל בספרד. תבנית מוכנה באתר עם נקודות ומסלול מקורב.|A pilgrimage route in Spain. A ready template on the site with approximate points and route.
+אנאפורנה,annapurna|טרק בנפאל. תבנית מוכנה באתר.|A trek in Nepal. A ready template on the site.
+מונבלאן,mont blanc,tmb|טור דה מונבלאן: מסלול סביב ההר בצרפת, איטליה ושווייץ. תבנית באתר.|The Tour du Mont Blanc: a loop around the mountain through France, Italy and Switzerland. A template on the site.
+שביל ישראל,israel national trail,inh|שביל הליכה לאורך ישראל. תבנית באתר עם סימונים קטנים (0.6) למניעת חפיפה.|A hiking trail along Israel. A template on the site with small (0.6) markers to avoid overlap.

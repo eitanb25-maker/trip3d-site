@@ -1,0 +1,57 @@
+פינים והחורים,pegs and sockets,peg|בליטות קטנות במעמד שנכנסות לשקעים במפה ומחברות את החלקים בלי דבק. מרווח (Gap) קובע כמה הדוק.|Small protrusions on the stand that fit sockets in the map, joining the parts without glue. The Gap sets how tight.
+שקע,socket,hole for peg|החור שבו הפין נכנס. אם הפין לא נכנס, הגדילו את המרווח.|The hole the peg enters. If the peg won't fit, increase the gap.
+ערכת חלקים,kit,parts kit|ייצוא של כמה חלקים נפרדים (מעמד ומפה) להדפסה, אפשר בצבעים שונים ובלי AMS.|An export of several separate parts (stand and map) for printing, possibly in different colors without an AMS.
+מרווח gap,gap,מרווח חיבור|הפרש מכוון בין חלקים נעולים: 0.2–0.3 מ״מ מתאים לרוב המדפסות.|A deliberate difference between locked parts: 0.2–0.3 mm suits most printers.
+זווית מעמד,stand angle,tilt|הטיית המודל ל-30° או 45° לצפייה על שולחן. נבנה טריז מתחת, מודפס שטוח.|Tilting the model 30° or 45° for desk viewing. A wedge is built below, printed flat.
+זרוע,arm,floating arm|מוט דק עם תמוכה שמחזיק אלמנט מרחף מעל המפה.|A thin rod with a brace that holds a floating element above the map.
+אלמנט מרחף,floating element|מטוס, מצנח רחיפה או ענן שמחזיקה זרוע מעל הסיכה או מרכז המפה.|A plane, paraglider or cloud held by an arm above a pin or the map center.
+מצנח,paraglider|אלמנט מרחף בצורת מצנח רחיפה, מתאים לטיולי אוויר ומצוקים.|A floating element shaped like a paraglider, suited to air and cliff trips.
+ענן מרחף,cloud element|אלמנט מרחף בצורת ענן. נוח לטיולים בהרים ולמראה קליל.|A cloud-shaped floating element. Nice for mountain trips and a light look.
+חריץ led,led slot,תעלת כבל|חריץ בתחתית לפס LED ותעלה לכבל. השכבה העליונה נשארת מלאה כדי שהאור יעבור.|A slot underneath for an LED strip and a cable channel. The top layer stays solid so light shines through.
+פס led,led strip|פס תאורה דק שנכנס לחריץ ומאיר את המזכרת. מומלץ חומר שקוף או לבן.|A thin light strip that fits the slot and lights the souvenir. Translucent or white material recommended.
+זמן אפקט,sunlight sim|סימולטור שמש מראה צללים בתצוגה לפי שעה וכיוון. לתצוגה בלבד.|The sun simulator shows shadows in the preview by time and direction. Preview only.
+הדמיית שכבות,layer preview,print simulation|סליידר שמראה איך המודל נבנה שכבה-שכבה, לפי גובה השכבה שבחרתם.|A slider showing how the model builds layer by layer at your chosen layer height.
+גרירת סיכות,drag pins|אפשר לגרור סיכה ישירות על המודל התלת-ממדי והמפה והרשימה מתעדכנות.|You can drag a pin directly on the 3D model and the map and list update.
+ספריית תבניות,template library|תבניות מסלול מוכנות בלחיצה: מדינה, נקודות, כותרת ומסלול.|One-click ready route templates: country, points, title and route.
+הצעות כיתוב,caption suggestions|רעיונות לכיתוב על הלוחית לפי המקומות שהוספתם. עם AI כשהוא פעיל, ובתבניות מקומיות אחרת.|Caption ideas for the plate based on your places. With AI when enabled, otherwise local templates.
+כלי עזר,tools,כלים|סוגי המוצרים: מעמד, מחזיק מפתחות, תליון, מגנט, קישוט, פאזל ומעמד לטלפון.|The product types: stand, keychain, pendant, magnet, ornament, puzzle and phone stand.
+קישוט לתליה,ornament,christmas ornament|קישוט קטן עם טבעת תלייה לעץ, לדלת או לחלון.|A small decoration with a hanging loop for a tree, door or window.
+מעמד לטלפון,phone stand,phone holder|מעמד שולחני שמחזיק טלפון עם צורת המדינה. בדקו שהמשטח מספיק יציב למכשיר שלכם.|A desk stand holding a phone with the country's shape. Make sure the base is stable enough for your device.
+פאזל,puzzle,jigsaw|המדינה מחולקת לחלקי פאזל מחוברים. מספר החלקים ומסגרת בהגדרות הפאזל.|The country split into interlocking pieces. Piece count and frame are in the puzzle settings.
+חלקי פאזל,puzzle pieces|מספר החתיכות. יותר חלקים = יותר מאתגר אבל חלקים קטנים וקשים להדפסה.|The number of pieces. More pieces is more challenging but smaller and harder to print.
+מסגרת פאזל,puzzle frame|מסגרת סביב הפאזל ששומרת עליו מורכב ונראה כמו תמונה.|A frame around the puzzle that keeps it assembled and looking like a picture.
+מחזיק מפתחות,keychain|מזכרת קטנה עם טבעת, בצורת המדינה או כקו המסלול. נוחה להדפסה מהירה.|A small souvenir with a ring, in the country shape or the route line. Quick to print.
+תליון,pendant|דומה למחזיק מפתחות אבל קטן, לשרשרת. כדאי טבעת עבה כדי שלא תישבר.|Like a keychain but smaller, for a chain. A thick loop avoids breakage.
+מגנט למקרר,fridge magnet|מזכרת שטוחה עם כיס למגנט בגב. מדפיסים, מדביקים מגנט ומחברים למקרר.|A flat souvenir with a pocket for a magnet at the back. Print, glue in a magnet and stick it on the fridge.
+כיס מגנט,magnet pocket|שקע בגב בגודל המגנט שבחרתם. אם המדינה צרה מדי האתר יזהיר.|A recess at the back sized to your magnet. If the country is too narrow the site warns you.
+מזכרת מכמה מדינות,multi country|מעמד אחד עם עד 6 מדינות, או אוספים מוכנים כמו סקנדינביה.|One stand with up to 6 countries, or ready collections like Scandinavia.
+אוסף מדינות,country collection,group|קבוצה מוכנה של מדינות סמוכות, כמו סקנדינביה או חצי האי האיברי.|A ready group of neighboring countries, like Scandinavia or the Iberian Peninsula.
+סקנדינביה,scandinavia|נורבגיה, שוודיה ודנמרק (ולפעמים פינלנד ואיסלנד). זמינה כאוסף מוכן.|Norway, Sweden and Denmark (sometimes Finland and Iceland). Available as a ready collection.
+חצי האי האיברי,iberian peninsula,iberia|ספרד ופורטוגל (ועוד). זמין כאוסף מוכן.|Spain and Portugal (and more). Available as a ready collection.
+הקשר שיחה,conversation context|הבוט זוכר את השאלה הקודמת ולכן אפשר לשאול 'ואיך מוסיפים אותו?' בלי לחזור על הנושא.|The bot remembers your previous question, so you can ask 'and how do I add it?' without repeating the topic.
+תיקון כתיב,spell correction,typo|הבוט מבין גם שגיאות כתיב ומילים עם אותיות חסרות, וגם הקלדה במקלדת בשפה לא נכונה.|The bot understands typos and missing letters, and even typing on the wrong keyboard layout.
+מילה נרדפת,synonym|מילה שמשמעותה דומה. הבוט מכיר סלנג וכינויים רבים לאותו נושא.|A word with a similar meaning. The bot knows many slang terms and nicknames for the same topic.
+שאלה שלא נענתה,unanswered question|שאלה שהבוט לא ידע לענות עליה. נשמרת למנהל שמלמד תשובה חדשה.|A question the bot couldn't answer. It's saved for the admin who teaches a new answer.
+דירוג תשובה,answer rating,thumbs|אפשר לדרג את תשובת הבוט (👍/👎). דירוגים שליליים עוזרים לתקן.|You can rate the bot's answer (👍/👎). Negative ratings help us fix it.
+ai,בינה מלאכותית,אי איי|כשהוא פעיל, עוזר חכם עונה על שאלות שהתשובות המוכנות לא מכסות. אפשר לבקש תשובה מוכנה במקום.|When enabled, a smart assistant answers questions the prepared answers don't cover. You can ask for a prepared answer instead.
+סיסמה חזקה,strong password|לפחות 10 תווים עם אותיות ומספרים. אל תשתמשו שוב בסיסמה מאתר אחר.|At least 10 characters with letters and numbers. Don't reuse a password from another site.
+איפוס סיסמה,password reset|מבקשים מהעמוד 'שכחתי סיסמה'. אם אין שליחת מיילים, הבקשה מגיעה למנהל.|Request it from 'Forgot password'. If mail isn't enabled the request goes to the admin.
+חשבון חסום,blocked account|מנהל יכול לחסום משתמש. אם נחסמתם בטעות, כתבו למנהל בצ'אט.|An admin can block a user. If you were blocked by mistake, write to the admin via chat.
+נעילת כניסה,login lockout|אחרי כמה ניסיונות כושלים הכניסה ננעלת זמנית כדי להגן על החשבון. מחכים כמה דקות.|After several failed attempts sign-in locks temporarily to protect the account. Wait a few minutes.
+התנתקות,logout,sign out|מהתפריט 'החשבון שלי'. התנתקות לא מוחקת פרויקטים שנשמרו בחשבון.|From the 'My account' menu. Signing out doesn't delete projects saved in your account.
+מחיקת חשבון,delete account|ב'החשבון שלי' אפשר לייצא או למחוק את כל הנתונים שלכם.|In 'My account' you can export or delete all your data.
+ייצוא נתונים,export data,gdpr|הורדת עותק של הנתונים שלכם מהחשבון. נמצא ב'החשבון שלי'.|Downloading a copy of your data from the account. Found in 'My account'.
+תגובה,comment,הערה|אפשר להגיב ביצירות בגלריה (בלי קישורים). המנהל יכול למחוק תגובות לא הולמות.|You can comment on gallery creations (no links). The admin can delete inappropriate comments.
+עוקב,follow,followers|מעקב אחרי יוצרים בגלריה כדי לראות את היצירות החדשות שלהם.|Following creators in the gallery to see their new creations.
+לייק,like,heart|♥ ביצירה בגלריה. אפשר ללחוץ שוב להסרה.|♥ on a gallery creation. Press again to remove.
+פיד,feed|רשימת היצירות החדשות בגלריה, אפשר לסנן לפי מדינה.|The list of new gallery creations; you can filter by country.
+יצירת השבוע,creation of the week|יצירה נבחרת שמוצגת בעמוד הראשי. נבחרת לפי לייקים ואיכות.|A featured creation on the home page, chosen by likes and quality.
+מדינת השבוע,country of the week|מדינה מומלצת שנותנת בונוס למי שיוצר ממנה.|A featured country giving a bonus to creators from it.
+שעה שמחה,happy hour|זמן קצר שבו כל ההורדות שוות יותר או יש בונוס. מופיע בבאנר.|A short window with extra-value downloads or a bonus. Shown in a banner.
+יום שנה,anniversary|בונוס ליום ההצטרפות שלכם לאתר.|A bonus on the anniversary of joining the site.
+מתנת פתיחה,welcome gift|הורדות במתנה למי שנרשם ומאמת מייל.|Gift downloads for those who register and verify email.
+מלך ההזמנות,top inviter|מי שהזמין הכי הרבה חברים בחודש מקבל פרס.|Whoever invited the most friends in a month wins a prize.
+יעד קהילתי,community goal|מטרה משותפת של כל המשתמשים. כשמגיעים אליה כולם מקבלים בונוס.|A shared target for all users. When reached everyone gets a bonus.
+תאריך,date,תאריך טיול|אפשר להוסיף תאריך או טווח תאריכים לכיתוב. כתבו בפורמט קצר כדי שיהיה קריא.|You can add a date or range to the lettering. Use a short format so it's readable.
+אותיות עבריות,hebrew letters,עברית על המזכרת|האתר תומך בכיתוב בעברית ובאנגלית ובשפות נוספות לפי הגופן. הטקסט מונח בכיוון הנכון אוטומטית.|The site supports Hebrew and English lettering and more depending on the font. Text is laid out in the correct direction automatically.
+אימוג'י,emoji|אימוג'י לא תמיד נתמך בכיתוב המודפס. השתמשו באייקונים של הסיכות במקום.|Emoji aren't always supported in printed lettering. Use pin icons instead.
