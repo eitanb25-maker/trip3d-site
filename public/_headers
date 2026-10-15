@@ -62,3 +62,5 @@
   Cache-Control: no-cache
 /colors.js
   Cache-Control: no-cache
+/continents.js
+  Cache-Control: no-cache
