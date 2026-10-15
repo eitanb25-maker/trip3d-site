@@ -1,5 +1,5 @@
 // גיבוי יומי מוצפן: נשמר באחסון האתר, ואם הוגדר – גם ב-Dropbox / Webhook
-import { saveAutoBackup, externalBackup, extTargets, store, alertMail, awardMonthly, awardRefMonthly, cleanupOld, dayKey, monthKey, subReminders, dailyHealth, notify, projectNudges } from "../lib/lib.mjs";
+import { saveAutoBackup, externalBackup, extTargets, store, alertMail, awardMonthly, awardRefMonthly, cleanupOld, dayKey, monthKey, subReminders, dailyHealth, healthDetails, notify, projectNudges } from "../lib/lib.mjs";
 
 export default async () => {
   try { const c = await cleanupOld(); if (Object.values(c).some(Boolean)) console.log("cleanup", JSON.stringify(c)); } catch (e) { console.error("cleanup failed", e); }
@@ -7,7 +7,7 @@ export default async () => {
   try { const n = await subReminders(); if (n) console.log("sub reminders", n); } catch (e) { console.error("sub reminders failed", e); }
   try {
     const st1 = await store(), set1 = (await st1.get("settings")) || {};
-    if (set1.dailyCheck !== false) { const bad = await dailyHealth(); if (bad.length) await notify("🩺 בדיקת בריאות יומית: נמצאו בעיות\n• " + bad.join("\n• ") + "\n\nפרטים בלוח הבקרה ← בדיקות."); else await notify("✅ סריקת בריאות יומית הסתיימה: הכול תקין", undefined, { noMail: true }); }
+    if (set1.dailyCheck !== false) { const bad = await dailyHealth(), det = (await healthDetails(bad)).join("\n"); if (bad.length) await notify("🩺 סריקת בריאות יומית: נמצאו " + bad.length + " בעיות\n• " + bad.join("\n• ") + "\n\n" + det + "\n\nפרטים בלוח הבקרה ← בדיקות."); else await notify("✅ סריקת בריאות יומית: הכול תקין\n" + det, undefined, { noMail: true }); }
   } catch (e) { console.error("daily health failed", e); }
   try {
     // ביום הראשון בחודש: פרסים אוטומטיים למובילי החודש שהסתיים

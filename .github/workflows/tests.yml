@@ -18,9 +18,20 @@ jobs:
           python-version: "3.12"
       - run: npm install --no-save three@0.128.0
       - run: pip install playwright && playwright install --with-deps chromium
-      - run: python3 tests/run.py
+      - id: t
+        run: python3 tests/run.py
         env:
           THREE_JS: node_modules/three/build/three.min.js
+      - name: צילומי מסך + דוח לדיסקורד (רק אם הוגדר הסוד DISCORD_WEBHOOK_URL)
+        if: always()
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          THREE_JS: node_modules/three/build/three.min.js
+        run: |
+          [ -n "$DISCORD_WEBHOOK_URL" ] || exit 0
+          (cd tests && node serve.mjs >/dev/null 2>&1 &) ; sleep 2
+          python3 tests/shots.py || true
+          python3 tests/report.py "בדיקות אוטומטיות (GitHub)" || true
       - if: failure()
         uses: actions/upload-artifact@v4
         with:

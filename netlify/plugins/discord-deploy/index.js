@@ -17,6 +17,6 @@ async function send(text) {
 const ctx = () => [process.env.CONTEXT || "", process.env.BRANCH ? "ענף " + process.env.BRANCH : "", process.env.COMMIT_REF ? "commit " + String(process.env.COMMIT_REF).slice(0, 7) : ""].filter(Boolean).join(" · ");
 
 module.exports = {
-  onSuccess: async () => { await send(`🚀 עדכון עלה לאתר (${ctx()})\n${latest()}${process.env.DEPLOY_URL ? "\n" + process.env.DEPLOY_URL : ""}`); },
+  onSuccess: async ({ utils } = {}) => { await send(`🚀 עדכון עלה לאתר (${ctx()})\n${latest()}${process.env.URL ? "\n🌐 " + process.env.URL : ""}${process.env.DEPLOY_URL ? "\n" + process.env.DEPLOY_URL : ""}`); },
   onError: async ({ utils } = {}) => { await send(`❌ עדכון נכשל בבנייה (${ctx()})\nהאתר ממשיך עם הגרסה הקודמת. פרטים בלוח Netlify ← Deploys.`); },
 };

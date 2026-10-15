@@ -27,4 +27,4 @@
 - **בדיקות אוטומטיות:** `python3 tests/run.py` (פירוט ב-`tests/README.md`). רצות גם ב-GitHub Actions על כל דחיפה ו-Pull Request (`.github/workflows/tests.yml`); כשל מופיע ב-✗ אדום ליד ה-commit, ולוגים מצורפים.
 - **בלי להפריע למשתמשים:** במקום מצב תחזוקה אפשר לעבוד על ענף נפרד ולפתוח Pull Request. ב-Netlify, Site configuration ← Build & deploy ← Branches and deploy contexts, מפעילים Deploy Previews. לכל PR נוצרת כתובת בדיקה משלו, והאתר החי לא משתנה עד המיזוג ל-`main`. ההתראה (`maintenance.json`) נשארת לשינויים שכן חייבים לעלות ישר ל-`main`.
 - **מקור הקוד:** `public/index.html` נערך ישירות. התיקייה `source/` ארכיון ישן (ראו `source/README.md`); לא לבנות ממנה מחדש.
-- **דיסקורד:** `DISCORD_WEBHOOK_URL` צריך להיות מוגדר ב-Netlify ל-Builds וגם ל-Functions. הוא שולח שגיאות, דיווחים, הצעות, סריקה יומית והודעה אחרי כל פריסה.
+- **דיסקורד:** `DISCORD_WEBHOOK_URL` צריך להיות מוגדר ב-Netlify ל-Builds וגם ל-Functions. הוא שולח שגיאות, דיווחים, הצעות, סריקה יומית והודעה אחרי כל פריסה. כדי שגם הרצת הבדיקות ב-GitHub תשלח סיכום + צילומי מסך: Settings ← Secrets and variables ← Actions ← סוד `DISCORD_WEBHOOK_URL` (אותו כתובת). בלי הסוד השלב מדולג.

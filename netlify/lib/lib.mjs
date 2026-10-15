@@ -343,6 +343,23 @@ export async function dailyHealth() {
   try { const a = await lastBackupAge(); if (a === null) bad.push("אין גיבוי פנימי בכלל"); else if (a > 7) bad.push("הגיבוי האחרון בן " + a + " ימים"); } catch {}
   return bad;
 }
+// פירוט לדוח הסריקה היומית: שורות מצב (✅/⚠️) + מספרים. לעולם לא זורק שגיאה
+export async function healthDetails(bad) {
+  const L = [], e = process.env, ok = (c, t, f) => L.push((c ? "✅ " : "⚠️ ") + (c ? t : f || t));
+  try {
+    const st = await store();
+    ok(!bad.some((b) => /אחסון/.test(b)), "אחסון: כתיבה וקריאה תקינות");
+    ok(!!(e.SESSION_SECRET && e.SESSION_SECRET.length >= 16), "סוד התחברות מוגדר", "סוד התחברות חסר/קצר");
+    ok(mailEnabled(), "שליחת מיילים מוגדרת", "שליחת מיילים לא מוגדרת");
+    const a = await lastBackupAge().catch(() => null);
+    ok(a !== null && a <= 7, "גיבוי אחרון: " + (a === 0 ? "היום" : a + " ימים"), a === null ? "אין גיבוי" : "גיבוי ישן: " + a + " ימים");
+    try { const u = await st.scan("u/", { limit: 5000 }); L.push("👥 משתמשים רשומים: " + u.length); } catch {}
+    try { const w = await st.get("n/errwin"); if (w && Date.now() - w.start < 864e5) L.push((w.n ? "🐛 שגיאות בשעה האחרונה: " + w.n : "🐛 אין שגיאות בשעה האחרונה")); } catch {}
+    const ch = [["Discord", e.DISCORD_WEBHOOK_URL], ["Telegram", e.TELEGRAM_BOT_TOKEN], ["Slack", e.SLACK_WEBHOOK_URL]].filter((x) => x[1]).map((x) => x[0]);
+    L.push("📣 ערוצי התראה פעילים: " + (ch.join(", ") || "אין"));
+  } catch (x) { L.push("⚠️ לא ניתן היה לאסוף פירוט: " + String((x && x.message) || x).slice(0, 80)); }
+  return L;
+}
 // תזכורות מנוי: 5 ימים לפני הסיום, ובסיום
 export async function subReminders() {
   const st = await store(), now = Date.now(); let n = 0;

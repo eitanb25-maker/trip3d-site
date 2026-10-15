@@ -11,8 +11,10 @@ T = os.path.join(ROOT, "tests")
 OUT = os.path.join(T, "out"); os.makedirs(OUT, exist_ok=True)
 EXTERNAL = re.compile(r"ERR_TUNNEL|ERR_NAME_NOT_RESOLVED|ERR_INTERNET|ERR_CONNECTION|ERR_PROXY|net::ERR_ABORTED")
 fails = []
+results = []
 
 def step(name, ok, detail=""):
+    results.append({"name": name, "ok": bool(ok), "detail": detail[:300]})
     print(("PASS " if ok else "FAIL ") + name + ((" – " + detail) if detail and not ok else ""))
     if not ok: fails.append(name)
 
@@ -62,5 +64,6 @@ if __name__ == "__main__":
     args = sys.argv[1:]; slow = "--slow" in args; only = [a for a in args if a != "--slow"]
     if not only and not slow: static(); notify()
     suites(only, slow)
+    json.dump({"passed": sum(r["ok"] for r in results), "total": len(results), "results": results}, open(os.path.join(OUT, "summary.json"), "w", encoding="utf8"), ensure_ascii=False)
     print("\n%d נכשלו" % len(fails) if fails else "\nהכול עבר")
     sys.exit(1 if fails else 0)
