@@ -28,7 +28,7 @@
     + "html.uxst .uxtabs{top:var(--uxph,46vh)}"
     + "}"
     + "#uxstk{display:none}html.uxst #uxstk.on{display:block}"
-    + ".uxpin{min-width:40px}";
+    + ".uxpin{display:none;min-width:40px}@media (max-width:1000px) and (orientation:portrait) and (min-height:520px){.uxpin{display:inline-block}}";
 
   var M = { sec: null, wrap: null, mk: {} };
   function mount() {

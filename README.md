@@ -13,7 +13,6 @@
 | `netlify/functions/weekly.mjs` | דוח שבועי אוטומטי (התראה פעם בשבוע) |
 | `netlify/lib/lib.mjs` | אחסון, סטטיסטיקות והתראות |
 | `netlify.toml`, `package.json` | הגדרות פריסה |
-| `source/` | קבצי המקור שממנו נוצר האתר (לא נדרש להעלאה) |
 
 ## פריסה ב-Netlify (הדרך המומלצת: GitHub)
 1. פתחו חשבון חינם ב-GitHub וצרו מאגר (repository) חדש. העלו אליו **את כל התוכן של התיקייה הזו** (גרירה של הקבצים בדף "uploading an existing file" מספיקה).

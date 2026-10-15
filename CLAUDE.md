@@ -18,5 +18,5 @@
 כניסה לבדיקה בלי המסך: `/?nomaint=1` (זה רק מסך; ה-API ממשיך לעבוד, וחסימה אמיתית היא "מצב תחזוקה" בהגדרות לוח הבקרה).
 
 ## עוד
-- `public/index.html` נבנה מ-`trip3d_template.html` + `build/override.js` + `build/shim.js` (תיקיית `build/` לא במאגר; עותקים ב-`source/`).
+- `public/index.html` והמודולים `public/*.js` נערכים ישירות (אין שלב בנייה; התבנית הישנה `source/` הוסרה ב-v68). בדיקות: `python3 tests/run.py`.
 - משתני סביבה: ראו `.env.example`. לעולם לא לשמור סודות במאגר.
