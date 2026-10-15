@@ -102,14 +102,14 @@
       pts: [[35.652, 33.248, "דן", "Dan", "flag", 200], [35.41, 32.99, "הר מירון", "Mt Meron", "peak", 1208], [35.55, 32.80, "הכנרת", "Sea of Galilee", "camera", -210], [35.39, 32.69, "הר תבור", "Mt Tabor", "peak", 588],
         [35.03, 32.74, "הכרמל", "Carmel", "tent", 400], [35.21, 31.78, "ירושלים", "Jerusalem", "heart", 780], [34.90, 31.61, "בית גוברין", "Beit Guvrin", "tent", 280], [35.21, 31.26, "ערד", "Arad", "tent", 600],
         [34.80, 30.61, "מצפה רמון", "Mitzpe Ramon", "peak", 850], [34.95, 29.55, "אילת", "Eilat", "flag", 0]] },
-    { id: "tmb", he: "טור דה מונבלאן", en: "Tour du Mont Blanc", sub_he: "מסלול מעגלי · צרפת, איטליה, שווייץ", sub_en: "Loop trail · France, Italy, Switzerland", countries: ["France", "Italy", "Switzerland"], crop: [6.55, 45.62, 7.3, 46.12], km: 170, loop: true,
+    { id: "tmb", he: "טור דה מונבלאן", en: "Tour du Mont Blanc", sub_he: "מסלול מעגלי · צרפת, איטליה, שווייץ", sub_en: "Loop trail · France, Italy, Switzerland", countries: ["France", "Italy", "Switzerland"], crop: [6.55, 45.62, 7.3, 46.12], km: 170, loop: true, psz: 0.6,
       pts: [[6.797, 45.891, "לה אוש", "Les Houches", "flag", 1010], [6.727, 45.821, "לה קונטמין", "Les Contamines", "tent", 1170], [6.723, 45.774, "קול דו בונום", "Col du Bonhomme", "peak", 2329], [6.744, 45.703, "לה שאפיה", "Les Chapieux", "tent", 1550],
         [6.825, 45.745, "קול דה לה סין", "Col de la Seigne", "peak", 2516], [6.969, 45.797, "קורמאיור", "Courmayeur", "heart", 1224], [7.08, 45.89, "גראן קול פרה", "Grand Col Ferret", "peak", 2537], [7.1, 46.0, "לה פולי", "La Fouly", "tent", 1600],
         [7.115, 46.03, "שאמפה", "Champex", "camera", 1470], [6.998, 46.056, "טריאן", "Trient", "tent", 1300], [6.957, 46.04, "קול דה באלם", "Col de Balme", "peak", 2191], [6.869, 45.924, "שמוני", "Chamonix", "heart", 1035]] },
-    { id: "ann", he: "סביב אנאפורנה", en: "Annapurna Circuit", sub_he: "מסלול טרק בנפאל", sub_en: "Trek in Nepal", countries: ["Nepal"], crop: [83.5, 28.1, 84.55, 28.95], km: 160, loop: false,
+    { id: "ann", he: "סביב אנאפורנה", en: "Annapurna Circuit", sub_he: "מסלול טרק בנפאל", sub_en: "Trek in Nepal", countries: ["Nepal"], crop: [83.5, 28.1, 84.55, 28.95], km: 160, loop: false, psz: 0.6,
       pts: [[84.375, 28.231, "בסיסאהאר", "Besisahar", "flag", 760], [84.234, 28.55, "צ׳אמה", "Chame", "tent", 2670], [84.016, 28.667, "מאנאנג", "Manang", "tent", 3540], [83.941, 28.795, "ת׳ורונג לה", "Thorong La", "peak", 5416],
         [83.872, 28.817, "מוקטינאת", "Muktinath", "camera", 3760], [83.723, 28.78, "ג׳ומסום", "Jomsom", "tent", 2720], [83.65, 28.489, "טאטופאני", "Tatopani", "tent", 1190], [83.69, 28.4, "פון היל", "Poon Hill", "camera", 3210], [83.985, 28.209, "פוקהרה", "Pokhara", "heart", 820]] },
-    { id: "cam", he: "קמינו דה סנטיאגו", en: "Camino de Santiago", sub_he: "הדרך הצרפתית · ספרד", sub_en: "The French Way · Spain", countries: ["Spain"], crop: [-9.1, 42.1, -0.9, 43.2], km: 770, loop: false,
+    { id: "cam", he: "קמינו דה סנטיאגו", en: "Camino de Santiago", sub_he: "הדרך הצרפתית · ספרד", sub_en: "The French Way · Spain", countries: ["Spain"], crop: [-9.1, 42.1, -0.9, 43.2], km: 770, loop: false, psz: 0.6,
       pts: [[-1.32, 42.995, "רונסבייס", "Roncesvalles", "flag", 950], [-1.646, 42.812, "פמפלונה", "Pamplona", "tent", 450], [-2.446, 42.465, "לוגרוניו", "Logroño", "tent", 380], [-3.703, 42.343, "בורגוס", "Burgos", "camera", 860],
         [-5.571, 42.599, "ליאון", "León", "tent", 830], [-7.0, 42.708, "או סברירו", "O Cebreiro", "peak", 1300], [-8.545, 42.881, "סנטיאגו", "Santiago", "heart", 260]] }
   ];
