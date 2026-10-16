@@ -9,6 +9,9 @@ function latest() {
   } catch (e) {}
   return "";
 }
+function subject() {
+  try { return require("child_process").execSync("git log -1 --pretty=%s", { encoding: "utf8", timeout: 3000 }).trim().slice(0, 200); } catch (e) { return ""; }
+}
 async function send(text) {
   const url = process.env.DISCORD_WEBHOOK_URL;
   if (!url || !/^https:\/\/(discord|discordapp)\.com\/api\/webhooks\//.test(url)) return;
@@ -17,6 +20,6 @@ async function send(text) {
 const ctx = () => [process.env.CONTEXT || "", process.env.BRANCH ? "ענף " + process.env.BRANCH : "", process.env.COMMIT_REF ? "commit " + String(process.env.COMMIT_REF).slice(0, 7) : ""].filter(Boolean).join(" · ");
 
 module.exports = {
-  onSuccess: async ({ utils } = {}) => { await send(`🚀 עדכון עלה לאתר (${ctx()})\n${latest()}${process.env.URL ? "\n🌐 " + process.env.URL : ""}${process.env.DEPLOY_URL ? "\n" + process.env.DEPLOY_URL : ""}`); },
+  onSuccess: async ({ utils } = {}) => { await send(`🚀 עדכון עלה לאתר (${ctx()})${subject() ? "\n📝 " + subject() : ""}\n${latest()}${process.env.URL ? "\n🌐 " + process.env.URL : ""}${process.env.DEPLOY_URL ? "\n" + process.env.DEPLOY_URL : ""}`); },
   onError: async ({ utils } = {}) => { await send(`❌ עדכון נכשל בבנייה (${ctx()})\nהאתר ממשיך עם הגרסה הקודמת. פרטים בלוח Netlify ← Deploys.`); },
 };

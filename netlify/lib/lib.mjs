@@ -714,6 +714,18 @@ export async function botMissText() {
   return "\n\n🤖 שאלות שהבוט לא ידע לענות עליהן השבוע:\n" + rows.map((r) => `• ${r.q} (${r.n}x)`).join("\n") + "\n(ללמד אותו: לוח בקרה ← בוט)";
 }
 
+// סיכום יומי של השימוש בבוט: שאלות שלא נענו + תשובות שקיבלו 👎 ב-24 השעות האחרונות (ריק אם לא היה כלום)
+export async function botDigestText(hours = 24) {
+  const st = await store(), cut = Date.now() - hours * 3600e3;
+  const miss = (await st.scan("bm/", { limit: 300 })).map((x) => x.v).filter((v) => v && (v.last || 0) > cut).sort((a, b) => b.n - a.n).slice(0, 10);
+  const down = (await st.scan("bf/", { limit: 300 })).map((x) => x.v).filter((v) => v && v.up === false && (v.ts || 0) > cut).slice(-10);
+  if (!miss.length && !down.length) return "";
+  let t = "🤖 הבוט ב-" + hours + " השעות האחרונות:";
+  if (miss.length) t += "\n❓ לא ידע לענות:\n" + miss.map((r) => `• ${String(r.q).slice(0, 120)} (${r.n}x)`).join("\n");
+  if (down.length) t += "\n👎 תשובות שלא עזרו:\n" + down.map((r) => `• ${String(r.q).slice(0, 100)} → ${r.t || "ללא נושא"}`).join("\n");
+  return t + "\n(ללמד אותו: לוח בקרה ← בוט, או לבקש ממני לשפר)";
+}
+
 // ---------- התראות דחיפה (Web Push, בלי תוכן; ה-Service Worker שולף את הטקסט בעצמו) ----------
 export const pushEnabled = () => !!(process.env.VAPID_PUBLIC && process.env.VAPID_PRIVATE);
 const b64u = (buf) => Buffer.from(buf).toString("base64url");
