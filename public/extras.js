@@ -59,6 +59,7 @@
     try {
       var steps = [
         [T("ברוכים הבאים לסטודיו 👋", "Welcome to the studio 👋"), T("בכמה צעדים קצרים תקבלו קבצי הדפסה של מזכרת מהטיול. הכול בחינם.", "In a few short steps you'll get print-ready files of a souvenir from your trip. It's free.")],
+        [T("רוצים לראות איך זה נראה? ✨", "Want to see how it looks? ✨"), T("אפשר לטעון טיול לדוגמה לאיטליה: מדינה, סיכות, כיתוב ודגל, ולראות מיד מודל תלת-ממדי מוכן. אחר כך משנים מה שרוצים.", "You can load a sample trip to Italy: country, pins, text and flag, and instantly see a finished 3D model. Then change whatever you like."), T("✨ טענו דוגמה מוכנה", "✨ Load a ready example")],
         [T("1. בוחרים כלי ומדינה", "1. Pick a tool and a country"), T("מזכרת עם מעמד, מחזיק מפתחות, מגנט, קישוט ועוד. מתחילים בלחיצה על הכלי שאתם אוהבים.", "A souvenir with stand, keychain, magnet, ornament and more. Start by tapping the tool you like.")],
         [T("2. מסמנים מקומות ומעצבים", "2. Mark places and design"), T("מוסיפים סיכות, שם טיול, תאריכים וצבעים, ורואים הכול בתלת-ממד תוך כדי.", "Add pins, a trip name, dates and colors, and watch it all update in 3D.")],
         [T("3. מורידים ומדפיסים", "3. Download and print"), T("ההורדה דורשת התחברות חד-פעמית וחינמית (אפשר גם עם גוגל). קבצים מוכנים ל-Bambu, Orca, Prusa ו-Cura. כפתור ה-📖 בצד מסביר הכול.", "Downloading needs a one-time free sign-in (Google works too). Files are ready for Bambu, Orca, Prusa and Cura. The 📖 tab on the side explains everything.")],
@@ -79,7 +80,10 @@
           var cnt = document.createElement("span"); cnt.dir = "ltr"; cnt.textContent = (i + 1) + " / " + steps.length;
           var go = document.createElement("button"); go.type = "button"; go.className = "go"; go.textContent = i === steps.length - 1 ? T("מתחילים!", "Let's go!") : T("הבא", "Next");
           go.onclick = function () { if (i === steps.length - 1) done(); else { i++; draw(); } };
-          nav.append(sk, cnt, go); c.append(h, p, nav); go.focus();
+          nav.append(sk, cnt, go); c.append(h, p);
+          if (s[2]) { var ab = document.createElement("button"); ab.type = "button"; ab.className = "go"; ab.textContent = s[2]; ab.style.cssText = "width:100%;margin:12px 0 0";
+            ab.onclick = function () { var ok = false; try { ok = window.exampleApi && exampleApi.load("italy"); } catch (e) {} if (ok) done(); else ab.textContent = T("לא הצלחנו לטעון", "Couldn't load"); }; c.append(ab); }
+          c.append(nav); go.focus();
         }
         draw();
       }
@@ -90,7 +94,11 @@
 
   // ----- טוטוריאל בן 10 שלבים: מופיע אוטומטית בכניסה לחשבון (פעם אחת לכל חשבון), ואפשר לפתוח שוב בכפתור ❓ -----
   var TUT = [
-    { sel: "#tools .tool", h: ["ברוכים הבאים, {name}! בוחרים כלי", "Welcome, {name}! Pick a tool"], t: ["זה סיור קצר של 10 שלבים. מתחילים בכלי: מזכרת עם מעמד, מכמה מדינות, מחזיק מפתחות, מגנט, קישוט, פאזל או מעמד לטלפון. אפשר לדלג בכל רגע ולפתוח שוב בכפתור ❓.", "A quick 10-step tour. It starts with the tool: souvenir with stand, multi-country, keychain, magnet, ornament, puzzle or phone stand. Skip any time and reopen it with the ❓ button."] },
+    { sel: "#tools .tool", h: ["ברוכים הבאים, {name}! בוחרים כלי", "Welcome, {name}! Pick a tool"], t: ["זה סיור קצר. מתחילים בכלי: מזכרת עם מעמד, מכמה מדינות, מחזיק מפתחות, מגנט, קישוט, פאזל או מעמד לטלפון. אפשר לדלג בכל רגע ולפתוח שוב בכפתור ❓.", "A quick 10-step tour. It starts with the tool: souvenir with stand, multi-country, keychain, magnet, ornament, puzzle or phone stand. Skip any time and reopen it with the ❓ button."] },
+    { act: ["✨ טענו דוגמה מוכנה (איטליה)", "✨ Load a ready example (Italy)"], h: ["נסו עם דוגמה מוכנה", "Try a ready-made example"], t: ["לחיצה על הכפתור טוענת טיול לדוגמה: מדינה, סיכות, שם טיול, תאריכים ודגל. תראו מיד מודל תלת-ממדי מוכן, ואז נעבור עליו יחד. אפשר לדלג וללחוץ 'הבא'.", "The button loads a sample trip: country, pins, trip name, dates and flag. You'll instantly see a finished 3D model, and we'll walk through it. You can skip it with 'Next'."] },
+    { sel: "#view", ed: true, h: ["זו המזכרת בתלת-ממד", "This is your 3D souvenir"], t: ["גוררים כדי לסובב, ומתקרבים עם שתי אצבעות או גלגלת. כל שינוי בהגדרות מתעדכן כאן אחרי רגע קצר.", "Drag to rotate, pinch or scroll to zoom. Every setting change updates here after a short moment."] },
+    { sel: ".uxtabs", ed: true, h: ["ארבע לשוניות להגדרות", "Four tabs of settings"], t: ["מדינה ומפה, מקומות ומים, עיצוב ותוכן (כיתוב, גופן, דגל, צבעים), ותצוגה והורדה. עוברים ביניהן כאן בלי לאבד את התצוגה.", "Country & map, places & water, design & text (text, font, flag, colors), and preview & export. Switch between them here without losing the preview."] },
+    { sel: "#dl", ed: true, tab: 4, h: ["הורדה להדפסה", "Download for printing"], t: ["כאן מורידים ZIP: 3MF (הכי נוח, כל החלקים והצבעים) וגם STL. פותחים בסלייסר כמו Cura או PrusaSlicer, ומדפיסים בגודל שמוצג בחלון ההורדה.", "Here you download a ZIP: 3MF (easiest, all parts and colors) plus STL. Open it in a slicer like Cura or PrusaSlicer and print at the size shown in the download window."] },
     { h: ["מדינה ומקומות", "Country and places"], t: ["עונים על שאלון קצר: בוחרים מדינה (או כמה), מסמנים על המפה את המקומות שהייתם בהם, ואפשר גם לייבא מסלול מקובץ KML/GPX.", "Answer a short questionnaire: choose a country (or several), mark the places you visited on the map, or import a route from a KML/GPX file."] },
     { h: ["מעצבים בתלת-ממד", "Design it in 3D"], t: ["רואים את המזכרת מתעדכנת בזמן אמת: שם הטיול ותאריכים, צבעים, דגל, מים, הרים וקוד QR. אפשר לסובב ולהגדיל עם האצבע או העכבר.", "Watch the souvenir update live: trip name and dates, colors, flag, water, mountains and a QR code. Rotate and zoom with your finger or mouse."] },
     { h: ["מתאימים למדפסת", "Fit your printer"], t: ["בוחרים את גודל משטח ההדפסה שלכם והאתר מתאים את המודל אליו אוטומטית, כולל פירוק לחלקים וצבע לכל חלק.", "Pick your print bed size and the site fits the model to it automatically, split into parts with a color for each."] },
@@ -113,7 +121,9 @@
     function done() { tutOn = false; sh.remove(); cd.remove(); document.removeEventListener("keydown", key); window.removeEventListener("resize", place);
       ls.s(uidKey(), "1"); try { if (window.API && API.session && !API.session.tut) { API.session.tut = true; fetch("/api/me/tutorial", { method: "POST", credentials: "include" }); } } catch (e) {} }
     function key(e) { if (e.key === "Escape") done(); else if (e.key === "ArrowRight") go(E ? 1 : -1); else if (e.key === "ArrowLeft") go(E ? -1 : 1); }
-    function go(d) { var n = i + d; if (n < 0) return; if (n >= TUT.length) { done(); return; } i = n; draw(); }
+    function edOpen() { return ["home", "intro"].every(function (id) { var e = document.getElementById(id); return !e || getComputedStyle(e).display === "none"; }); }
+    function hasT(st) { if (!st.sel) return false; if (st.ed && !edOpen()) return false; if (st.tab) { var tb = document.querySelector('.uxtabs button[data-t="' + st.tab + '"]'); if (tb) tb.click(); } var el = document.querySelector(st.sel); if (!el) return false; var r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== "hidden"; }
+    function go(d) { var n = i + d; while (n >= 0 && n < TUT.length && TUT[n].ed && !hasT(TUT[n])) n += d; if (n < 0) return; if (n >= TUT.length) { done(); return; } i = n; draw(); }
     function target() { var st = TUT[i]; if (!st.sel) return null; var el = document.querySelector(st.sel); if (!el) return null; var r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== "hidden" ? el : null; }
     function place() {
       var el = target(), vw = window.innerWidth, vh = window.innerHeight;
@@ -128,6 +138,9 @@
       var st = TUT[i], L = E ? 1 : 0; cd.textContent = "";
       var h = document.createElement("h3"); h.style.cssText = "margin:0 0 6px;font-size:18px"; h.textContent = st.h[L].replace("{name}", name);
       var p = document.createElement("p"); p.style.margin = "0"; p.textContent = st.t[L];
+      var actb = null;
+      if (st.act) { actb = document.createElement("button"); actb.type = "button"; actb.textContent = st.act[L]; actb.style.cssText = "display:block;width:100%;margin:12px 0 0;border:0;border-radius:10px;padding:11px 14px;font-family:inherit;font-weight:800;font-size:15px;cursor:pointer;background:var(--ac,#ea580c);color:#fff";
+        actb.onclick = function () { var ok = false; try { ok = window.exampleApi && exampleApi.load("italy"); } catch (e) {} actb.disabled = true; actb.textContent = ok ? (E ? "✓ Loaded" : "✓ נטען") : (E ? "Couldn't load" : "לא הצלחנו לטעון"); if (ok) setTimeout(function () { go(1); }, 700); }; }
       var dots = document.createElement("div"); dots.style.cssText = "display:flex;gap:5px;justify-content:center;margin:12px 0 4px";
       TUT.forEach(function (_, k) { var d = document.createElement("span"); d.style.cssText = "width:" + (k === i ? 18 : 7) + "px;height:7px;border-radius:9px;background:" + (k === i ? "var(--ac,#ea580c)" : "var(--bd,#ccc)") + ";transition:width .2s"; dots.appendChild(d); });
       var nav = document.createElement("div"); nav.style.cssText = "display:flex;gap:8px;align-items:center";
@@ -135,7 +148,7 @@
       var cnt = document.createElement("span"); cnt.style.cssText = "flex:1;text-align:center;color:var(--mu,#777);font-size:13px;white-space:nowrap"; cnt.dir = "ltr"; cnt.textContent = (i + 1) + " / " + TUT.length;
       var last = i === TUT.length - 1;
       nav.append(b(T("דלג", "Skip"), "sk", done), b(T("הקודם", "Back"), "bk", function () { go(-1); }, i === 0), cnt, b(last ? T("סיום 🎉", "Finish 🎉") : T("הבא", "Next"), "go", function () { go(1); }));
-      cd.append(h, p, dots, nav); place(); var gb = nav.lastChild; gb.focus({ preventScroll: true });
+      cd.append(h, p); if (actb) cd.append(actb); cd.append(dots, nav); place(); var gb = nav.lastChild; gb.focus({ preventScroll: true });
     }
     document.addEventListener("keydown", key); window.addEventListener("resize", place); draw();
   };

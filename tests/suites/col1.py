@@ -17,7 +17,7 @@ with sync_playwright() as p:
     print("box in tab", pg.evaluate("document.getElementById('colbox').closest('.uxp')&&document.getElementById('colbox').closest('.uxp').dataset.t"))
     pg.evaluate("colorsApi.generate()"); pg.wait_for_timeout(500)
     print("thumbs",pg.evaluate("Object.keys(colorsApi.C.thumbs).join()"), pg.evaluate("document.querySelectorAll('.colcard').length"))
-    b=pg.query_selector("#colbox"); b.scroll_into_view_if_needed(); b.screenshot(path="col_box.png")
+    pg.evaluate("document.querySelectorAll('details.uxacc').forEach(d=>d.open=true)"); b=pg.query_selector("#colbox"); b.scroll_into_view_if_needed(); b.screenshot(path="col_box.png")
     pg.evaluate("document.querySelector('.colcard[data-k=forest]').click()"); pg.wait_for_timeout(1500)
     print("after forest",pg.evaluate("[$('c_base').value,$('c_land').value,!document.getElementById('colrev').hidden,document.querySelector('.colcard.on b').textContent]"))
     pg.evaluate("document.getElementById('colrev').click()"); pg.wait_for_timeout(1500)

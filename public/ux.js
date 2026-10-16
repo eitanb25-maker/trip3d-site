@@ -14,6 +14,12 @@
     + "@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .uxtabs button[aria-selected=true]{color:#1b1308}}:root[data-theme=dark] .uxtabs button[aria-selected=true]{color:#1b1308}"
     + ".uxtabs button b{display:inline-block;min-width:1.4em;opacity:.8}"
     + ".uxp[hidden]{display:none!important}"
+    + ".uxacc{margin:0 0 10px;border:1px solid var(--bd,#ddd);border-radius:14px;background:var(--card,transparent);overflow:clip}"
+    + ".uxacc>summary{list-style:none;display:flex;align-items:center;gap:8px;min-height:46px;padding:8px 14px;cursor:pointer;font-weight:800;font-size:15px;user-select:none}"
+    + ".uxacc>summary::-webkit-details-marker{display:none}.uxacc>summary::before{content:'';width:8px;height:8px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(135deg);transition:transform .15s;flex:none;margin-inline-end:2px}"
+    + "html[dir=ltr] .uxacc>summary::before,html[lang=en] .uxacc>summary::before{transform:rotate(-45deg)}.uxacc[open]>summary::before,html[dir=ltr] .uxacc[open]>summary::before,html[lang=en] .uxacc[open]>summary::before{transform:rotate(45deg)}.uxab>hr:first-child{display:none}.uxacc>summary:focus-visible{outline:3px solid var(--ac,#2563eb);outline-offset:-3px}"
+    + ".uxacc>summary small{margin-inline-start:auto;font-weight:500;opacity:.65;font-size:12px}"
+    + ".uxacc>.uxab{padding:2px 14px 12px}.uxacc[open]>summary{border-bottom:1px solid var(--bd,#e5e5e5)}"
     + ".uxnav{display:flex;gap:8px;justify-content:space-between;margin-top:14px}"
     + ".uxnav button{flex:1;min-height:44px}"
     + ".uxi{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;margin-inline-start:6px;padding:0;border-radius:50%;border:1px solid var(--bd,#999);background:transparent;color:inherit;font:700 12px/1 system-ui;cursor:help;vertical-align:middle}"
@@ -51,6 +57,51 @@
     return 0;
   }
 
+  /* ---------- אקורדיונים בתוך הלשוניות: כל לשונית מחולקת לנושאים נפתחים/נסגרים ---------- */
+  var GROUPS = {
+    1: [{ k: "base", he: "בסיס ומדינה", en: "Base & country", open: 1, ids: "bed ncol cin far rg rgx gj" },
+        { k: "tex", he: "טקסטורה וגבהים", en: "Texture & elevation", ids: "lh rimg rmode rh showimg alr" }],
+    2: [{ k: "pins", he: "סיכות ומסלול", en: "Pins & route", open: 1, ids: "q sb cands cnt pl impf impt impb ps route dr dk dd dc" },
+        { k: "water", he: "מים", en: "Water", ids: "wb wf wimg wcol eye wtol alw" }],
+    3: [{ k: "txt", he: "כיתוב ודגל", en: "Text & flag", open: 1, ids: "trip d1 d2 tsub font shownames numpins fm f1 f2 f3 fimg" },
+        { k: "stand", he: "מעמד וצבעים", en: "Stand & colors", ids: "bh rim gap pcs pfr mgs shape bg c_base" },
+        { k: "qr", he: "קוד QR", en: "QR code", ids: "qron qrurl" }]
+  };
+  function accState(k) { try { var v = sessionStorage.getItem("trip3d_acc_" + k); return v === null ? null : v === "1"; } catch (e) { return null; } }
+  function buildAcc(panels) {
+    var made = [];
+    Object.keys(GROUPS).forEach(function (n) {
+      var p = panels[n], gs = GROUPS[n], idG = {};
+      gs.forEach(function (g) { g.ids.split(" ").forEach(function (i) { idG[i] = g.k; }); });
+      var kids = Array.prototype.slice.call(p.children), keys = kids.map(function (k) { return tabOf(k, idG) ; });
+      /* tabOf מחזיר מספר-לשונית; כאן המפתח הוא מחרוזת, ולכן נשתמש בו כמו שהוא (0/undefined = ללא שיוך) */
+      for (var i = 0; i < kids.length; i++) if (!keys[i]) {
+        var lbl = kids[i].tagName == "LABEL" || kids[i].tagName == "HR";
+        if (lbl) { for (var j = i + 1; j < kids.length; j++) if (keys[j]) { keys[i] = keys[j]; break; } }
+      }
+      var last = gs[0].k;
+      for (i = 0; i < kids.length; i++) { if (keys[i]) last = keys[i]; else keys[i] = last; }
+      var box = {};
+      gs.forEach(function (g) {
+        var d = document.createElement("details"); d.className = "uxacc"; d.dataset.k = g.k;
+        var st = accState(g.k); d.open = st === null ? !!g.open : st;
+        var sm = document.createElement("summary"); sm.innerHTML = "<span></span>"; sm.firstChild.textContent = Lx(g.he, g.en);
+        var b = document.createElement("div"); b.className = "uxab"; d.append(sm, b);
+        d.addEventListener("toggle", function () { try { sessionStorage.setItem("trip3d_acc_" + g.k, d.open ? "1" : "0"); } catch (e) { } });
+        box[g.k] = b; g.el = d; g.sum = sm.firstChild;
+      });
+      kids.forEach(function (k, idx) { box[keys[idx]].appendChild(k); });
+      var anchor = p.firstChild;
+      gs.forEach(function (g) { if (box[g.k].children.length) { p.insertBefore(g.el, anchor); made.push(g); } });
+    });
+    /* פוקוס/שגיאה בתוך קבוצה סגורה פותח אותה (טוטוריאל, מקלדת, קישור פנימי) */
+    var of = HTMLElement.prototype.focus;
+    HTMLElement.prototype.focus = function () { try { var d = this.closest && this.closest("details.uxacc"); if (d && !d.open) d.open = true; } catch (e) { } return of.apply(this, arguments); };
+    document.addEventListener("focusin", function (e) { var d = e.target && e.target.closest && e.target.closest("details.uxacc"); if (d && !d.open) d.open = true; });
+    window.uxAcc = { open: function (k) { made.forEach(function (g) { if (!k || g.k === k) g.el.open = true; }); }, relabel: function () { made.forEach(function (g) { g.sum.textContent = Lx(g.he, g.en); }); } };
+    return made;
+  }
+
   function buildTabs() {
     var card = document.querySelector("main > section.card");
     if (!card || card.dataset.uxt || !$("cin") || !$("dl")) return;
@@ -76,6 +127,7 @@
     });
     card.insertBefore(bar, card.firstChild);
     kids.forEach(function (k, idx) { panels[tabs[idx]].appendChild(k); });
+    try { buildAcc(panels); } catch (e) { console.warn("ux acc", e); }
     TABS.forEach(function (t) {
       var p = panels[t.n], nav = document.createElement("div"); nav.className = "uxnav";
       if (t.n > 1) { var pv = document.createElement("button"); pv.type = "button"; pv.textContent = "‹ " + Lx("הקודם", "Back"); pv.onclick = function () { show(t.n - 1, true); }; nav.appendChild(pv); }
@@ -98,6 +150,7 @@
     }
     window.uxShowTab = show;
     function relabel() {
+      try { window.uxAcc && uxAcc.relabel(); } catch (e) { }
       Array.prototype.forEach.call(bar.children, function (b, i) { var t = TABS[i]; b.querySelector("span").textContent = Lx(t.he, t.en); b.title = Lx(t.he, t.en); });
       TABS.forEach(function (t) { var nv = panels[t.n].querySelector(".uxnav"); if (!nv) return; var bs = nv.querySelectorAll("button"); if (t.n > 1) bs[0].textContent = "‹ " + Lx("הקודם", "Back"); if (t.n < 4) bs[bs.length - 1].textContent = Lx("הבא", "Next") + " ›"; });
     }

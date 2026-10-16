@@ -26,7 +26,7 @@
 <script src="/geo.js" defer></script>
 <script src="/trips.js" defer></script>
 <script src="/litho.js" defer></script>
-<script src="/mech.js" defer></script>
+<script src="/mech.js" defer></script><script src="/example.js" defer></script>
 <script src="/fab.js" defer></script>
 <script src="/spin.js" defer></script><script src="/undo.js" defer></script><script src="/assemble.js" defer></script><script src="/postcard.js" defer></script><script src="/mobile.js" defer></script><script src="/colors.js" defer></script><script src="/continents.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -631,6 +631,8 @@ const vc=$("view"),R=new THREE.WebGLRenderer({canvas:vc,antialias:!LOWQ,alpha:tr
 cam.position.set(0,75,175);cam.lookAt(0,0,0);sc.add(new THREE.AmbientLight(0xffffff,.65));const dl=new THREE.DirectionalLight(0xffffff,.8);dl.position.set(60,120,90);sc.add(dl);
 const pivot=new THREE.Group();sc.add(pivot);let model=null,auto=true;pivot.rotation.x=.5;
 let tm=0;function setBusy(b,txt){const e=$("busy");if(!e)return;e.classList.toggle("on",!!b);if(b)$("busyt").textContent=txt||L_("בונה מודל…","Building model…")}
+// שינוי בבקרים (סליידר/בחירה/טקסט) מושהה ~180ms ומתאחד לחישוב אחד; לפני הורדה/ייצוא קוראים ל-updD.flush()
+let _ut=0;function updD(){setBusy(true);clearTimeout(_ut);_ut=setTimeout(()=>{_ut=0;update()},180)}updD.flush=()=>{if(_ut){clearTimeout(_ut);_ut=0;update()}};
 function update(){setBusy(true);applyBg();computeMasks();drawMap();clearTimeout(asT);asT=setTimeout(autosave,1000);clearTimeout(tm);tm=setTimeout(()=>makeFlag(render),LOWQ?220:60)}
 function render(){if(model)pivot.remove(model);model=new THREE.Group();model.rotation.x=-Math.PI/2;
   const P0=build();showSize(P0);P0.forEach(p=>{if(!p.geoms.length)return;const arr=p.geoms.map(ge=>(ge.index?ge.toNonIndexed():ge).attributes.position.array),pos=new Float32Array(arr.reduce((t,a)=>t+a.length,0));let o=0;arr.forEach(a=>{pos.set(a,o);o+=a.length});
@@ -716,13 +718,20 @@ function printCheck(P,sc){const out={thin:{},tiny:{},flt:{},skipped:false},comps
    D.forEach(d=>{const X=(d[0]+d[2]+d[4])/3,Y=(d[1]+d[3]+d[5])/3,k=Math.floor((Y-y0)/cs)*gw+Math.floor((X-x0)/cs),L=H.get(k);if(!(L&&L.some(z=>z<=d[6]+.1&&z>=d[6]-.6)))ov+=d[7]})}
   out.ovh=ov;out.bed=bd}
  return out}
-async function prepareFiles(){await new Promise(r=>{setBusy(true,L_("מכין קבצים ובודק את המודל…","Preparing files and checking the model…"));setTimeout(r,40)});const P=build(),z=scaleFor(P),sc=z.sc,n=NC(),all=[].concat(...P.map(p=>p.geoms)),G={},nm=x=>(LANG=="en"?NME:NMH)[x]||x;
+async function prepareFiles(){updD.flush();await new Promise(r=>{setBusy(true,L_("מכין קבצים ובודק את המודל…","Preparing files and checking the model…"));setTimeout(r,40)});const P=build(),z=scaleFor(P),sc=z.sc,n=NC(),all=[].concat(...P.map(p=>p.geoms)),G={},nm=x=>(LANG=="en"?NME:NMH)[x]||x;
   const files=[{name:"all_in_one.stl",data:stl(all,sc),desc:L_("כל החלקים בקובץ אחד – להדפסה בצבע אחד","All parts in one file – for single-color printing")}];
   if(n>1)P.forEach(p=>{if(!p.geoms.length)return;const key=n>=5?p.name:p.rep;(G[key]=G[key]||{g:[],n:[],c:p.color}).g.push(...p.geoms);G[key].n.push(p.name.replace(/^\d+[a-z]?_/,"").replace(/_\d+$/,""))});
   if(n>1)Object.values(G).forEach((o,i)=>files.push({name:`color${i+1}_${[...new Set(o.n)].join("+")}.stl`,data:stl(o.g,sc),desc:L_("חלק לצבע ","Part for color ")+(i+1)+": "+[...new Set(o.n)].map(nm).join(" + ")}));
   try{const groups=n>1?Object.values(G):[{g:all,n:["model"],c:(P[0]&&P[0].color)||"#cccccc"}];
     files.splice(1,0,{name:"trip3d.3mf",data:await make3mf(groups.map(o=>({g:o.g,n:[...new Set(o.n)],c:o.c})),sc),desc:n>1?L_("קובץ אחד עם כל החלקים והצבעים – נפתח ישר בסלייסר","One file with all parts and colors – opens directly in your slicer"):L_("קובץ אחד – נפתח ישר בסלייסר","One file – opens directly in your slicer")})}catch(e){}
   const chk=meshCheck(P);let pc=null;try{pc=printCheck(P,sc)}catch(e){}setBusy(false);return{files,z,n,chk,pc}}
+function fmtHelp(){const z=PEND&&PEND.z,bed=+$("bed").value||0,sz=z?`${(z.w*10).toFixed(0)}×${(z.h*10).toFixed(0)} ${L_("מ״מ","mm")} (${z.w.toFixed(1)}×${z.h.toFixed(1)} ${L_("ס״מ","cm")})`:"";
+ return `<details class="fmthelp" open style="margin:8px 0;font-size:13px;line-height:1.55"><summary style="cursor:pointer;font-weight:700">${L_("📄 איזה קובץ לפתוח, ובאיזה גודל להדפיס","📄 Which file to open, and what size to print")}</summary><ul style="margin:6px 0 0;padding-inline-start:18px">`+
+ `<li><b>3MF</b> – ${L_("מומלץ: קובץ אחד עם כל החלקים והצבעים. נפתח ישר ב-Bambu Studio, OrcaSlicer, PrusaSlicer ו-Cura.","recommended: one file with all parts and colors. Opens directly in Bambu Studio, OrcaSlicer, PrusaSlicer and Cura.")}</li>`+
+ `<li><b>STL</b> – ${L_("לצבע אחד (all_in_one.stl) או קובץ נפרד לכל צבע (color1…, color2…): טוענים את כולם יחד בסלייסר כדי שישארו מיושרים. בלי צבעים בתוך הקובץ.","for a single color (all_in_one.stl) or a separate file per color (color1…, color2…): load them all together in the slicer so they stay aligned. No colors inside the file.")}</li>`+
+ `<li>${L_("אין קובץ OBJ; כל סלייסר פותח 3MF ו-STL.","There is no OBJ file; every slicer opens 3MF and STL.")}</li>`+
+ `<li>📏 ${L_("הגודל לפי הקובץ: ","Size as exported: ")}<b>${sz}</b>${bed?" "+L_("על משטח של "+bed+" מ״מ.","for a "+bed+" mm bed."):""} ${L_("יחידות הקובץ הן מילימטרים, ולכן משאירים בסלייסר קנה מידה 100% (אל תשנו גודל). אם צריך קטן יותר, מקטינים באחוז אחיד בכל הצירים.","File units are millimeters, so keep the slicer scale at 100% (don't resize). If you need it smaller, scale by one uniform percentage on all axes.")}</li>`+
+ `<li>⚙️ ${L_("התחלה טובה ב-Cura / PrusaSlicer: PLA, גובה שכבה 0.2 מ״מ, מילוי 15%, בלי תמיכות (מדריך מלא בקישור למעלה).","A good start in Cura / PrusaSlicer: PLA, 0.2 mm layers, 15% infill, no supports (full guide linked above).")}</li></ul></details>`}
 function pcHtml(pc){if(!pc)return"";if(pc.skipped)return`<div class="chk-box" style="margin:8px 0;font-size:13px;color:#6b6a64">${L_("בדיקת הדפסתיות דולגה (המודל גדול מאוד).","Printability check skipped (very large model).")}</div>`;
  const nm=o=>Object.entries(o).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([k,v])=>(LANG=="en"?(NME[k]||k):(NMH[k]||k))+(v>1?" ×"+v:"")).join(", "),cnt=o=>Object.values(o).reduce((a,b)=>a+b,0),L=[];
  if(cnt(pc.thin))L.push(L_("פרטים דקים מ-0.6 מ״מ ("+cnt(pc.thin)+"): "+nm(pc.thin)+". ייתכן שלא יודפסו בדיוק. עזרו: מיטה גדולה יותר, שם קצר יותר, או פחות פרטים.","Details thinner than 0.6 mm ("+cnt(pc.thin)+"): "+nm(pc.thin)+". They may not print accurately. Try a larger bed, a shorter name or fewer details."));
@@ -733,9 +742,9 @@ function pcHtml(pc){if(!pc)return"";if(pc.skipped)return`<div class="chk-box" st
  return L.length?`<div class="chk-box" style="margin:8px 0;font-size:13px;color:#b45309">⚠️ ${L_("בדיקת הדפסתיות (משוערת):","Printability check (approximate):")}<ul style="margin:4px 0 0;padding-inline-start:18px">${L.map(x=>"<li>"+x+"</li>").join("")}</ul></div>`:`<div class="chk-box" style="margin:8px 0;font-size:13px;color:#166534">${L_("✅ בדיקת הדפסתיות: לא נמצאו פרטים דקים מדי או חלקים צפים.","✅ Printability check: no too-thin details or floating parts found.")}</div>`}
 function closeDlg(){$("dlg").style.display="none";PEND=null}
 async function myId(){try{const u=await claude.use("user");return u?await u.id():null}catch(e){return null}}
-$("dl").onclick=async()=>{const m=$("msg");try{m.textContent=L_("מכין קבצים…","Preparing files…");PEND=await prepareFiles();m.textContent="";const signed=!!(await myId());
+$("dl").onclick=async()=>{updD.flush();const m=$("msg");try{m.textContent=L_("מכין קבצים…","Preparing files…");PEND=await prepareFiles();m.textContent="";const signed=!!(await myId());
   const w=$("warn").textContent.startsWith("⚠️")?`<p class="hint" style="color:#b45309">${$("warn").innerHTML}</p>`:"";
-  $("dbox").innerHTML=`<h2>${L_("מה תקבלו בהורדה","What you'll get in the download")}</h2><p class="hint">${L_("גודל המודל","Model size")}: ${PEND.z.w.toFixed(1)}×${PEND.z.h.toFixed(1)} ${L_("ס״מ","cm")} · ${NC()>=5?"5+":NC()} ${L_("צבעים","colors")}</p><p class="hint">${L_("הקבצים יישמרו יחד בקובץ ZIP אחד.","The files are saved together in one ZIP file.")}</p>${window.quotaHtml?quotaHtml():""}<p class="hint"><a href="/guide.html" target="_blank" rel="noopener" style="color:var(--ac);font-weight:700">${L_("📖 מדריך הדפסה: איך פותחים את הקבצים בסלייסר","📖 Print guide: how to open the files in your slicer")}</a></p>`+w+
+  $("dbox").innerHTML=`<h2>${L_("מה תקבלו בהורדה","What you'll get in the download")}</h2><p class="hint">${L_("גודל המודל","Model size")}: ${PEND.z.w.toFixed(1)}×${PEND.z.h.toFixed(1)} ${L_("ס״מ","cm")} · ${NC()>=5?"5+":NC()} ${L_("צבעים","colors")}</p><p class="hint">${L_("הקבצים יישמרו יחד בקובץ ZIP אחד.","The files are saved together in one ZIP file.")}</p>${window.quotaHtml?quotaHtml():""}<p class="hint"><a href="/guide.html" target="_blank" rel="noopener" style="color:var(--ac);font-weight:700">${L_("📖 מדריך הדפסה: איך פותחים את הקבצים בסלייסר","📖 Print guide: how to open the files in your slicer")}</a></p>`+fmtHelp()+w+
    (signed?"":`<div class="gate">${L_("🔒 כדי להוריד צריך להתחבר (פעם אחת, בחינם). ההורדה נרשמת כדי לשמור על מכסה הוגנת לכולם.","🔒 Sign in to download (once, free). Downloads are logged to keep a fair quota for everyone.")}<br><button class="go" id="gatelogin" style="margin:8px 0 0;padding:6px 14px">${L_("התחברות / הרשמה","Sign in / Sign up")}</button></div>`)+
    `<div class="chk-box" style="margin:8px 0;font-size:13px;color:${PEND.chk.open?"#b45309":"#166534"}">${PEND.chk.open?L_("⚠️ בדיקת שלמות אוטומטית: נמצאו קצוות פתוחים ב-"+PEND.chk.bad.length+" חלקים ("+PEND.chk.bad.slice(0,4).map(x=>x[0].replace(/^\d+[a-z]?_/,"")).join(", ")+"). הסלייסר בדרך כלל מתקן את זה, אבל כדאי לבדוק בתצוגת השכבות.","⚠️ Automatic integrity check: open edges found in "+PEND.chk.bad.length+" parts ("+PEND.chk.bad.slice(0,4).map(x=>x[0].replace(/^\d+[a-z]?_/,"")).join(", ")+"). Slicers usually repair this, but check the layer preview."):L_("✅ בדיקת שלמות אוטומטית: כל החלקים סגורים ("+PEND.chk.tris.toLocaleString()+" משולשים).","✅ Automatic integrity check: all parts are closed ("+PEND.chk.tris.toLocaleString()+" triangles).")}</div>`+
    pcHtml(PEND.pc)+PEND.files.map(f=>`<div class="fi"><b dir="ltr">${f.name}</b><i>${Math.max(1,Math.round(f.data.length/1024))} KB</i><span>${f.desc}</span></div>`).join("")+
@@ -747,9 +756,9 @@ $("dl").onclick=async()=>{const m=$("msg");try{m.textContent=L_("מכין קבצ
       await d.save({filename:"trip3d.zip",data:zip(PEND.files)});closeDlg();m.textContent=L_("נשמר. פתחו את ה-ZIP והעלו את הקובץ המתאים לסלייסר.","Saved. Open the ZIP and upload the right file to your slicer.")}
     catch(e){closeDlg();m.textContent=e&&e.code=="declined"?L_("ההורדה בוטלה","Download cancelled"):L_("שגיאה בהורדה","Download error")}}}
   catch(e){m.textContent=L_("שגיאה בהכנת הקבצים","Error preparing the files")}};
-["trip","tsub","shownames","d1","d2","bh","rim","lh","bg","gap","route","qron","qrurl","mgs","shape","c_base","c_land","c_pin","c_text","c_water","c_relief","wcol","wtol","rmode","rh","showimg","ps","psz","fm","f1","f2","f3"].forEach(i=>$(i).addEventListener((i=="trip"||i=="tsub")?"input":"change",update));
-["c_base","c_land","c_pin","c_text","c_water","c_relief","wcol","wtol","rh","f1","f2","f3"].forEach(i=>$(i).addEventListener("input",update));
-["w","r"].forEach(p=>["sx","sy","ox","oy"].forEach(a=>{$(p+a).addEventListener("input",update)}));
+["trip","tsub","shownames","d1","d2","bh","rim","lh","bg","gap","route","qron","qrurl","mgs","shape","c_base","c_land","c_pin","c_text","c_water","c_relief","wcol","wtol","rmode","rh","showimg","ps","psz","fm","f1","f2","f3"].forEach(i=>$(i).addEventListener((i=="trip"||i=="tsub")?"input":"change",updD));
+["c_base","c_land","c_pin","c_text","c_water","c_relief","wcol","wtol","rh","f1","f2","f3"].forEach(i=>$(i).addEventListener("input",updD));
+["w","r"].forEach(p=>["sx","sy","ox","oy"].forEach(a=>{$(p+a).addEventListener("input",updD)}));
 const SV=["pcs","pfr","mgs","trip","tsub","d1","d2","bh","shape","font","c_base","c_land","c_water","c_relief","c_pin","c_text","fm","f1","f2","f3","ps","psz","bed","ncol","far","shownames","numpins","wcol","wtol","rmode","rh","wsx","wsy","wox","woy","rsx","rsy","rox","roy","showimg","cin","rim","lh","bg","gap","route","qron","qrurl"];
 function applyTool(){const st=TOOL=="stand",hide=(id,d)=>{let n=$(id);if(n.parentElement.tagName=="LABEL"||n.parentElement.classList.contains("row")||n.parentElement.classList.contains("cols"))n=n.parentElement;n.style.display=d?"none":"";const p=n.previousElementSibling;if(p&&p.tagName=="LABEL"&&n.tagName!="LABEL")p.style.display=d?"none":""};
   ["bh","rim","gap","shape","tsub","d1","d2","font","shownames","numpins","fm","qron","qrurl","lh","bg"].forEach(i=>hide(i,!st&&i!="bg"));hide("mgs",TOOL!="magnet");hide("pcs",TOOL!="puzzle");hide("pfr",TOOL!="puzzle");$("f1").parentElement.style.display=st?"":"none";$("fimg").style.display=st&&$("fm").value=="img"?"block":"none"}
@@ -779,7 +788,7 @@ $("shot").onclick=async()=>{try{const d=await claude.use("downloads");if(!d){$("
   const w=vc.clientWidth;R.setSize(w,w,false);g.direction="rtl";g.textAlign="center";g.fillStyle=$("bg").value=="light"?"#1d1d1b":"#fff";g.font=`bold 56px ${FF()}`;g.fillText($("trip").value,540,1150);
   g.font=`28px ${FF()}`;g.fillStyle=$("bg").value=="light"?"#57534e":"#cbd5e1";g.fillText([dt(),$("tsub").value].filter(Boolean).join(" · "),540,1205);
   const b=await new Promise(r=>c.toBlob(r,"image/png"));await d.save({filename:"trip3d.png",data:b});$("msg").textContent="התמונה נשמרה"}catch(e){$("msg").textContent=e&&e.code=="declined"?"השמירה בוטלה":"יצירת התמונה נכשלה"}};
-["numpins"].forEach(i=>$(i).addEventListener("change",update));
+["numpins"].forEach(i=>$(i).addEventListener("change",updD));
 ["bed","ncol"].forEach(i=>$(i).onchange=()=>{syncPickers();update()});
 const STY={classic:{n:"קלאסי",c:{base:"#d8d3c4",land:"#6aa05a",water:"#2f80ed",relief:"#8b6b4a",pin:"#dc2626",text:"#374151"}},
 beach:{n:"חוף וים",c:{base:"#f2e3b8",land:"#e9c46a",water:"#2a9d8f",relief:"#c8963e",pin:"#e76f51",text:"#264653"}},
