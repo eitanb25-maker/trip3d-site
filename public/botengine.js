@@ -1295,7 +1295,7 @@
 
   // כל המועמדים עם ציון (למסך הבדיקה בסטודיו), ואת הטוב ביותר כמו תמיד
   const DEFQ = /^(?:מה זה|מהו|מהי|מה הכוונה ב|מה פירוש|מה המשמעות של|מה ההבדל בין|what is|what s|what are|whats|define|meaning of|explain) /;
-  const GENERIC = new Set(["איך עובד האתר", "כלים", "באג", "תקלה", "איך מתחילים", "מה האתר"]); // נושאים כלליים שלא דורסים התאמה ספציפית
+  const GENERIC = new Set(["איך עובד האתר", "כלים", "באג", "תקלה", "איך מתחילים", "מה האתר", "פרויקט", "מזכרת", "הגדרות הדפסה", "מחיר", "גודל", "טלפון", "מכסה", "להזמין", "הרשמה", "איזה חומר", "כמה זמן", "להוריד"]); // נושאים כלליים שלא דורסים התאמה ספציפית
   const scoreAll = (t) => {
     let best = null, bs = 0; const list = [];
     const core = t.trim().replace(DEFQ, "").replace(/^(?:ה|ב|ל)(?=.{3})/, "").trim();
@@ -1304,7 +1304,8 @@
       for (const k of e[0].split(",")) {
         const { w, nk } = kwOf(k);
         if (!nk) continue;
-        if (w ? t.includes(" " + nk + " ") : t.includes(nk)) sc += (k.length >= 4 || (nk.length === 3 && t.includes(" " + nk + " ")) ? 2 : 1) + (nk.includes(" ") ? 2 : 0) + (w ? 1 : 0);
+        const ww = w || nk.length < 3; // מילות מפתח של 1-2 אותיות ("אי", "איי") חייבות להיות מילה שלמה, אחרת "איפה"/"איך" מתאימות להן
+        if (ww ? t.includes(" " + nk + " ") : t.includes(nk)) sc += (k.length >= 4 || (nk.length === 3 && t.includes(" " + nk + " ")) ? 2 : 1) + (nk.includes(" ") ? 2 : 0) + (w ? 1 : 0);
         if (core && (nk === core || nk === t.trim().replace(DEFQ, "").trim()) && t.trim() !== nk) sc += 3;
       }
       if (sc > 2 && GENERIC.has(topic(e))) sc -= 2; // נושא כללי (באג, כלים...) מפסיד בתיקו מול נושא ספציפי

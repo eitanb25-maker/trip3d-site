@@ -4,7 +4,9 @@ const D = path.dirname(fileURLToPath(import.meta.url)), ctx = { console, navigat
 vm.runInContext(fs.readFileSync(D + "/../public/botengine.js", "utf8"), ctx); const B = ctx.BotEngine;
 B.addLex(JSON.parse(zlib.gunzipSync(fs.readFileSync(D + "/../public/botlex.bin")).toString()));
 let ok = 0, n = 0; const bad = [];
-for (const f of fs.readdirSync(D + "/data").filter((x) => x.endsWith(".tsv"))) for (const l of fs.readFileSync(D + "/data/" + f, "utf8").split("\n")) {
+const oi = process.argv.indexOf("--only"), only = oi > 0 ? process.argv[oi + 1] : null; /* --only קובץ.tsv: מודד קובץ בודד (גם מחוץ ל-data) */
+const files = only ? [only] : fs.readdirSync(D + "/data").filter((x) => x.endsWith(".tsv")).map((x) => D + "/data/" + x);
+for (const f of files) for (const l of fs.readFileSync(f, "utf8").split("\n")) {
   if (!l.trim()) continue; const [q, want] = l.split("\t"); n++;
   const m = B.match(q); const got = m.hit ? B.topic(m.hit) : "NONE";
   if (want.trim().split("|").includes(got)) ok++; else bad.push(`${f}: ${q} → ${got} (צפוי: ${want})`);

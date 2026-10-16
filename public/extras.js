@@ -189,14 +189,14 @@
     } catch (e) {}
   }
   // ----- נגישות: שם נגיש לשדות וכפתורים שאין להם (קוראי מסך) -----
-  var NAMES = { d1: ["תאריך התחלת הטיול", "Trip start date"], d2: ["תאריך סיום הטיול", "Trip end date"], gj: ["בחירת קובץ GeoJSON", "Choose a GeoJSON file"], wf: ["בחירת קובץ GeoJSON", "Choose a GeoJSON file"], wimg: ["בחירת תמונה", "Choose an image"], rimg: ["בחירת תמונה", "Choose an image"], impf: ["בחירת קובץ מקומות לייבוא", "Choose a places file to import"], dci: ["כתיבת תגובה", "Write a comment"] };
+  var NAMES = { impt: ["הדביקו רשימת מקומות לייבוא", "Paste a list of places to import"], d1: ["תאריך התחלת הטיול", "Trip start date"], d2: ["תאריך סיום הטיול", "Trip end date"], gj: ["בחירת קובץ GeoJSON", "Choose a GeoJSON file"], wf: ["בחירת קובץ GeoJSON", "Choose a GeoJSON file"], wimg: ["בחירת תמונה", "Choose an image"], rimg: ["בחירת תמונה", "Choose an image"], impf: ["בחירת קובץ מקומות לייבוא", "Choose a places file to import"], dci: ["כתיבת תגובה", "Write a comment"] };
   function a11y() {
     try {
       document.querySelectorAll("input,select,textarea,button").forEach(function (e) {
-        if (e.getAttribute("aria-label") || e.getAttribute("aria-labelledby") || (e.labels && e.labels.length) || e.closest("label")) return;
+        if ((e.getAttribute("aria-label") && !e.hasAttribute("data-al") && !NAMES[e.id]) || e.getAttribute("aria-labelledby") || (e.labels && e.labels.length) || e.closest("label")) return;
         if (e.tagName === "BUTTON" && (e.textContent || "").trim()) return;
         var n = NAMES[e.id] ? T(NAMES[e.id][0], NAMES[e.id][1]) : e.title || e.placeholder || "";
-        if (n) e.setAttribute("aria-label", n);
+        if (n) { e.setAttribute("aria-label", n); e.setAttribute("data-al", "1"); }
       });
     } catch (er) {}
   }

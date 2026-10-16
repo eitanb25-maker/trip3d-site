@@ -9,7 +9,7 @@
   /* ---------- CSS ---------- */
   var css = ""
     + ".uxtabs{display:flex;gap:6px;position:sticky;top:0;z-index:20;background:var(--bg,#fff);padding:6px 0;margin:0 0 10px;overflow-x:auto;-webkit-overflow-scrolling:touch}"
-    + ".uxtabs button{flex:1 0 auto;min-height:40px;padding:6px 12px;border-radius:999px;border:1px solid var(--bd,#ccc);background:var(--card,#fff);color:inherit;font:inherit;font-weight:700;cursor:pointer;white-space:nowrap}"
+    + ".uxtabs button{width:auto;flex:1 0 auto;min-height:40px;padding:6px 12px;border-radius:999px;border:1px solid var(--bd,#ccc);background:var(--card,#fff);color:inherit;font:inherit;font-weight:700;cursor:pointer;white-space:nowrap}"
     + ".uxtabs button[aria-selected=true]{background:var(--ac,#2563eb);border-color:var(--ac,#2563eb);color:#fff}"
     + "@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .uxtabs button[aria-selected=true]{color:#1b1308}}:root[data-theme=dark] .uxtabs button[aria-selected=true]{color:#1b1308}"
     + ".uxtabs button b{display:inline-block;min-width:1.4em;opacity:.8}"
