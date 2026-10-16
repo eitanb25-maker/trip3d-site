@@ -33,6 +33,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/1.6.19/topojson.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/datamaps/0.5.9/datamaps.world.min.js"></script>
+<script src="/microstates.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700&family=Heebo:wght@700&family=Frank+Ruhl+Libre:wght@700&family=Secular+One&display=swap">
 <style>
@@ -295,6 +296,8 @@ function fixAM(n,rs){if(n=="Antarctica")return rs;const wide=rs.some(r=>{let a=1
 // load countries from datamaps topology
 try{const T=Datamap.prototype.worldTopo,o=Object.values(T.objects)[0],fc=topojson.feature(T,o);
   fc.features.forEach(f=>{const g=f.geometry;if(!g)return;const rs=g.type=="Polygon"?[g.coordinates[0]]:g.type=="MultiPolygon"?g.coordinates.map(p=>p[0]):[];if(rs.length)countries[f.properties.name]=fixAM(f.properties.name,rs)})}catch(e){}
+/* מדינות קטנות שחסרות בקובץ datamaps (microstates.js) */
+try{if(window.MICRO)for(const k in MICRO)if(!countries[k])countries[k]=fixAM(k,MICRO[k])}catch(e){}
 let fromLib=Object.keys(countries).length>0;
 if(!fromLib){for(const k in FB)countries[k]=[FB[k]];$("msg").textContent="לא הצלחתי לטעון את רשימת המדינות המלאה – מוצגות שתי מדינות בלבד. אפשר להעלות GeoJSON."}
 const ALIAS={"United States of America":"United States","Democratic Republic of the Congo":"Congo - Kinshasa","Republic of the Congo":"Congo - Brazzaville","Ivory Coast":"Côte d’Ivoire","Republic of Serbia":"Serbia","United Republic of Tanzania":"Tanzania","Czech Republic":"Czechia","Swaziland":"Eswatini","East Timor":"Timor-Leste","Macedonia":"North Macedonia","Myanmar":"Myanmar (Burma)","The Bahamas":"Bahamas","Guinea Bissau":"Guinea-Bissau","Cape Verde":"Cabo Verde","Palestine":"Palestinian Territories","Falkland Islands":"Falkland Islands","Vatican":"Vatican City","Hong Kong":"Hong Kong SAR China","Macau":"Macao SAR China","Republic of Korea":"South Korea","Bosnia and Herzegovina":"Bosnia & Herzegovina","Trinidad and Tobago":"Trinidad & Tobago","Antigua and Barbuda":"Antigua & Barbuda","Saint Kitts and Nevis":"St. Kitts & Nevis","Saint Vincent and the Grenadines":"St. Vincent & Grenadines","Sao Tome and Principe":"São Tomé & Príncipe","Saint Lucia":"St. Lucia"},HE={};
@@ -302,7 +305,7 @@ try{const en=new Intl.DisplayNames("en",{type:"region"}),he=new Intl.DisplayName
   for(const a of A)for(const b of A){const c=a+b,n=en.of(c);if(n&&n!=c)by[n.toLowerCase()]=he.of(c)}
   Object.keys(countries).forEach(k=>{const h=by[(ALIAS[k]||k).toLowerCase()];if(h)HE[k]=h})}catch(e){}
 /* שמות בעברית שהדפדפן לא מספק (שם חדש כמו Türkiye, או שטחים שאינם מדינה ב-ICU) */
-Object.entries({"Turkey":"טורקיה","Northern Cyprus":"צפון קפריסין","Falkland Islands":"איי פוקלנד","Somaliland":"סומלילנד","West Bank":"הגדה המערבית","French Southern and Antarctic Lands":"הטריטוריות הדרומיות והאנטארקטיות של צרפת"}).forEach(([k,h])=>{if(countries[k]&&!HE[k])HE[k]=h});
+Object.entries({"Cape Verde":"כף ורדה","Turkey":"טורקיה","Northern Cyprus":"צפון קפריסין","Falkland Islands":"איי פוקלנד","Somaliland":"סומלילנד","West Bank":"הגדה המערבית","French Southern and Antarctic Lands":"הטריטוריות הדרומיות והאנטארקטיות של צרפת"}).forEach(([k,h])=>{if(countries[k]&&!HE[k])HE[k]=h});
 const norm=x=>(x||"").trim().toLowerCase(),findC=v=>{v=norm(v);if(!v)return undefined;const k=Object.keys(countries).find(k=>norm(k)==v||norm(HE[k])==v);return k&&window.cBlocked&&window.cBlocked(k)?undefined:k},cname=k=>LANG=="en"?k:(HE[k]||k);
 Object.keys(countries).sort().forEach(k=>{$("cl").append(new Option(k));if(HE[k])$("cl").append(new Option(HE[k]))});
 const area=r=>{let a=0;for(let i=0;i<r.length;i++){const p=r[i],q=r[(i+1)%r.length];a+=p[0]*q[1]-q[0]*p[1]}return Math.abs(a/2)};
