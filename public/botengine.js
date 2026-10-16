@@ -1044,7 +1044,7 @@
   ["קירור,מאוורר קירור,מאוורר,cooling,cooling fan,part cooling","ב-PLA כדאי קירור חזק (מאוורר 100% אחרי השכבות הראשונות), וזה עוזר לפרטים קטנים וכיתוב. ב-PETG קירור בינוני, וב-ABS/ASA כמעט בלי מאוורר.","With PLA use strong cooling (fan 100% after the first layers); it helps small details and lettering. For PETG use medium cooling, and for ABS/ASA almost no fan.","",""],
   ["להוריד מהמשטח,איך מוציאים את ההדפסה,ההדפסה תקועה במשטח,print stuck to the plate,remove the print,how to remove the print","מחכים שהמשטח והחלק יתקררו (ב-PLA כמעט מעצמו משתחרר), ואז מכופפים את משטח הקפיץ או מחליקים שפכטל דק בעדינות מתחת לחלק. אל תכפו עם כוח על חלקים דקים. אם נדבק חזק מדי – הקפיאו את המשטח לדקה או הוסיפו מעט סבון על המשטח בפעם הבאה.","Wait for the plate and part to cool (PLA often releases by itself), then flex the spring plate or slide a thin scraper gently under the part. Don't force thin parts. If it's stuck too hard, chill the plate for a minute or add a bit of soap on the bed next time.","",""],
   ["מהנייד,מהטלפון,עובד בנייד,דפדפן נתמך,איזה דפדפן,on my phone,mobile browser,supported browser,which browser","האתר עובד בטלפון ובמחשב, בדפדפנים עדכניים (Chrome, Safari, Firefox, Edge). לעיצוב נוח יותר מומלץ מסך גדול, ואת הקובץ שהורדתם פותחים בסלייסר במחשב (או באפליקציה של המדפסת).","The site works on phone and computer, in current browsers (Chrome, Safari, Firefox, Edge). A bigger screen is more comfortable for designing, and you open the downloaded file in a slicer on a computer (or your printer's app).","",""],
-  ["מה זה pla,מה זה petg,מה זה asa,מה זה tpu,סוגי חומרים,pla petg abs,what is pla,what is petg,what is abs,what is tpu,difference between pla and petg","PLA – קל להדפסה, מתאים לרוב המזכרות, אבל רך בחום. PETG – חזק וגמיש יותר ועמיד יותר בחום ובשמש. ABS/ASA – עמיד לחוץ אבל דורש מדפסת סגורה ואוורור. TPU – גמיש מאוד, פחות מתאים לכיתוב דק. להתחלה: PLA.","PLA – easy to print, fits most souvenirs, but softens in heat. PETG – stronger, more flexible and more resistant to heat and sun. ABS/ASA – outdoor-proof but needs an enclosure and ventilation. TPU – very flexible, less suited to fine lettering. To start: PLA.","",""],
+  ["מה זה pla,סוגי חומרים,pla petg abs,what is pla,what is petg,what is abs,what is tpu,difference between pla and petg","PLA – קל להדפסה, מתאים לרוב המזכרות, אבל רך בחום. PETG – חזק וגמיש יותר ועמיד יותר בחום ובשמש. ABS/ASA – עמיד לחוץ אבל דורש מדפסת סגורה ואוורור. TPU – גמיש מאוד, פחות מתאים לכיתוב דק. להתחלה: PLA.","PLA – easy to print, fits most souvenirs, but softens in heat. PETG – stronger, more flexible and more resistant to heat and sun. ABS/ASA – outdoor-proof but needs an enclosure and ventilation. TPU – very flexible, less suited to fine lettering. To start: PLA.","",""],
   ["אוורור,ריח בהדפסה,עשן,בטוח להדפיס בבית,ventilation,smell when printing,fumes,is it safe to print at home","PLA כמעט בלי ריח, ובכל זאת כדאי להדפיס בחדר מאוורר ולא ליד מיטה. ABS/ASA פולטים אדים – מדפיסים רק בחדר מאוורר או במדפסת סגורה עם סינון. לא להשאיר מדפסת פעילה ללא השגחה לאורך זמן.","PLA has almost no smell, but still print in a ventilated room and not next to a bed. ABS/ASA emit fumes – print only in a ventilated room or an enclosed printer with filtering. Don't leave a running printer unattended for long.","",""]
   ];
   KB.push(...NEWK);
@@ -1307,6 +1307,7 @@
         const ww = w || nk.length < 3; // מילות מפתח של 1-2 אותיות ("אי", "איי") חייבות להיות מילה שלמה, אחרת "איפה"/"איך" מתאימות להן
         if (ww ? t.includes(" " + nk + " ") : t.includes(nk)) sc += (k.length >= 4 || (nk.length === 3 && t.includes(" " + nk + " ")) ? 2 : 1) + (nk.includes(" ") ? 2 : 0) + (w ? 1 : 0);
         if (core && (nk === core || nk === t.trim().replace(DEFQ, "").trim()) && t.trim() !== nk) sc += 3;
+        else if (t.trim() === nk && nk.split(" ").length >= 3 && nk.length >= 10) sc += 10; // שאלה מוכרת במלואה (ניסוח שנכתב ידנית) גוברת על התאמות חלקיות
       }
       if (sc > 2 && GENERIC.has(topic(e))) sc -= 2; // נושא כללי (באג, כלים...) מפסיד בתיקו מול נושא ספציפי
       if (sc > 0) list.push({ src: "kb", sc, e });
@@ -1399,10 +1400,10 @@
       const c = correct(t0);
       if (c !== t0) { const y = tryText(c); if (y.r.bs >= 2 && y.r.bs > x.r.bs) { x = y; via = "typo"; used = y.t; corrected = c.trim(); } }
     }
-    if (x.r.bs < 2) {
+    if (x.r.bs < 2 || (via === "typo" && /^[a-z0-9 ]+$/i.test(String(q).trim()))) { // טקסט לטיני ש"תוקן" כאילו שגיאת כתיב: קודם בודקים אם זו מקלדת עברית
       for (const alt of layoutAlts(q)) {
         const ta = " " + norm(alt) + " ", y = tryText(ta);
-        if (y.r.bs >= 2 && y.r.bs > x.r.bs) { x = y; via = "layout"; used = y.t; corrected = alt; break; }
+        if (y.r.bs >= 2 && (y.r.bs > x.r.bs || (via === "typo" && y.r.bs >= x.r.bs))) { x = y; via = "layout"; used = y.t; corrected = alt; break; }
       }
     }
     if (x.r.bs < 2 && prev && t0.trim().split(" ").length <= 4) {
