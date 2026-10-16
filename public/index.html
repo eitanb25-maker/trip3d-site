@@ -1140,18 +1140,26 @@ $("gal").onclick=async e=>{const o=e.target.dataset.o,d=e.target.dataset.d;
   if(o!=null){let r=GL[+o];try{if(r._cloud)r=await API.j("GET","/projects/"+r.id);putProj(JSON.parse(r.proj));curKey=r.id;$("home").style.display="none";$("intro").style.display="none";$("msg").textContent=L_("הפרויקט נטען","Project loaded")}catch(_){$("msg").textContent=L_("לא הצלחתי לטעון את הקובץ","Couldn't load the file")}}
   else if(d!=null){const r=GL[+d];try{if(r._cloud)await API.j("DELETE","/projects/"+r.id);else{const L=JSON.parse(localStorage.getItem("trip3d_g")||"[]").filter(x=>x.id!=r.id);localStorage.setItem("trip3d_g",JSON.stringify(L))}if(curKey==r.id)curKey=null;renderGallery()}catch(_){}}};
 // ---------- חיפוש מקומות (OpenStreetMap) ----------
-async function geocode(q,n){const c=$("cin").value||"";const r=await fetch("https://nominatim.openstreetmap.org/search?format=jsonv2&limit="+(n||5)+"&accept-language="+(LANG=="en"?"en":"he")+"&q="+encodeURIComponent(q+(c&&!MULTI?", "+c:"")));if(!r.ok)throw 0;return(await r.json()).map(x=>({name:(x.name||x.display_name.split(",")[0]),detail:x.display_name.split(",").slice(1,3).join(",").trim(),lat:+x.lat,lon:+x.lon}))}
+async function geocode(q,n){const c=$("cin").value||"",lang=LANG=="en"?"en":"he";
+  const go=async s=>{const r=await fetch("https://nominatim.openstreetmap.org/search?format=jsonv2&limit="+(n||5)+"&accept-language="+lang+"&q="+encodeURIComponent(s));if(!r.ok)throw 0;return(await r.json()).map(x=>({name:(x.name||x.display_name.split(",")[0]),detail:x.display_name.split(",").slice(1,3).join(",").trim(),lat:+x.lat,lon:+x.lon}))};
+  let L=await go(q+(c&&!MULTI?", "+c:""));
+  if(!L.length&&c&&!MULTI){await new Promise(r=>setTimeout(r,1100));L=await go(q)} /* המדינה שנבחרה היא רק העדפה: אם אין תוצאה שם, מחפשים בכל העולם */
+  return L}
+// האם נקודה נמצאת מחוץ למדינה שנבחרה (עם שוליים של 2 מעלות)
+function outC(x){const c=$("cin").value||"";if(!c)return false;try{const B=pick(raw).map(bb);return B.length>0&&!B.some(b=>x.lon>=b[0]-2&&x.lon<=b[1]+2&&x.lat>=b[2]-2&&x.lat<=b[3]+2)}catch(e){return false}}
 $("sb").onclick=async()=>{const q=$("q").value.trim();if(!q)return;const m=$("msg"),box=$("cands");box.innerHTML="";
   const xy=q.match(/@?(-?\d{1,3}(?:\.\d+)?)\s*[, ]\s*(-?\d{1,3}(?:\.\d+)?)/);
   if(xy&&Math.abs(+xy[1])<=90&&Math.abs(+xy[2])<=180){addPin(+xy[2],+xy[1],"מקום "+(pins.length+1));$("q").value="";m.textContent=L_("נוסף לפי קואורדינטות","Added by coordinates");return}
-  try{m.textContent=L_("מחפש…","Searching…");const L=await geocode(q,5);if(!L.length){m.textContent=L_("לא נמצא. נסו שם מדויק יותר או לחצו על המפה.","Not found. Try a more exact name or click the map.");return}
-    const rs=pick(raw),B=rs.map(bb),c=$("cin").value||"";m.textContent=L_("בחרו תוצאה:","Choose a result:");
-    L.forEach(x=>{const out=B&&c&&!B.some(b=>x.lon>=b[0]-2&&x.lon<=b[1]+2&&x.lat>=b[2]-2&&x.lat<=b[3]+2);const bt=document.createElement("button");bt.style.cssText="display:block;text-align:start;margin-bottom:5px";bt.textContent=x.name+(x.detail?" – "+x.detail:"")+(out?L_(" (מחוץ למדינה שנבחרה)"," (outside the selected country)"):"");
-      bt.onclick=()=>{addPin(x.lon,x.lat,x.name);box.innerHTML="";$("q").value="";m.textContent=L_("נוסף: ","Added: ")+x.name};box.append(bt)})}
+  try{m.textContent=L_("מחפש…","Searching…");const L=await geocode(q,5);if(!L.length){m.textContent=L_("לא נמצא. נסו את השם באנגלית או בשפת המקום (למשל Universal Studios Japan), הדביקו קואורדינטות, או לחצו על המפה.","Not found. Try the name in English or the local language (e.g. Universal Studios Japan), paste coordinates, or click the map.");return}
+    m.textContent=L_("בחרו תוצאה:","Choose a result:");
+    L.forEach(x=>{const out=outC(x);const bt=document.createElement("button");bt.style.cssText="display:block;text-align:start;margin-bottom:5px";bt.textContent=x.name+(x.detail?" – "+x.detail:"")+(out?L_(" (מחוץ למדינה שנבחרה)"," (outside the selected country)"):"");
+      bt.onclick=()=>{addPin(x.lon,x.lat,x.name);box.innerHTML="";$("q").value="";m.textContent=L_("נוסף: ","Added: ")+x.name+(out?L_(". שימו לב: המקום מחוץ למדינה שנבחרה ולכן לא יוצג על המפה. אם התכוונתם למדינה אחרת, החליפו מדינה בלשונית ״מדינה ומפה״.",". Note: it is outside the selected country, so it will not show on the map. If you meant another country, change the country in the Country & map tab."):"")};box.append(bt)})}
   catch(e){m.textContent=L_("החיפוש נכשל – אפשר ללחוץ על המפה או להדביק קואורדינטות","Search failed – you can click the map or paste coordinates")}};
-async function findAll(L){const m=$("msg");m.textContent=L_("מחפש את המקומות שלכם…","Searching for your places…");let n=0;
-  for(const q of L){try{const r=await geocode(q,1);if(r[0]){pins.push({lon:r[0].lon,lat:r[0].lat,name:q,fav:!!W.fav&&q==W.fav});n++}}catch(e){}await new Promise(r=>setTimeout(r,1100))}
-  renderPins();update();m.textContent=L_("נמצאו ","Found ")+n+L_(" מתוך "," of ")+L.length+L_(" מקומות. כדאי לבדוק במפה, ואפשר לתקן בלחיצה."," places. Check them on the map; you can fix by clicking.")}
+async function findAll(L){const m=$("msg");m.textContent=L_("מחפש את המקומות שלכם…","Searching for your places…");let n=0;const none=[],far=[];
+  for(const q of L){try{const r=await geocode(q,1);if(!r[0])none.push(q);else if(outC(r[0]))far.push(q);else{pins.push({lon:r[0].lon,lat:r[0].lat,name:q,fav:!!W.fav&&q==W.fav});n++}}catch(e){none.push(q)}await new Promise(r=>setTimeout(r,1100))}
+  renderPins();update();m.textContent=L_("נמצאו ","Found ")+n+L_(" מתוך "," of ")+L.length+L_(" מקומות. כדאי לבדוק במפה, ואפשר לתקן בלחיצה."," places. Check them on the map; you can fix by clicking.")
+   +(far.length?L_(" נמצאו מחוץ למדינה שנבחרה ולכן לא נוספו: "," Found outside the selected country, so not added: ")+far.join(", ")+L_(". אם התכוונתם למדינה אחרת, החליפו את המדינה."," If you meant another country, change the country."):"")
+   +(none.length?L_(" לא נמצאו: "," Not found: ")+none.join(", ")+L_(". נסו שם באנגלית או לחצו על המפה."," Try the name in English or click the map."):"")}
 // ---------- תמונה לשיתוף ברשתות ----------
 function fitText(g,txt,maxW,px,min,weight){px=px||48;do{g.font=`${weight||"bold"} ${px}px ${FF()}`;px-=2}while(g.measureText(txt).width>maxW&&px>(min||18));return g.measureText(txt).width<=maxW}
 async function makeShare(fmt){const [W,H]={sq:[1080,1080],wide:[1200,630],story:[1080,1920]}[fmt];R.setSize(1080,1080,false);R.render(sc,cam);
