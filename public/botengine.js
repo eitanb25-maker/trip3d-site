@@ -1412,15 +1412,80 @@
       if (y.r.bs >= 2 && y.r.bs > scoreAll(" " + norm(prev) + " ").bs) { x = y; via = "context"; used = y.t; }
     }
     const hit = x.r.bs >= 2 ? x.r.best : null;
-    return { hit, score: x.r.bs, via: hit ? via : "none", expanded: used.trim(), corrected, cands: x.r.list.slice(0, 6).map((c) => ({ src: c.src, sc: c.sc, kw: c.e.cust ? c.e.kw : c.e[0].split(",").slice(0, 3).join(", "), a: c.e[1] })) };
+    return { hit, score: x.r.bs, via: hit ? via : "none", expanded: used.trim(), corrected, cands: x.r.list.slice(0, 6).map((c) => ({ src: c.src, sc: c.sc, kw: c.e.cust ? c.e.kw : c.e[0].split(",").slice(0, 3).join(", "), a: c.e[1], e: c.e })) };
   };
   const faq = (q, prev) => match(q, prev).hit;
   const topic = (e) => e ? (e.cust ? String(e.kw || "").split(" ").slice(0, 3).join(" ") : String(e[0]).split(",")[0].replace(/^=/, "").trim()) : "";
   // רמזים ל-AI: התשובות המוכנות הקרובות ביותר לשאלה (עוזר לו לענות בהתאם לאתר)
   const hints = (q) => match(q).cands.filter((c) => c.sc >= 1).slice(0, 3).map((c) => c.a);
 
+  // ---- שכבת שיחה: הקשר, שאלות המשך, ריבוי כוונות, הבהרות ----
+  // converse(q, st, ctx) → {type:"answer"|"multi"|"clarify"|"text"|"none", ...}. st = newDialog() נשמר בין הודעות.
+  const TOOLN = { stand: "מעמד", magnet: "מגנט", key: "מחזיק מפתחות", orn: "קישוט", puzzle: "פאזל", holder: "מחזיק" };
+  const RE_MORE = /^(ו?עוד|תרחיב|תפרט|פרט|תסביר|הסבר|תסביר יותר|תסביר שוב|לא הבנתי|לא הבנתי\S*|תפרט יותר|more|tell me more|explain|explain more|elaborate|go on|i don'?t understand|say more)[\s?!.]*$/i;
+  const RE_NO = /^(לא|לא זה|זה לא זה|לא מה ששאלתי|לא נכון|no|nope|not that|wrong)[\s?!.]*$/i;
+  const RE_YES = /^(כן|בטח|יאללה|ברור|בסדר|בכיף|yes|yep|sure|ok|okay)[\s?!.]*$/i;
+  const RE_FOLLOW = /^(?:ומה לגבי|מה לגבי|ומה עם|מה עם|ואם|ולגבי|לגבי|ומה אם|what about|how about|and what about|and how about|and on|and in|and for|and if|what if)\s+(.+)$/i;
+  const RE_SPLIT = /\?+\s+|\s+(?:וגם|ובנוסף|ועוד דבר|ואחרי זה|and also|also|plus)\s+/i;
+  const newDialog = () => ({ lastQ: "", lastHit: null, lastList: [], shown: [], opts: null, n: 0 });
+  const lbl = (e, lang) => { if (lang !== "he" && e[2]) { const w = String(e[2]).replace(/\s+/g, " ").split(" ").slice(0, 6).join(" "); return w + "…"; } return topic(e); };
+  const converse = (q, st, cx) => {
+    st = st || newDialog(); cx = cx || {}; const lang = cx.lang || "he"; q = String(q || "").trim(); st.n++;
+    const done = (r) => { if (r.type === "answer" && r.hit) { st.lastHit = r.hit; st.shown.push(topic(r.hit)); if (!r.followup) { st.lastQ = q; st.lastList = r.list || []; } } if (r.type !== "answer") st.opts = null; return r; };
+    const nq = norm(q);
+    // 1) בחירה מתוך חלופות שהוצעו (מספר או שם החלופה), או "לא" ← מציעים אותן שוב
+    if (st.opts && st.opts.length) {
+      let pick = null; const num = /^\s*([1-3])\s*[.)]?\s*$/.exec(q);
+      if (num) pick = st.opts[+num[1] - 1];
+      else for (const o of st.opts) if (nq && norm(o.label).trim() && (nq === norm(o.label).trim())) pick = o;
+      if (pick) { st.opts = null; return done({ type: "answer", hit: pick.entry, via: "pick", followup: false }); }
+      if (RE_NO.test(q)) { const o = st.opts; return done({ type: "text", he: "אוקיי, אולי אחד מאלה? אפשר ללחוץ, או לנסח אחרת.", en: "Okay, maybe one of these? Tap one, or rephrase.", options: o, offer: true }); }
+    }
+    st.opts = null;
+    // 2) "עוד / תסביר" – הרחבה מאותו נושא
+    if (RE_MORE.test(q) && st.lastHit) {
+      const base = st.lastList.length ? st.lastList : match(st.lastQ).cands;
+      const top = base[0] ? base[0].sc : 0;
+      const nx = base.find((c) => c.e && c.e !== st.lastHit && !st.shown.includes(topic(c.e)) && c.sc >= Math.max(2, top * .45));
+      if (nx) return done({ type: "answer", hit: nx.e, via: "more", prefix: lang === "he" ? "הנה עוד על זה:" : "Here's more on that:", followup: true });
+      return done({ type: "text", he: "זה כל מה שיש לי על הנושא הזה. אפשר לשאול אותי משהו אחר, או לשלוח את השאלה למנהל האתר.", en: "That's everything I have on this. You can ask me something else, or send your question to the site owner.", offer: true });
+    }
+    // 3) שאלת המשך קצרה ("ומה לגבי הנייד?")
+    const fm = st.lastQ && RE_FOLLOW.exec(q);
+    if (fm && fm[1].trim().split(/\s+/).length <= 5) {
+      const rest = fm[1].replace(/[?!.]+$/, "");
+      const alone = match(rest), comb = match(st.lastQ + " " + rest);
+      const y = alone.score >= 4 ? alone : comb.score >= 2 ? comb : null;
+      if (y && y.hit) return done({ type: "answer", hit: y.hit, via: "followup", list: y.cands, followup: false });
+    }
+    // 4) כמה שאלות בהודעה אחת
+    const parts = q.split(RE_SPLIT).map((x) => x.trim()).filter((x) => x.split(/\s+/).length >= 2);
+    if (parts.length >= 2 && parts.length <= 3) {
+      const ms = parts.map((x) => ({ q: x, m: match(x, st.lastQ) }));
+      const tops = ms.map((x) => x.m.hit && topic(x.m.hit));
+      if (ms.every((x) => x.m.score >= 3) && new Set(tops).size === ms.length) {
+        for (const x of ms) st.shown.push(topic(x.m.hit)); st.lastQ = ms[0].q; st.lastHit = ms[ms.length - 1].m.hit; st.lastList = ms[0].m.cands; st.opts = null;
+        return { type: "multi", parts: ms.map((x) => ({ q: x.q, hit: x.m.hit })) };
+      }
+    }
+    // 5) התאמה רגילה (+ הקשר הכלי הפעיל אם אין תשובה)
+    let m = match(q, st.lastQ), via = m.via;
+    if (!m.hit && cx.tool && TOOLN[cx.tool]) { const m2 = match(q + " " + TOOLN[cx.tool]); if (m2.hit && m2.score >= 3) { m = m2; via = "tool"; } }
+    if (!m.hit) return done({ type: "none" });
+    // 6) ביטחון נמוך (התאמה של מילה אחת חלשה): עונים, אבל אומרים שלא בטוחים ומציעים חלופות
+    let alts = [], low = false;
+    if (m.score <= LOW_MAX && via !== "tool") {
+      low = true; const seen = new Set([topic(m.hit)]);
+      for (const c of m.cands) { if (!c.e || c.sc < 1) continue; const t = topic(c.e); if (seen.has(t)) continue; seen.add(t); alts.push({ label: lbl(c.e, lang), entry: c.e }); if (alts.length >= 3) break; }
+    }
+    st.lastAlts = alts;
+    st.opts = alts.length ? alts : null;
+    return done({ type: "answer", hit: m.hit, via, list: m.cands, score: m.score, lowconf: low, alts });
+  };
+  const LOW_MAX = 2;
+
   window.BotEngine = {
-    KB, SYN, norm, match, detect, reply, ui, LANGREQ, ML, faq, topic, hints, expand, correct,
+    KB, SYN, norm, match, converse, newDialog, detect, reply, ui, LANGREQ, ML, faq, topic, hints, expand, correct,
     addLex(l) {
       l = l || {};
       if (Array.isArray(l.kb)) for (const e of l.kb) if (Array.isArray(e) && e[0] && e[1]) KB.push(e.length >= 5 ? e : [e[0], e[1], e[2] || e[1], e[3] || "", e[4] || ""]);
