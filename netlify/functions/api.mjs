@@ -84,7 +84,7 @@ async function turnstileOk(token, ip) {
 async function body(req, max = 300000) {
   const t = await req.text();
   if (t.length > max) throw Object.assign(new Error("big"), { status: 413 });
-  try { return t ? JSON.parse(t) : {}; } catch { throw Object.assign(new Error("json"), { status: 400 }); }
+  try { const j = t ? JSON.parse(t) : {}; return j && typeof j === "object" ? j : {}; } catch { throw Object.assign(new Error("json"), { status: 400 }); }
 }
 
 async function authUser(req) {

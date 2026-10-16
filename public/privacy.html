@@ -15,7 +15,7 @@
 <h2>גיבויים</h2><p>הנתונים מגובים אוטומטית פעם בשבוע בצורה מוצפנת ונשמרים אצל בעל האתר.</p>
 <h2>עוגיות ואחסון בדפדפן</h2><p>עוגייה הכרחית אחת להתחברות, ואחסון מקומי בדפדפן לשמירת ההגדרות והפרויקטים במכשיר. אין עוגיות פרסום או מעקב.</p>
 <h2>שירותים חיצוניים</h2><ul><li>אירוח ושרת: Netlify.</li><li>חיפוש מקומות: Nominatim של OpenStreetMap מקבל את הטקסט שחיפשת.</li><li>ספריות ופונטים נטענים מ-cdnjs ומ-Google Fonts.</li><li>אם הופעלו: התחברות עם Google, שליחת מיילים (Resend), בדיקת אנושיות (Cloudflare Turnstile) והתראות למנהל (טלגרם/דיסקורד/מייל).</li></ul>
-<h2>הזכויות שלך</h2><p>בחלון החשבון אפשר <b>להוריד את כל הנתונים שלך</b> ו<b>למחוק את החשבון</b> (כולל הפרויקטים השמורים). נתוני ההורדות נשמרים בצורה אנונימית לצורכי סטטיסטיקה. לשאלות: <span id="cx">פנו לבעל האתר</span>.</p>
+<h2>הזכויות שלך</h2><p>בחלון החשבון אפשר <b>להוריד את כל הנתונים שלך</b> ו<b>למחוק את החשבון</b> (כולל הפרויקטים השמורים). נתוני ההורדות נשמרים בצורה אנונימית לצורכי סטטיסטיקה. לשאלות: <span class="cx">פנו לבעל האתר</span>.</p>
 <h2>שינויים</h2><p>נוסח זה עשוי להתעדכן.</p></div><div data-l="en" style="display:none"><h1>Privacy policy</h1>
 <p class="note">This is a general draft meant as a starting point only. The site owner is responsible for adapting it to actual practice, and should consult a lawyer before publishing, especially if there are users from the European Union.</p>
 <h2>What data is stored</h2>
@@ -30,9 +30,9 @@
 <h2>Backups</h2><p>Data is backed up automatically once a week in encrypted form and kept by the site owner.</p>
 <h2>Cookies and browser storage</h2><p>One essential cookie for sign-in, and local browser storage to keep your settings and projects on your device. No advertising or tracking cookies.</p>
 <h2>External services</h2><ul><li>Hosting and server: Netlify.</li><li>Place search: OpenStreetMap's Nominatim receives the text you search for.</li><li>Libraries and fonts are loaded from cdnjs and Google Fonts.</li><li>If enabled: Google sign-in, email sending (Resend), human check (Cloudflare Turnstile) and owner alerts (Telegram/Discord/email).</li></ul>
-<h2>Your rights</h2><p>In the account window you can <b>download all your data</b> and <b>delete your account</b> (including saved projects). Download records are kept anonymously for statistics. Questions: <span id="cx">contact the site owner</span>.</p>
+<h2>Your rights</h2><p>In the account window you can <b>download all your data</b> and <b>delete your account</b> (including saved projects). Download records are kept anonymously for statistics. Questions: <span class="cx">contact the site owner</span>.</p>
 <h2>Changes</h2><p>This text may be updated.</p></div>
 <script>let L="he";try{L=localStorage.getItem("trip3d_l")||"he"}catch(e){}
 function setL(l){L=l;try{localStorage.setItem("trip3d_l",l)}catch(e){}document.documentElement.lang=l;document.documentElement.dir=l=="en"?"ltr":"rtl";document.querySelectorAll("[data-l]").forEach(e=>e.style.display=e.dataset.l==l?"":"none");document.title=document.querySelector("[data-l='"+l+"'] h1").textContent;const b=document.getElementById("lb");b.textContent=l=="en"?"עברית":"English"}
 document.getElementById("lb").onclick=()=>setL(L=="en"?"he":"en");setL(L);
-const cs=document.querySelectorAll("#cx");if(cs.length)fetch("/api/config").then(r=>r.json()).then(j=>{if(j.contactEmail){cs.forEach(c=>{const a=document.createElement("a");a.href="mailto:"+j.contactEmail.replace(/[^\w@.+-]/g,"");a.textContent=j.contactEmail;c.replaceChildren(a)})}}).catch(()=>{})</script></body></html>
+const cs=document.querySelectorAll(".cx");if(cs.length)fetch("/api/config").then(r=>r.json()).then(j=>{if(j.contactEmail){cs.forEach(c=>{const a=document.createElement("a");a.href="mailto:"+j.contactEmail.replace(/[^\w@.+-]/g,"");a.textContent=j.contactEmail;c.replaceChildren(a)})}}).catch(()=>{})</script></body></html>
