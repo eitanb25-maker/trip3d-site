@@ -28,6 +28,8 @@
     + "html.uxst .uxtabs{top:var(--uxph,46vh)}"
     + "}"
     + "#uxstk{display:none}html.uxst #uxstk.on{display:block}"
+    + "html.uxst main{position:relative;z-index:1}" /* שכבת ערימה משלו: כרטיס התצוגה הנדבק לא יוצג מעל מסך הבית (#home z-index:11) */
+    + "@media (pointer:coarse),(max-width:700px){#home a:not(.btn2):not(.card){display:inline-block;padding:7px 4px}#home a.btn2{padding-block:7px}input[type=checkbox]{width:24px;height:24px}}"
     + ".uxpin{display:none;min-width:40px}@media (max-width:1000px) and (orientation:portrait) and (min-height:520px){.uxpin{display:inline-block}}";
 
   var M = { sec: null, wrap: null, mk: {} };

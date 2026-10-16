@@ -59,7 +59,14 @@ syn=[[t,",".join(w)] for t,w in words.items()]+[[t,",".join(p)] for t,p in phr.i
 import gzip
 PT=["מה זה {n}","איפה {n}","יש {n}","תסביר על {n}","עזרה עם {n}","שאלה על {n}","בעיה עם {n}","לא הבנתי {n}","איך עובד {n}","מה לגבי {n}","רוצה לדעת על {n}","אפשר לשאול על {n}"]
 tpl=[[t,",".join(w)] for t,w in words.items() if w]
-data={"kb":kb,"syn":syn,"tpl":tpl,"pt":PT,"ptn":6,"pre":["ה","ו","ב","ל","מ","כ","ש","וה","שה","לה","מה","וב","ול","כש"],"suf":["ים","ות","ת","י","ו","ך","נו","כם","ם"]}
+kbx=[]
+for l in open("kbx.txt",encoding="utf8"):
+    l=l.strip()
+    if l and not l.startswith("#"):
+        t,k=l.split("|"); ks=[x.strip() for x in k.split(",") if x.strip()]
+        ks=[("="+x if len(x)<=3 and not x.startswith("=") else x) for x in ks]  # מילים קצרות = מילה שלמה בלבד
+        kbx.append([t.strip(),",".join(ks)])
+data={"kbx":kbx,"kb":kb,"syn":syn,"tpl":tpl,"pt":PT,"ptn":6,"pre":["ה","ו","ב","ל","מ","כ","ש","וה","שה","לה","מה","וב","ול","כש"],"suf":["ים","ות","ת","י","ו","ך","נו","כם","ם"]}
 raw=json.dumps(data,ensure_ascii=False,separators=(",",":")).encode()
 gz=gzip.compress(raw,9)
 open("../../public/botlex.bin","wb").write(gz)
